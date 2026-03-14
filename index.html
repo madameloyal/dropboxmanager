@@ -291,7 +291,7 @@ td.actions { white-space:nowrap; width:1px; }
     <div id="active-event-badge" style="display:none;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:6px;padding:3px 10px;font-size:0.72em;color:var(--green);font-weight:600;"></div>
     <div style="flex:1;display:flex;gap:6px;align-items:center;min-width:200px;">
       <div class="scan-input-wrap" style="flex:1;">
-        <input type="text" id="paths-scan-root" placeholder="/01_ALL MEDIAS ML 2026" style="font-family:monospace;font-size:0.76em;width:100%;" oninput="saveScanRoot(this.value)" onfocus="showScanSuggestions('paths-scan-root','paths-scan-sugg')" autocomplete="off">
+        <input type="text" id="paths-scan-root" placeholder="/01_ALL MEDIAS ML 2026" value="/01_ALL MEDIAS ML 2026" style="font-family:monospace;font-size:0.76em;width:100%;" oninput="saveScanRoot(this.value)" onfocus="showScanSuggestions('paths-scan-root','paths-scan-sugg')" autocomplete="off">
         <div class="scan-suggestions" id="paths-scan-sugg"></div>
       </div>
       <button class="btn btn-ghost btn-sm" onclick="scanEventsFromPaths()">🔍 Scanner</button>
@@ -570,7 +570,7 @@ td.actions { white-space:nowrap; width:1px; }
     <div class="card-label">🔍 Étape 1 — Scanner les événements Dropbox</div>
     <div class="field-row" style="margin-bottom:10px;">
       <div class="scan-input-wrap">
-        <input type="text" id="scan-root" placeholder="/01_ALL MEDIAS ML 2026" style="font-family:monospace;font-size:0.8em;width:100%;" oninput="saveScanRoot(this.value)" onfocus="showScanSuggestions('scan-root','setup-scan-sugg')" autocomplete="off">
+        <input type="text" id="scan-root" placeholder="/01_ALL MEDIAS ML 2026" value="/01_ALL MEDIAS ML 2026" style="font-family:monospace;font-size:0.8em;width:100%;" oninput="saveScanRoot(this.value)" onfocus="showScanSuggestions('scan-root','setup-scan-sugg')" autocomplete="off">
         <div class="scan-suggestions" id="setup-scan-sugg"></div>
       </div>
       <button class="btn btn-primary btn-sm" onclick="scanEvents()">🔍 Scanner</button>
@@ -2605,6 +2605,8 @@ if(savedRoot) {
   const sr1 = document.getElementById('scan-root'); if(sr1) sr1.value = savedRoot;
   const sr2 = document.getElementById('paths-scan-root'); if(sr2) sr2.value = savedRoot;
 }
+// Always sync saveScanRoot so history works correctly
+saveScanRoot(document.getElementById('paths-scan-root').value);
 
 // Restore event city/date
 const savedCity = localStorage.getItem('dbx_ev_city');
