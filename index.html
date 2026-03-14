@@ -2328,12 +2328,16 @@ async function verifyType(type) {
       const cell = document.getElementById(`vc-${type}-${row.n}-${key}`);
       try {
         // Use recursive:false — only count direct files in that slot folder
-        const data = await apiPost('files/list_folder', {
-          path,
-          recursive: false,
-          include_non_downloadable_files: false
+        let entries = [];
+        let vdata = await apiPost('files/list_folder', {
+          path, recursive: true, include_non_downloadable_files: false
         });
-        const files = (data.entries||[]).filter(e => e['.tag']==='file');
+        entries = entries.concat(vdata.entries||[]);
+        while(vdata.has_more) {
+          vdata = await apiPost('files/list_folder/continue', {cursor: vdata.cursor});
+          entries = entries.concat(vdata.entries||[]);
+        }
+        const files = entries.filter(e => e['.tag']==='file');
         counts[key] = files.length;
         found[key]  = true;
         // Accumulate size
