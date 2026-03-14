@@ -405,12 +405,14 @@ td.actions { white-space:nowrap; width:1px; }
         <thead>
           <tr>
             <th>#</th>
-            <th>Name</th>
+            <th>Nom</th>
             <th>Jour 1</th>
             <th>Jour 2</th>
             <th>Partenaires</th>
+            <th>Total</th>
+            <th>Taille</th>
+            <th>1er upload</th>
             <th>Status</th>
-            <th>Templates</th>
           </tr>
         </thead>
         <tbody id="tbody-verify-photo"></tbody>
@@ -429,12 +431,14 @@ td.actions { white-space:nowrap; width:1px; }
         <thead>
           <tr>
             <th>#</th>
-            <th>Name</th>
+            <th>Nom</th>
             <th>Jour 1</th>
             <th>Jour 2</th>
             <th>BAB / Montages</th>
+            <th>Total</th>
+            <th>Taille</th>
+            <th>1er upload</th>
             <th>Status</th>
-            <th>Templates</th>
           </tr>
         </thead>
         <tbody id="tbody-verify-video"></tbody>
@@ -511,8 +515,8 @@ td.actions { white-space:nowrap; width:1px; }
 
 <!-- EMAIL MODAL -->
 <!-- MESSAGES OVERLAY -->
-<div id="email-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:100;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;">
-  <div style="background:var(--surface);border:1px solid rgba(255,255,255,0.08);border-radius:20px;width:100%;max-width:860px;display:flex;flex-direction:column;margin:auto;">
+<div id="email-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:100;justify-content:center;padding:20px;overflow-y:auto;">
+  <div style="background:var(--surface);border:1px solid rgba(255,255,255,0.08);border-radius:20px;width:100%;max-width:860px;margin:auto;">
 
     <!-- accent bar -->
     <div style="height:3px;background:linear-gradient(90deg,var(--day-0),var(--day-1),var(--day-2));flex-shrink:0;"></div>
@@ -1558,9 +1562,8 @@ async function scanEventsFromPaths() {
 
 function selectEventFromPaths(path, name) {
   const cleanName = name.replace(/^\d+_/,'').trim();
-  // Update EVENT_CONFIG
-  EVENT_CONFIG.name    = cleanName;
-  EVENT_CONFIG.edition = cleanName;
+  // Only set internal name — edition/city are controlled by the Ville/Édition input field
+  EVENT_CONFIG.name = cleanName;
   // Show badge
   const badge = document.getElementById('active-event-badge');
   badge.textContent = '✓ ' + name;
@@ -2140,9 +2143,9 @@ function applyTemplate(tplKey, nom, j1, j2, p3, editLink) {
     j2:      j2      || '[Lien Dropbox – Jour 2]',
     p3:      p3      || (tplKey.startsWith('photo') ? '[Lien Dropbox – Partenaires]' : '[Lien Dropbox – BAB & Montages]'),
     edit:    editLink|| '[Lien Dropbox d\'accès et édition]',
-    city:    EVENT_CONFIG.city    || '[Ville]',
-    date:    EVENT_CONFIG.date    || '[Date]',
-    edition: EVENT_CONFIG.edition || EVENT_CONFIG.city || '[Édition]',
+    city:    EVENT_CONFIG.city    || '"Ville/Édition"',
+    date:    EVENT_CONFIG.date    || '"Date"',
+    edition: EVENT_CONFIG.edition || '"Ville/Édition"',
   };
   const replace = str => str.replace(/\{(\w+)\}/g, (_, k) => vars[k] !== undefined ? vars[k] : `{${k}}`);
   return {
@@ -2206,8 +2209,8 @@ function updateEditorPreview() {
     nom, j1: links.j1?.url||'[Lien Jour 1]', j2: links.j2?.url||'[Lien Jour 2]',
     p3: links.p3?.url||(isPhoto?'[Partenaires]':'[BAB & Montages]'),
     edit: '[Lien édition]',
-    city: EVENT_CONFIG.city||'[Ville]', date: EVENT_CONFIG.date||'[Date]',
-    edition: EVENT_CONFIG.edition||EVENT_CONFIG.city||'[Édition]',
+    city: EVENT_CONFIG.city||'"Ville/Édition"', date: EVENT_CONFIG.date||'"Date"',
+    edition: EVENT_CONFIG.edition||'"Ville/Édition"',
   };
   const preview = body.replace(/\{(\w+)\}/g, (_,k) => vars[k]!==undefined ? vars[k] : `{${k}}`);
   document.getElementById('tpl-preview').textContent = preview;
@@ -2248,13 +2251,11 @@ function renderVerifyTables(force=false) {
   ['photo','video'].forEach(type => {
     const state  = type==='photo' ? photoState : videoState;
     const tbody  = document.getElementById('tbody-verify-'+type);
-    // Don't re-render if already populated with real data
     if(!force && tbody.querySelector('.status-chip.sc-loading, .file-count')) return;
-    // Only render if empty or all rows are the initial placeholder
     tbody.innerHTML = '';
-    state.forEach((row, idx) => {
-      const tr   = document.createElement('tr');
-      tr.id      = 'vtr-'+type+'-'+row.n;
+    state.forEach((row) => {
+      const tr = document.createElement('tr');
+      tr.id    = 'vtr-'+type+'-'+row.n;
       const name = row.realName || (type==='photo'?'Photographe':'Vidéaste')+' '+row.n;
       tr.innerHTML = `
         <td class="num">${String(row.n).padStart(2,'0')}</td>
@@ -2262,17 +2263,30 @@ function renderVerifyTables(force=false) {
         <td id="vc-${type}-${row.n}-j1"><span style="color:var(--text-dim);font-size:0.75em;">—</span></td>
         <td id="vc-${type}-${row.n}-j2"><span style="color:var(--text-dim);font-size:0.75em;">—</span></td>
         <td id="vc-${type}-${row.n}-p3"><span style="color:var(--text-dim);font-size:0.75em;">—</span></td>
-        <td id="vs-${type}-${row.n}"><span style="color:var(--text-dim);font-size:0.75em;">Not checked</span></td>
-        <td id="vt-${type}-${row.n}" class="actions">
-          <button class="btn btn-ghost btn-xs" onclick="openModal('${type}',${idx})">✉️ Templates</button>
-        </td>`;
+        <td id="vc-${type}-${row.n}-total"><span style="color:var(--text-dim);font-size:0.75em;">—</span></td>
+        <td id="vc-${type}-${row.n}-size"><span style="color:var(--text-dim);font-size:0.75em;">—</span></td>
+        <td id="vc-${type}-${row.n}-date"><span style="color:var(--text-dim);font-size:0.75em;">—</span></td>
+        <td id="vs-${type}-${row.n}"><span style="color:var(--text-dim);font-size:0.75em;">Non vérifié</span></td>`;
       tbody.appendChild(tr);
     });
   });
 }
 
+function fmtSize(bytes) {
+  if(bytes === 0) return '0';
+  if(bytes < 1024*1024) return (bytes/1024).toFixed(0)+' KB';
+  if(bytes < 1024*1024*1024) return (bytes/(1024*1024)).toFixed(1)+' MB';
+  return (bytes/(1024*1024*1024)).toFixed(2)+' GB';
+}
+
+function fmtDate(iso) {
+  if(!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
 async function runVerify(scope) {
-  if(!getToken()){toast('⚠️ Enter token first','warn');return;}
+  if(!getToken()){toast('⚠️ Entre le token d\'abord','warn');return;}
   if(scope==='all'||scope==='photo') await verifyType('photo');
   if(scope==='all'||scope==='video') await verifyType('video');
 }
@@ -2281,13 +2295,10 @@ async function verifyType(type) {
   const state = type==='photo' ? photoState : videoState;
   const tbody = document.getElementById('tbody-verify-'+type);
   const keys  = ['j1','j2','p3'];
-  const labels = type==='photo'
-    ? {j1:'Jour 1',j2:'Jour 2',p3:'Partenaires'}
-    : {j1:'Jour 1',j2:'Jour 2',p3:'BAB / Montages'};
 
   // Init rows as loading
   tbody.innerHTML = '';
-  state.forEach((row,idx) => {
+  state.forEach((row) => {
     const tr = document.createElement('tr');
     tr.id = 'vtr-'+type+'-'+row.n;
     const name = row.realName || (type==='photo'?'Photographe':'Vidéaste')+' '+row.n;
@@ -2297,54 +2308,92 @@ async function verifyType(type) {
       <td id="vc-${type}-${row.n}-j1"><span class="status-chip sc-loading">…</span></td>
       <td id="vc-${type}-${row.n}-j2"><span class="status-chip sc-loading">…</span></td>
       <td id="vc-${type}-${row.n}-p3"><span class="status-chip sc-loading">…</span></td>
-      <td id="vs-${type}-${row.n}"><span class="status-chip sc-loading">Checking…</span></td>
-      <td id="vt-${type}-${row.n}" class="actions">
-        <button class="btn btn-ghost btn-xs" onclick="openModal('${type}',${idx})">✉️ Templates</button>
-      </td>`;
+      <td id="vc-${type}-${row.n}-total"><span class="status-chip sc-loading">…</span></td>
+      <td id="vc-${type}-${row.n}-size"><span class="status-chip sc-loading">…</span></td>
+      <td id="vc-${type}-${row.n}-date"><span class="status-chip sc-loading">…</span></td>
+      <td id="vs-${type}-${row.n}"><span class="status-chip sc-loading">Checking…</span></td>`;
     tbody.appendChild(tr);
   });
 
   let uploaded=0, none=0;
   for(const row of state) {
-    const name = row.realName || (type==='photo'?'Photographe':'Vidéaste')+' '+row.n;
-    const counts = {j1:null, j2:null, p3:null};
+    const counts = {j1:0, j2:0, p3:0};
+    const found  = {j1:false, j2:false, p3:false};
+    let totalBytes = 0;
+    let firstDate  = null;
+
     for(const key of keys) {
-      const path = getFolderPath(type, row.n, key);
+      // Use dest path from state — fall back to getFolderPath only if missing
+      const path = row.links[key].dest || getFolderPath(type, row.n, key);
+      const cell = document.getElementById(`vc-${type}-${row.n}-${key}`);
       try {
-        const data = await apiPost('files/list_folder', {path, recursive:false, include_non_downloadable_files:false});
-        counts[key] = (data.entries||[]).filter(e=>e['.tag']==='file').length;
+        // Use recursive:false — only count direct files in that slot folder
+        const data = await apiPost('files/list_folder', {
+          path,
+          recursive: false,
+          include_non_downloadable_files: false
+        });
+        const files = (data.entries||[]).filter(e => e['.tag']==='file');
+        counts[key] = files.length;
+        found[key]  = true;
+        // Accumulate size
+        files.forEach(f => {
+          if(f.size) totalBytes += f.size;
+          // Track earliest server_modified date
+          if(f.server_modified) {
+            const d = new Date(f.server_modified);
+            if(!firstDate || d < firstDate) firstDate = d;
+          }
+        });
+        if(cell) {
+          const n = counts[key];
+          if(n===0)  cell.innerHTML=`<span class="file-count fc-zero">0</span>`;
+          else if(n<5) cell.innerHTML=`<span class="file-count fc-some">${n}</span>`;
+          else         cell.innerHTML=`<span class="file-count fc-good">${n}</span>`;
+        }
       } catch(e) {
-        counts[key] = -1; // folder not found or error
+        found[key] = false;
+        if(cell) cell.innerHTML=`<span class="status-chip sc-none">—</span>`;
       }
-      await new Promise(r=>setTimeout(r,120));
+      await new Promise(r=>setTimeout(r,100));
     }
 
-    // Update cells
-    for(const key of keys) {
-      const cell = document.getElementById(`vc-${type}-${row.n}-${key}`);
-      if(!cell) continue;
-      const n = counts[key];
-      if(n===-1) cell.innerHTML=`<span class="status-chip sc-none">—</span>`;
-      else if(n===0) cell.innerHTML=`<span class="file-count fc-zero">0 files</span>`;
-      else if(n<5) cell.innerHTML=`<span class="file-count fc-some">${n} files</span>`;
-      else cell.innerHTML=`<span class="file-count fc-good">${n} files</span>`;
+    // Total files + size + date cells
+    const totalFiles = counts.j1 + counts.j2 + counts.p3;
+    const totalCell  = document.getElementById(`vc-${type}-${row.n}-total`);
+    const sizeCell   = document.getElementById(`vc-${type}-${row.n}-size`);
+    const dateCell   = document.getElementById(`vc-${type}-${row.n}-date`);
+
+    if(totalCell) {
+      totalCell.innerHTML = totalFiles > 0
+        ? `<span class="file-count ${totalFiles>=10?'fc-good':'fc-some'}">${totalFiles}</span>`
+        : `<span class="file-count fc-zero">0</span>`;
+    }
+    if(sizeCell) {
+      sizeCell.innerHTML = totalBytes > 0
+        ? `<span style="font-size:0.78em;color:var(--green);font-weight:600;">${fmtSize(totalBytes)}</span>`
+        : `<span style="font-size:0.75em;color:var(--text-dim);">—</span>`;
+    }
+    if(dateCell) {
+      dateCell.innerHTML = firstDate
+        ? `<span style="font-size:0.72em;color:var(--text-muted);">${fmtDate(firstDate.toISOString())}</span>`
+        : `<span style="font-size:0.75em;color:var(--text-dim);">—</span>`;
     }
 
     // Status chip
-    const total = Object.values(counts).filter(v=>v>=0).reduce((a,b)=>a+b,0);
     const hasAny = Object.values(counts).some(v=>v>0);
-    const hasAll = Object.values(counts).every(v=>v>0);
+    const hasAll = Object.keys(found).every(k=>found[k] && counts[k]>0);
     const statusCell = document.getElementById(`vs-${type}-${row.n}`);
     if(statusCell) {
-      if(!hasAny) { statusCell.innerHTML='<span class="status-chip sc-none">⏳ Nothing yet</span>'; none++; }
-      else if(hasAll) { statusCell.innerHTML=`<span class="status-chip sc-complete">✓ All folders (${total})</span>`; uploaded++; }
-      else { statusCell.innerHTML=`<span class="status-chip sc-partial">⚠️ Partial (${total})</span>`; uploaded++; }
+      if(!hasAny)  { statusCell.innerHTML='<span class="status-chip sc-none">⏳ Rien</span>'; none++; }
+      else if(hasAll) { statusCell.innerHTML=`<span class="status-chip sc-complete">✓ Complet</span>`; uploaded++; }
+      else            { statusCell.innerHTML=`<span class="status-chip sc-partial">⚠ Partiel</span>`; uploaded++; }
     }
   }
 
   const summary = document.getElementById('verify-'+type+'-summary');
-  if(summary) summary.textContent = `${uploaded} uploaded · ${none} nothing yet · ${state.length} total`;
-  toast(`✓ ${type} check done`,'success');
+  if(summary) summary.textContent = `${uploaded} uploadé(s) · ${none} rien · ${state.length} total`;
+  toast(`✓ Vérif ${type} terminée`,'success');
 }
 
 // ══════════════════════════════════════════════════
