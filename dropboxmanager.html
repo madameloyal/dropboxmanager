@@ -58,16 +58,7 @@ body{
 .dt.on .dt-count{color:var(--text-muted);}
 .export-item{display:block;width:100%;text-align:left;background:none;border:none;border-radius:8px;padding:10px 12px;cursor:pointer;transition:background .12s;}
 .export-item:hover{background:var(--surface-2);}
-/* ── LIST FILTER BAR ── */
-.filterbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
-.filter-search{flex:1 1 100%;min-width:200px;display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;}
-.filter-search:focus-within{border-color:var(--border-h);}
-.filter-search input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:inherit;font-size:13px;padding:0;}
-.filter-search input::placeholder{color:var(--text-dim);}
-.fchip{flex:0 0 auto;padding:6px 13px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;}
-.fchip:hover{border-color:var(--border-h);color:var(--text);}
-.fchip.on{background:var(--surface-2);border-color:var(--border-h);color:var(--text);}
-@media(min-width:560px){.filter-search{flex:1 1 200px;}}
+/* ── LIST FILTER BAR — see canonical .liste-filterbar block below ── */
 .row-status{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:middle;flex-shrink:0;}
 .rs-complete{background:var(--green);}
 .rs-partial{background:var(--amber);}
@@ -124,7 +115,7 @@ code{font-size:12px;background:rgba(255,255,255,0.06);padding:1px 6px;border-rad
 .btn-ghost:hover:not(:disabled){background:rgba(255,255,255,0.09);color:var(--text);border-color:var(--border-h);}
 .btn-primary{background:var(--indigo);color:#fff;}
 .btn-primary:hover:not(:disabled){opacity:.88;}
-.btn-bordeaux{background:linear-gradient(135deg,var(--day-2),var(--purple));color:#fff;border:none;}
+.btn-bordeaux{background:var(--indigo);color:#fff;border:none;}
 .btn-bordeaux:hover:not(:disabled){opacity:.88;}
 .btn-sm{padding:6px 11px;font-size:12px;border-radius:7px;}
 .btn-xs{padding:4px 9px;font-size:11px;border-radius:6px;}
@@ -335,11 +326,11 @@ td.actions{white-space:nowrap;width:1px;}
 <div class="kpi-row" id="kpi-row">
   <div class="kpi"><div class="kpi-edge photo"></div><div class="kpi-label" id="stat-label-1">Liens photo</div><div class="kpi-val" id="stat-photo-done">—</div></div>
   <div class="kpi"><div class="kpi-edge video"></div><div class="kpi-label" id="stat-label-2">Liens vidéo</div><div class="kpi-val" id="stat-video-done">—</div></div>
-  <div class="kpi" style="cursor:pointer;" onclick="countAllFilesForHeader()" title="Cliquer pour compter les fichiers uploadés">
-    <div class="kpi-edge photo"></div><div class="kpi-label">📷 Fichiers <span style="color:var(--text-dim);font-weight:400;">· cliquer</span></div><div class="kpi-val" id="stat-files-photo">—</div>
+  <div class="kpi" style="cursor:pointer;" onclick="countFilesForType('photo')" title="Cliquer pour recompter les fichiers photo">
+    <div class="kpi-edge photo"></div><div class="kpi-label">📷 Fichiers <span style="color:var(--text-dim);font-weight:400;">· maj</span></div><div class="kpi-val" id="stat-files-photo">—</div>
   </div>
-  <div class="kpi" style="cursor:pointer;" onclick="countAllFilesForHeader()" title="Cliquer pour compter les fichiers uploadés">
-    <div class="kpi-edge video"></div><div class="kpi-label">🎬 Fichiers <span style="color:var(--text-dim);font-weight:400;">· cliquer</span></div><div class="kpi-val" id="stat-files-video">—</div>
+  <div class="kpi" style="cursor:pointer;" onclick="countFilesForType('video')" title="Cliquer pour recompter les fichiers vidéo">
+    <div class="kpi-edge video"></div><div class="kpi-label">🎬 Fichiers <span style="color:var(--text-dim);font-weight:400;">· maj</span></div><div class="kpi-val" id="stat-files-video">—</div>
   </div>
 </div>
 
@@ -450,22 +441,24 @@ td.actions{white-space:nowrap;width:1px;}
   <div class="section-header">
     <span class="section-title-text">Photographes <span id="section-photo-count" style="color:var(--text-dim);font-weight:400;"></span></span>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-      <button class="fchip" onclick="openMessagesOverlay('photo')">📨 Messages</button>
-      <button class="fchip" onclick="openExportMenu(this)">⬇️ Export</button>
+      <button class="lchip" onclick="openMessagesOverlay('photo')">📨 Messages</button>
+      <button class="lchip" onclick="openExportMenu(this)">⬇️ Export</button>
       <div class="view-toggle" id="view-toggle-photo">
         <button class="on" data-view="list" onclick="setView('photo','list')" title="Vue liste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <button data-view="grid" onclick="setView('photo','grid')" title="Vue grille"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
       </div>
     </div>
   </div>
-  <div class="filterbar" id="filterbar-photo">
-    <label class="filter-search">
+  <div class="liste-filterbar" id="filterbar-photo">
+    <label class="liste-search">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dim);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input type="text" placeholder="Rechercher un nom…" oninput="setFilterSearch('photo',this.value)">
     </label>
-    <button class="fchip on" data-f="all" onclick="setFilterStatus('photo','all',this)">Tous</button>
-    <button class="fchip" data-f="unnamed" onclick="setFilterStatus('photo','unnamed',this)">Sans nom</button>
-    <button class="fchip" data-f="incomplete" onclick="setFilterStatus('photo','incomplete',this)">Incomplets</button>
+    <div class="lchips">
+    <button class="lchip on" data-f="all" onclick="setFilterStatus('photo','all',this)">Tous</button>
+    <button class="lchip" data-f="unnamed" onclick="setFilterStatus('photo','unnamed',this)">Sans nom</button>
+    <button class="lchip" data-f="incomplete" onclick="setFilterStatus('photo','incomplete',this)">Incomplets</button>
+    </div>
   </div>
   <div class="tbl-wrap" id="list-photo">
     <table>
@@ -482,22 +475,24 @@ td.actions{white-space:nowrap;width:1px;}
   <div class="section-header">
     <span class="section-title-text">Vidéastes <span id="section-video-count" style="color:var(--text-dim);font-weight:400;"></span></span>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-      <button class="fchip" onclick="openMessagesOverlay('video')">📨 Messages</button>
-      <button class="fchip" onclick="openExportMenu(this)">⬇️ Export</button>
+      <button class="lchip" onclick="openMessagesOverlay('video')">📨 Messages</button>
+      <button class="lchip" onclick="openExportMenu(this)">⬇️ Export</button>
       <div class="view-toggle" id="view-toggle-video">
         <button class="on" data-view="list" onclick="setView('video','list')" title="Vue liste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <button data-view="grid" onclick="setView('video','grid')" title="Vue grille"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
       </div>
     </div>
   </div>
-  <div class="filterbar" id="filterbar-video">
-    <label class="filter-search">
+  <div class="liste-filterbar" id="filterbar-video">
+    <label class="liste-search">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dim);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input type="text" placeholder="Rechercher un nom…" oninput="setFilterSearch('video',this.value)">
     </label>
-    <button class="fchip on" data-f="all" onclick="setFilterStatus('video','all',this)">Tous</button>
-    <button class="fchip" data-f="unnamed" onclick="setFilterStatus('video','unnamed',this)">Sans nom</button>
-    <button class="fchip" data-f="incomplete" onclick="setFilterStatus('video','incomplete',this)">Incomplets</button>
+    <div class="lchips">
+    <button class="lchip on" data-f="all" onclick="setFilterStatus('video','all',this)">Tous</button>
+    <button class="lchip" data-f="unnamed" onclick="setFilterStatus('video','unnamed',this)">Sans nom</button>
+    <button class="lchip" data-f="incomplete" onclick="setFilterStatus('video','incomplete',this)">Incomplets</button>
+    </div>
   </div>
   <div class="tbl-wrap" id="list-video">
     <table>
@@ -726,7 +721,7 @@ td.actions{white-space:nowrap;width:1px;}
         </label>
         <span id="csv-import-status" style="font-size:12px;color:var(--text-muted);"></span>
       </div>
-      <p class="hint" style="margin-top:8px;">Le CSV contient le nom de l'événement, les jours (dates), et la liste photo/vidéo. Une fois importé, tout est pré-rempli ci-dessous — vérifie puis clique « Tout créer ».</p>
+      <p class="hint" style="margin-top:8px;">Le modèle est un tableau simple : en haut tu mets le <b>nom de l'événement</b> et les <b>dates</b> des jours ; en dessous, une ligne par personne (Photographe / Vidéaste) où tu tapes le <b>nom</b>. Ouvre-le dans Numbers ou Excel, remplis, ré-importe — tout se pré-remplit ci-dessous.</p>
     </div>
 
     <div class="card" style="margin-bottom:14px;border-color:rgba(244,114,182,0.25);">
@@ -1406,7 +1401,7 @@ const filterState = { photo:{q:'',status:'all'}, video:{q:'',status:'all'} };
 function setFilterSearch(type, val){ filterState[type].q = (val||'').toLowerCase().trim(); renderTable(type); }
 function setFilterStatus(type, status, el){
   filterState[type].status = status;
-  document.querySelectorAll(`#filterbar-${type} .fchip`).forEach(b=>b.classList.toggle('on', b.dataset.f===status));
+  document.querySelectorAll(`#filterbar-${type} .lchip`).forEach(b=>b.classList.toggle('on', b.dataset.f===status));
   renderTable(type);
 }
 // Status of a person row: complete / partial / empty (by links present)
@@ -2290,7 +2285,9 @@ async function loadEventFromPaths() {
       newVideo.forEach((r,i)=>{ if(r.realName){ const inp=document.getElementById(`name-video-${r.n}`); if(inp) inp.value=r.realName; }});
       updateStats();
     },100);
-    // File count is manual — use the 🔢 button in the header
+    // Auto-count files on load (each card fills independently, non-blocking)
+    countFilesForType('photo');
+    countFilesForType('video');
   } catch(e){ toast('✗ '+e.message,'error'); }
   finally { if(btn){ btn.disabled=false; btn.textContent="⚡ Charger l'événement"; } }
 }
@@ -2682,52 +2679,38 @@ function renderSetupResults(){
 // ══════════════════════════════════════════════════
 // FILE COUNT — header upload stats
 // ══════════════════════════════════════════════════
-async function countAllFilesForHeader() {
+async function countFilesForType(type) {
   if(!getToken()) return;
-  const pStat = document.getElementById('stat-files-photo');
-  const vStat = document.getElementById('stat-files-video');
-  if(pStat) pStat.innerHTML = '<span style="color:var(--amber);font-size:0.85em;">…</span>';
-  if(vStat) vStat.innerHTML = '<span style="color:var(--amber);font-size:0.85em;">…</span>';
-
-  async function countFolders(state, type) {
-    let total = 0;
-    for(const row of state) {
-      for(const key of ['j1','j2','j3','p3']) {
-        const link = row.links[key];
-        // Use the real destination folder stored on the link (folders have dates in names)
-        const path = link && link.dest ? link.dest : null;
-        if(!path) continue;
-        try {
-          let data = await apiPost('files/list_folder',{path, recursive:true, include_non_downloadable_files:false});
+  const stat = document.getElementById('stat-files-'+type);
+  const state = type==='photo' ? photoState : videoState;
+  if(!stat) return;
+  if(state.length===0){ stat.innerHTML='—'; return; }
+  stat.innerHTML = '<span style="color:var(--amber);font-size:0.85em;">…</span>';
+  let total = 0;
+  for(const row of state) {
+    for(const key of ['j1','j2','j3','p3']) {
+      const link = row.links[key];
+      const path = link && link.dest ? link.dest : null;
+      if(!path) continue;
+      try {
+        let data = await apiPost('files/list_folder',{path, recursive:true, include_non_downloadable_files:false});
+        total += (data.entries||[]).filter(e=>e['.tag']==='file').length;
+        while(data.has_more){
+          data = await apiPost('files/list_folder/continue',{cursor:data.cursor});
           total += (data.entries||[]).filter(e=>e['.tag']==='file').length;
-          while(data.has_more){
-            data = await apiPost('files/list_folder/continue',{cursor:data.cursor});
-            total += (data.entries||[]).filter(e=>e['.tag']==='file').length;
-          }
-        } catch(e) { /* empty or missing */ }
-        await new Promise(r=>setTimeout(r,60));
-      }
+        }
+      } catch(e) { /* empty or missing */ }
+      await new Promise(r=>setTimeout(r,50));
     }
-    return total;
   }
+  stat.innerHTML = total > 0 ? `${total} <span class="dim">fichiers</span>` : '0';
+  stat.style.color = total > 0 ? 'var(--green)' : 'var(--text-dim)';
+  return total;
+}
 
-  try {
-    const [pCount, vCount] = await Promise.all([
-      countFolders(photoState, 'photo'),
-      countFolders(videoState, 'video')
-    ]);
-    if(pStat) {
-      pStat.innerHTML = pCount > 0 ? `${pCount} <span class="dim">fichiers</span>` : '0';
-      pStat.style.color = pCount > 0 ? 'var(--green)' : 'var(--text-dim)';
-    }
-    if(vStat) {
-      vStat.innerHTML = vCount > 0 ? `${vCount} <span class="dim">fichiers</span>` : '0';
-      vStat.style.color = vCount > 0 ? 'var(--green)' : 'var(--text-dim)';
-    }
-  } catch(e) {
-    if(pStat) pStat.innerHTML = '—';
-    if(vStat) vStat.innerHTML = '—';
-  }
+// Counts both (used at startup); each card can also be refreshed alone.
+async function countAllFilesForHeader() {
+  await Promise.all([countFilesForType('photo'), countFilesForType('video')]);
 }
 
 // ══════════════════════════════════════════════════
@@ -3229,9 +3212,8 @@ function exportPdf(stats) {
   .page { max-width:760px; margin:0 auto; padding:0 4px; }
 
   @media print { .noprint { display:none !important; } }
-  .noprint { background:#1e293b; color:#fff; padding:14px 18px; border-radius:12px; margin-bottom:22px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
-  .noprint .hint { font-size:12px; opacity:.85; line-height:1.5; flex:1; min-width:200px; }
-  .noprint button { background:#fff; color:#1e293b; border:none; padding:11px 18px; border-radius:9px; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .noprint { position:fixed; top:12px; right:12px; z-index:50; }
+  .noprint button { background:#1e293b; color:#fff; border:none; padding:11px 18px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,0.18); }
 
   .hdr { border-bottom:2px solid #1e293b; padding-bottom:14px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; }
   .hdr h1 { font-size:21px; font-weight:800; letter-spacing:-0.3px; color:#0f172a; }
@@ -3256,15 +3238,15 @@ function exportPdf(stats) {
   .bar-fill { height:100%; background:#2563eb; border-radius:5px; }
 
   .block-title { font-size:14px; font-weight:800; color:#0f172a; margin:0 0 12px; display:flex; align-items:center; gap:7px; }
-  .podiums { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:26px; }
-  .podium { border:1px solid #e2e8f0; border-radius:10px; padding:12px 13px; background:#fff; }
-  .podium-h { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:#0f172a; margin-bottom:9px; line-height:1.3; }
-  .podium-h span { display:block; font-size:8.5px; font-weight:600; color:#94a3b8; text-transform:none; letter-spacing:0; margin-top:1px; }
-  .podium-row { display:flex; align-items:center; gap:7px; padding:5px 0; border-top:1px solid #f1f5f9; }
+  .podiums { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:26px; }
+  .podium { border:1px solid #e2e8f0; border-radius:10px; padding:12px 11px; background:#fff; }
+  .podium-h { font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.4px; color:#0f172a; margin-bottom:9px; line-height:1.3; }
+  .podium-h span { display:block; font-size:8px; font-weight:600; color:#94a3b8; text-transform:none; letter-spacing:0; margin-top:1px; }
+  .podium-row { display:flex; align-items:center; gap:5px; padding:5px 0; border-top:1px solid #f1f5f9; }
   .podium-row:first-of-type { border-top:none; }
-  .podium-row .medal { font-size:14px; flex-shrink:0; }
-  .podium-row .pn { font-weight:700; font-size:11px; color:#1e293b; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .podium-row .pv { font-size:11px; font-weight:700; color:#2563eb; font-variant-numeric:tabular-nums; flex-shrink:0; }
+  .podium-row .medal { font-size:13px; flex-shrink:0; }
+  .podium-row .pn { font-weight:700; font-size:10.5px; color:#1e293b; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .podium-row .pv { font-size:10px; font-weight:700; color:#2563eb; font-variant-numeric:tabular-nums; flex-shrink:0; white-space:nowrap; }
   .podium-row.r0 .pv { color:#16a34a; }
 
   .sect { margin-bottom:22px; break-inside:avoid; }
@@ -3287,8 +3269,7 @@ function exportPdf(stats) {
 </style></head><body>
 <div class="page">
   <div class="noprint">
-    <span class="hint">📄 Enregistrer en PDF : appuie sur le bouton (ou Partager ⬆️) → « Imprimer » → écarte 2 doigts sur l'aperçu → Partager → « Enregistrer dans Fichiers ».</span>
-    <button onclick="window.print()">🖨️ Imprimer / PDF</button>
+    <button onclick="window.print()" title="Enregistrer en PDF : Imprimer → écarte 2 doigts → Partager → Enregistrer dans Fichiers">🖨️ PDF</button>
   </div>
 
   <div class="hdr">
