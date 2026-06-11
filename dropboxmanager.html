@@ -55,6 +55,19 @@ body{
 .dt.on{color:#fff;font-weight:600;border-bottom:2px solid #fff;background:rgba(255,255,255,.06)}
 .dt-count{color:var(--text-dim);font-weight:400;font-size:11px;margin-left:2px;}
 .dt.on .dt-count{color:var(--text-muted);}
+.export-item{display:block;width:100%;text-align:left;background:none;border:none;border-radius:8px;padding:10px 12px;cursor:pointer;transition:background .12s;}
+.export-item:hover{background:var(--surface-2);}
+/* ── LIST FILTER BAR ── */
+.filterbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.filter-search{display:flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:7px 11px;flex:1;min-width:140px;}
+.filter-search input{background:none;border:none;outline:none;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;width:100%;padding:0;}
+.fchip{padding:6px 12px;border-radius:7px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.fchip:hover{color:var(--text);border-color:var(--border-h);}
+.fchip.on{background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.35);color:#a5b4fc;}
+.row-status{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:middle;flex-shrink:0;}
+.rs-complete{background:var(--green);}
+.rs-partial{background:var(--amber);}
+.rs-empty{background:var(--text-dim);}
 
 /* ── LAYOUT ── */
 .wrap{max-width:1020px;margin:0 auto;padding:18px 20px 80px;}
@@ -432,12 +445,21 @@ td.actions{white-space:nowrap;width:1px;}
     <span class="section-title-text">Photographes <span id="section-photo-count" style="color:var(--text-dim);font-weight:400;"></span></span>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
       <button class="btn btn-ghost btn-sm" onclick="openMessagesOverlay('photo')">📨 Messages</button>
-      <button class="btn btn-ghost btn-sm" onclick="openExportMenu()">⬇️ Export</button>
+      <button class="btn btn-ghost btn-sm" onclick="openExportMenu(this)">⬇️ Export</button>
       <div class="view-toggle" id="view-toggle-photo">
         <button class="on" data-view="list" onclick="setView('photo','list')" title="Vue liste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <button data-view="grid" onclick="setView('photo','grid')" title="Vue grille"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
       </div>
     </div>
+  </div>
+  <div class="filterbar" id="filterbar-photo">
+    <label class="filter-search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dim);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" placeholder="Rechercher un nom…" oninput="setFilterSearch('photo',this.value)">
+    </label>
+    <button class="fchip on" data-f="all" onclick="setFilterStatus('photo','all',this)">Tous</button>
+    <button class="fchip" data-f="unnamed" onclick="setFilterStatus('photo','unnamed',this)">Sans nom</button>
+    <button class="fchip" data-f="incomplete" onclick="setFilterStatus('photo','incomplete',this)">Liens manquants</button>
   </div>
   <div class="tbl-wrap" id="list-photo">
     <table>
@@ -455,12 +477,21 @@ td.actions{white-space:nowrap;width:1px;}
     <span class="section-title-text">Vidéastes <span id="section-video-count" style="color:var(--text-dim);font-weight:400;"></span></span>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
       <button class="btn btn-ghost btn-sm" onclick="openMessagesOverlay('video')">📨 Messages</button>
-      <button class="btn btn-ghost btn-sm" onclick="openExportMenu()">⬇️ Export</button>
+      <button class="btn btn-ghost btn-sm" onclick="openExportMenu(this)">⬇️ Export</button>
       <div class="view-toggle" id="view-toggle-video">
         <button class="on" data-view="list" onclick="setView('video','list')" title="Vue liste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <button data-view="grid" onclick="setView('video','grid')" title="Vue grille"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
       </div>
     </div>
+  </div>
+  <div class="filterbar" id="filterbar-video">
+    <label class="filter-search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dim);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" placeholder="Rechercher un nom…" oninput="setFilterSearch('video',this.value)">
+    </label>
+    <button class="fchip on" data-f="all" onclick="setFilterStatus('video','all',this)">Tous</button>
+    <button class="fchip" data-f="unnamed" onclick="setFilterStatus('video','unnamed',this)">Sans nom</button>
+    <button class="fchip" data-f="incomplete" onclick="setFilterStatus('video','incomplete',this)">Liens manquants</button>
   </div>
   <div class="tbl-wrap" id="list-video">
     <table>
@@ -871,7 +902,9 @@ const smartSetup = {
 };
 
 function smartSuffix() {
-  const n = (smartSetup.eventName||'').trim();
+  let n = (smartSetup.eventName||'').trim();
+  // Strip a redundant leading/inner "ML " the user may have typed, to avoid "ML JUIN ML X…"
+  n = n.replace(/\bML\s+/gi,'').replace(/\s{2,}/g,' ').trim();
   return n ? `ML ${n}` : 'ML EVENT 2026';
 }
 function smartPhotoBase(){ return `Photographes Pro - ${smartSuffix()}`; }
@@ -1331,6 +1364,29 @@ function keyLabel(type, key) {
 }
 
 const viewMode = { photo:'list', video:'list' };
+const filterState = { photo:{q:'',status:'all'}, video:{q:'',status:'all'} };
+
+function setFilterSearch(type, val){ filterState[type].q = (val||'').toLowerCase().trim(); renderTable(type); }
+function setFilterStatus(type, status, el){
+  filterState[type].status = status;
+  document.querySelectorAll(`#filterbar-${type} .fchip`).forEach(b=>b.classList.toggle('on', b.dataset.f===status));
+  renderTable(type);
+}
+// Status of a person row: complete / partial / empty (by links present)
+function rowStatus(row){
+  const keys=['j1','j2','j3','p3'];
+  const have = keys.filter(k=>row.links[k] && row.links[k].url).length;
+  if(have===0) return 'empty';
+  if(have<keys.length) return 'partial';
+  return 'complete';
+}
+function passesFilter(type, row){
+  const f = filterState[type];
+  if(f.q){ const nm=(row.realName||'').toLowerCase(); if(!nm.includes(f.q)) return false; }
+  if(f.status==='unnamed' && row.realName.trim()) return false;
+  if(f.status==='incomplete' && rowStatus(row)==='complete') return false;
+  return true;
+}
 
 function setView(type, mode) {
   viewMode[type] = mode;
@@ -1386,11 +1442,15 @@ function renderTable(type) {
     if(state.length===0){
       tbody.innerHTML=`<tr class="liste-empty"><td colspan="7">Aucun ${kind.toLowerCase()} chargé — choisis un événement dans le menu en haut à gauche, ou scanne dans 🔧 Réglages.</td></tr>`;
     }
+    let shown=0;
     state.forEach((row,idx)=>{
+      if(!passesFilter(type,row)) return;
+      shown++;
       const tr = document.createElement('tr'); tr.id='tr-'+type+'-'+row.n;
       const anyDest = row.links.j1.dest||row.links.j2.dest||row.links.j3?.dest||row.links.p3.dest||'';
       const folderUrl = getFolderUrl(type, row, anyDest);
       const hasName = !!row.realName.trim();
+      const st = rowStatus(row);
       // name cell: read-only display + edit pencil, OR input when editing
       let nameInner;
       if(row._editing){
@@ -1400,6 +1460,7 @@ function renderTable(type) {
         </div>`;
       } else {
         nameInner = `<div class="name-display">
+          <span class="row-status rs-${st}" title="${st==='complete'?'Tous les liens créés':st==='partial'?'Liens partiels':'Aucun lien'}"></span>
           <span class="name-text ${hasName?'':'unset'}">${hasName?row.realName:kind+' '+row.n}</span>
           <button class="icon-btn edit" title="Modifier le nom" onclick="toggleNameEdit('${type}',${idx})">✏️</button>
         </div>`;
@@ -1415,6 +1476,9 @@ function renderTable(type) {
       tr.innerHTML = `<td class="num">${String(row.n).padStart(2,'0')}</td>${nameCell}${lnkCellOrPlus(type,idx,'j1')}${lnkCellOrPlus(type,idx,'j2')}${lnkCellOrPlus(type,idx,'j3')}${lnkCellOrPlus(type,idx,'p3')}${actionsCell}`;
       tbody.appendChild(tr);
     });
+    if(state.length>0 && shown===0){
+      tbody.innerHTML=`<tr class="liste-empty"><td colspan="7">Aucun résultat pour ce filtre.</td></tr>`;
+    }
   }
 
   // ── GRID (cards) ──
@@ -1424,7 +1488,10 @@ function renderTable(type) {
     if(state.length===0){
       grid.innerHTML=`<div style="grid-column:1/-1;color:var(--text-dim);font-size:13px;padding:30px 0;text-align:center;">Aucun ${kind.toLowerCase()} chargé.</div>`;
     }
+    let gshown=0;
     state.forEach((row,idx)=>{
+      if(!passesFilter(type,row)) return;
+      gshown++;
       const anyDest = row.links.j1.dest||row.links.j2.dest||row.links.j3?.dest||row.links.p3.dest||'';
       const folderUrl = getFolderUrl(type, row, anyDest);
       const hasName = !!row.realName.trim();
@@ -1435,6 +1502,7 @@ function renderTable(type) {
              <button class="icon-btn edit" title="Valider" onclick="commitNameEdit('${type}',${idx})">✓</button>
            </div>`
         : `<div class="pcard-name-row">
+             <span class="row-status rs-${rowStatus(row)}"></span>
              <span class="pcard-name ${hasName?'':'unset'}">${hasName?row.realName:kind+' '+row.n}</span>
              <button class="icon-btn edit" title="Modifier le nom" onclick="toggleNameEdit('${type}',${idx})">✏️</button>
            </div>`;
@@ -1460,6 +1528,9 @@ function renderTable(type) {
         <div class="pcard-foot">${folderBtn}${editorBtn}<span style="margin-left:auto;"></span>${delBtn}</div>`;
       grid.appendChild(card);
     });
+    if(state.length>0 && gshown===0){
+      grid.innerHTML=`<div style="grid-column:1/-1;color:var(--text-dim);font-size:13px;padding:30px 0;text-align:center;">Aucun résultat pour ce filtre.</div>`;
+    }
   }
   updateStats();
 }
@@ -1990,6 +2061,13 @@ async function scanEventsFromPaths() {
     }
     document.getElementById('paths-scan-results').style.display='block';
     toast(`✓ ${folders.length} événement(s) trouvé(s)`,'success');
+    // Auto-load the most recent event (last in list) so everything is ready when leaving the tab
+    if(folders.length){
+      const last = scannedEvents[scannedEvents.length-1];
+      const sw = document.getElementById('session-sw');
+      if(sw) sw.value = String(scannedEvents.length-1);
+      selectEventFromPaths(last.path, last.name);
+    }
   } catch(e){ toast('✗ '+e.message,'error'); }
   btn.disabled=false; btn.textContent='🔍 Scanner';
 }
@@ -1998,6 +2076,13 @@ function selectEventFromPaths(path, name) {
   const cleanName = name.replace(/^\d+_/,'').trim();
   selectedEventPath = path;
   EVENT_CONFIG.name = cleanName;
+  // Derive a sensible edition/city label for message templates (was the removed Ville field)
+  if(!EVENT_CONFIG.edition || EVENT_CONFIG.edition===EVENT_CONFIG.city){
+    EVENT_CONFIG.edition = cleanName;
+    EVENT_CONFIG.city = cleanName.replace(/\bML\b/gi,'').replace(/\s{2,}/g,' ').trim();
+  }
+  // Persist for auto-restore on next launch
+  try { localStorage.setItem('dbx_last_event', JSON.stringify({path, name, root:(document.getElementById('paths-scan-root')||{}).value||''})); } catch(e){}
   // Update nav session name + subtitle
   const nm = document.getElementById('nav-session-name');
   if(nm) nm.innerHTML = `${name}<span class="dot"></span>`;
@@ -2297,6 +2382,23 @@ async function runSmartSetup(){
   if(!smartSetup.eventName.trim()){toast('⚠️ Entre le nom de l\'événement','warn');return;}
   if(smartSetup.photoNames.length===0 && smartSetup.videoNames.length===0){toast('⚠️ Ajoute au moins un nom','warn');return;}
   if(smartSetup.days.length===0){toast('⚠️ Ajoute au moins un jour','warn');return;}
+
+  // ── Overwrite protection: check if base folders already contain person folders ──
+  const phBase = `${evRoot}/${smartPhotoBase()}`;
+  const viBase = `${evRoot}/${smartVideoBase()}`;
+  let existing = 0;
+  try {
+    for(const base of [phBase, viBase]){
+      try {
+        const d = await apiPost('files/list_folder',{path:base,include_non_downloadable_files:false});
+        existing += (d.entries||[]).filter(e=>e['.tag']==='folder').length;
+      } catch(e){ /* base doesn't exist yet — fine */ }
+    }
+  } catch(e){}
+  if(existing > 0){
+    const ok = confirm(`⚠️ ATTENTION\n\nCet événement contient déjà ${existing} dossier(s) de personnes.\n\nRelancer la création va RÉ-UTILISER les dossiers existants (aucune suppression), mais peut créer des doublons si les noms ont changé.\n\nContinuer quand même ?`);
+    if(!ok){ toast('Annulé — aucun dossier touché','info'); return; }
+  }
 
   const suffix = smartSuffix();
   const btn=document.getElementById('btn-run-setup'); if(btn) btn.disabled=true;
@@ -2816,86 +2918,138 @@ function fmtDate(iso) {
 // ══════════════════════════════════════════════════
 // EXPORT — CSV data + designed PDF report (snapshot)
 // ══════════════════════════════════════════════════
-function openExportMenu() {
+let exportBusy = false;
+function openExportMenu(anchorEl) {
   if(photoState.length===0 && videoState.length===0){ toast('⚠️ Aucun événement chargé','warn'); return; }
-  let modal = document.getElementById('export-modal');
-  if(modal) modal.remove();
-  modal = document.createElement('div');
-  modal.id = 'export-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px;';
-  modal.onclick = e => { if(e.target===modal) modal.remove(); };
-  modal.innerHTML = `
-    <div style="background:var(--surface);border:1px solid var(--border-h);border-radius:14px;padding:22px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
-      <div style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:6px;">Exporter un snapshot</div>
-      <div style="font-size:13px;color:var(--text-muted);margin-bottom:18px;line-height:1.6;">Scanne tous les dossiers de l'événement (nombre de fichiers, taille, 1er upload) puis génère ton export.</div>
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <button class="btn btn-ghost" style="justify-content:flex-start;padding:14px 16px;text-align:left;" onclick="runExport('csv')">
-          <div><div style="font-weight:700;color:var(--text);">📊 CSV — données brutes</div><div style="font-size:12px;color:var(--text-dim);font-weight:400;margin-top:2px;">Toutes les infos + stats par personne, pour tableur</div></div>
-        </button>
-        <button class="btn btn-primary" style="justify-content:flex-start;padding:14px 16px;text-align:left;" onclick="runExport('pdf')">
-          <div><div style="font-weight:700;">📄 Rapport PDF — 1 page</div><div style="font-size:12px;opacity:0.85;font-weight:400;margin-top:2px;">Snapshot designé pour le/la responsable com'</div></div>
-        </button>
-      </div>
-      <div id="export-progress" style="font-size:12px;color:var(--amber);margin-top:14px;text-align:center;min-height:16px;"></div>
-      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px;justify-content:center;" onclick="document.getElementById('export-modal').remove()">Annuler</button>
-    </div>`;
-  document.body.appendChild(modal);
+  // Close any open menu
+  const old = document.getElementById('export-menu'); if(old){ old.remove(); return; }
+  const menu = document.createElement('div');
+  menu.id = 'export-menu';
+  menu.style.cssText = 'position:fixed;z-index:9998;background:var(--surface);border:1px solid var(--border-h);border-radius:12px;padding:6px;box-shadow:0 16px 48px rgba(0,0,0,0.6);min-width:240px;';
+  menu.innerHTML = `
+    <button class="export-item" onclick="runExport('csv')">
+      <div style="font-weight:700;color:var(--text);font-size:13px;">📊 CSV — données brutes</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">Stats par personne, pour tableur</div>
+    </button>
+    <button class="export-item" onclick="runExport('pdf')">
+      <div style="font-weight:700;color:var(--text);font-size:13px;">📄 Rapport PDF — 1 page</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">Snapshot designé pour la com'</div>
+    </button>`;
+  document.body.appendChild(menu);
+  // Position under the button that was clicked
+  const btn = anchorEl || (window.event && window.event.target.closest('button'));
+  if(btn){
+    const r = btn.getBoundingClientRect();
+    menu.style.top = (r.bottom+6)+'px';
+    let left = r.left;
+    if(left + 240 > window.innerWidth-10) left = window.innerWidth-250;
+    menu.style.left = Math.max(10,left)+'px';
+  } else { menu.style.top='80px'; menu.style.right='16px'; }
+  // Close on outside click
+  setTimeout(()=>{
+    const close = e => { if(!menu.contains(e.target)){ menu.remove(); document.removeEventListener('click',close); } };
+    document.addEventListener('click', close);
+  },0);
 }
 
 // Scan every person's slot folders and return structured stats
-async function gatherEventStats() {
+async function gatherEventStats(onProgress) {
   const keys = ['j1','j2','j3','p3'];
-  const prog = document.getElementById('export-progress');
   const result = { photo:[], video:[], generatedAt:new Date() };
-  for(const [type, state] of [['photo',photoState],['video',videoState]]){
-    for(let i=0;i<state.length;i++){
-      const row = state[i];
-      const name = row.realName.trim() || `${type==='photo'?'Photographe':'Vidéaste'} ${row.n}`;
-      if(prog) prog.textContent = `⏳ ${name}…`;
-      const person = { n:row.n, name, files:0, bytes:0, firstUpload:null, lastUpload:null, slots:{} };
-      for(const key of keys){
-        const dest = row.links[key] && row.links[key].dest;
-        person.slots[key] = { files:0, hasLink: !!(row.links[key] && row.links[key].url) };
-        if(!dest) continue;
-        try {
-          let entries=[];
-          let data = await apiPost('files/list_folder',{path:dest,recursive:true,include_non_downloadable_files:false});
-          entries = entries.concat(data.entries||[]);
-          while(data.has_more){ data = await apiPost('files/list_folder/continue',{cursor:data.cursor}); entries=entries.concat(data.entries||[]); }
-          const files = entries.filter(e=>e['.tag']==='file');
-          person.slots[key].files = files.length;
-          person.files += files.length;
-          files.forEach(f=>{
-            if(f.size) person.bytes += f.size;
-            if(f.server_modified){
-              const d = new Date(f.server_modified);
-              if(!person.firstUpload || d < person.firstUpload) person.firstUpload = d;
-              if(!person.lastUpload  || d > person.lastUpload)  person.lastUpload = d;
-            }
-          });
-        } catch(e){}
-        await new Promise(r=>setTimeout(r,60));
-      }
+  let done = 0;
+  const all = [...photoState.map(r=>['photo',r]), ...videoState.map(r=>['video',r])];
+  const total = all.length;
+
+  // Scan one person: a single recursive list_folder on their person folder gets ALL slots
+  async function scanPerson(type, row){
+    const name = row.realName.trim() || `${type==='photo'?'Photographe':'Vidéaste'} ${row.n}`;
+    const person = { n:row.n, name, files:0, bytes:0, firstUpload:null, lastUpload:null, slots:{} };
+    keys.forEach(k=>{ person.slots[k] = { files:0, hasLink: !!(row.links[k] && row.links[k].url) }; });
+    // Derive the person folder from any slot dest (strip the subfolder)
+    let personFolder = '';
+    for(const k of keys){
+      const d = row.links[k] && row.links[k].dest;
+      if(d){ personFolder = d.split('/').slice(0,-1).join('/'); break; }
+    }
+    if(personFolder){
+      try {
+        let entries=[];
+        let data = await apiPost('files/list_folder',{path:personFolder,recursive:true,include_non_downloadable_files:false});
+        entries = entries.concat(data.entries||[]);
+        while(data.has_more){ data = await apiPost('files/list_folder/continue',{cursor:data.cursor}); entries=entries.concat(data.entries||[]); }
+        const files = entries.filter(e=>e['.tag']==='file');
+        // Map each slot's dest folder name to its key for bucketing
+        const slotByName = {};
+        keys.forEach(k=>{ const d=row.links[k]&&row.links[k].dest; if(d) slotByName[d.toLowerCase()] = k; });
+        files.forEach(f=>{
+          person.files++;
+          if(f.size) person.bytes += f.size;
+          if(f.server_modified){
+            const dt = new Date(f.server_modified);
+            if(!person.firstUpload || dt < person.firstUpload) person.firstUpload = dt;
+            if(!person.lastUpload  || dt > person.lastUpload)  person.lastUpload = dt;
+          }
+          // Bucket into a slot by matching the parent path
+          const parent = (f.path_display||'').split('/').slice(0,-1).join('/').toLowerCase();
+          const k = slotByName[parent];
+          if(k) person.slots[k].files++;
+        });
+      } catch(e){}
+    }
+    done++;
+    if(onProgress) onProgress(done, total, name);
+    return person;
+  }
+
+  // Run with limited concurrency (4 at a time) for speed without hammering the API
+  const queue = all.slice();
+  const workers = Array.from({length:4}, async ()=>{
+    while(queue.length){
+      const [type, row] = queue.shift();
+      const person = await scanPerson(type, row);
       result[type].push(person);
     }
-  }
+  });
+  await Promise.all(workers);
+  result.photo.sort((a,b)=>a.n-b.n);
+  result.video.sort((a,b)=>a.n-b.n);
   return result;
 }
 
 async function runExport(kind) {
+  // Close the dropdown immediately so it doesn't interfere
+  const menu = document.getElementById('export-menu'); if(menu) menu.remove();
   if(!getToken()){ toast('⚠️ Connecte Dropbox d\'abord','warn'); return; }
-  const prog = document.getElementById('export-progress');
-  if(prog) prog.textContent = '⏳ Scan des dossiers…';
+  if(exportBusy){ toast('⏳ Un export est déjà en cours…','warn'); return; }
+  exportBusy = true;
+  const total = photoState.length + videoState.length;
+  showPersistentToast(`⏳ Préparation de l'export ${kind.toUpperCase()} — scan de ${total} dossiers…`);
   try {
-    const stats = await gatherEventStats();
+    const stats = await gatherEventStats((done,tot,name)=>{
+      showPersistentToast(`⏳ Export ${kind.toUpperCase()} — ${done}/${tot} (${name})`);
+    });
     if(kind==='csv') exportCsv(stats);
     else exportPdf(stats);
-    const modal = document.getElementById('export-modal'); if(modal) modal.remove();
+    hidePersistentToast();
+    toast(kind==='csv'?'✓ CSV prêt':'✓ Rapport PDF prêt','success');
   } catch(e){
-    if(prog) prog.textContent = '✗ '+e.message;
+    hidePersistentToast();
     toast('✗ Export échoué : '+e.message,'error');
-  }
+  } finally { exportBusy = false; }
 }
+
+// Lightweight persistent toast (separate from the auto-hiding one)
+function showPersistentToast(msg){
+  let t = document.getElementById('export-toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'export-toast';
+    t.style.cssText = 'position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border-h);border-radius:10px;padding:11px 18px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,.6);color:var(--text);max-width:90vw;text-align:center;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+}
+function hidePersistentToast(){ const t=document.getElementById('export-toast'); if(t) t.remove(); }
 
 function eventLabel() {
   return EVENT_CONFIG.edition || EVENT_CONFIG.city || EVENT_CONFIG.name || 'Événement ML';
@@ -3388,6 +3542,35 @@ if(savedDate) {
   EVENT_CONFIG.date = savedDate;
   const el = document.getElementById('ev-date-inline'); if(el) el.value = savedDate;
 }
+
+// Auto-restore last loaded event (zero-effort reopen)
+async function autoRestoreLastEvent(){
+  let saved;
+  try { saved = JSON.parse(localStorage.getItem('dbx_last_event')||'null'); } catch(e){}
+  if(!saved || !saved.path) return;
+  const nm = document.getElementById('nav-session-name');
+  if(nm) nm.innerHTML = `${saved.name}<span class="dot"></span>`;
+  const navSub = document.getElementById('nav-session-sub');
+  if(navSub) navSub.textContent = '⏳ Reconnexion + restauration…';
+  // Always refresh the access token first (stored tokens expire ~4h)
+  try { await refreshAccessToken(); } catch(e){}
+  if(!getToken()){ if(navSub) navSub.textContent='Aucun événement chargé'; return; }
+  try {
+    const root = (saved.root || '/01_ALL MEDIAS ML 2026').replace(/\/$/,'');
+    try {
+      const data = await apiPost('files/list_folder',{path:root,include_non_downloadable_files:false});
+      const folders = (data.entries||[]).filter(e=>e['.tag']==='folder').sort((a,b)=>a.name.localeCompare(b.name));
+      scannedEvents = folders.map(f=>({name:f.name, path:f.path_display}));
+      renderSwitcher();
+      const sw = document.getElementById('session-sw');
+      if(sw){ const i=scannedEvents.findIndex(e=>e.path===saved.path); if(i>=0) sw.value=String(i); }
+    } catch(e){}
+    selectEventFromPaths(saved.path, saved.name);
+  } catch(e){
+    if(navSub) navSub.textContent = 'Aucun événement chargé';
+  }
+}
+autoRestoreLastEvent();
 
 // ══════════════════════════════════════════════════
 // DESTINATION VERIFICATION MODE
