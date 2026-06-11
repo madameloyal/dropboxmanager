@@ -418,6 +418,7 @@ td.actions{white-space:nowrap;width:1px;}
       <button class="btn btn-ghost btn-sm" id="btn-verif-photo" onclick="toggleVerifDest('photo')">◇ Destinations</button>
       <button class="btn btn-ghost btn-sm" onclick="openMessagesOverlay('photo')">📨 Messages</button>
       <button class="btn btn-ghost btn-sm" onclick="copySection('photo')">📋 Copier</button>
+      <button class="btn btn-ghost btn-sm" onclick="openExportMenu()">⬇️ Export</button>
       <div class="view-toggle" id="view-toggle-photo">
         <button class="on" data-view="list" onclick="setView('photo','list')" title="Vue liste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <button data-view="grid" onclick="setView('photo','grid')" title="Vue grille"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
@@ -442,6 +443,7 @@ td.actions{white-space:nowrap;width:1px;}
       <button class="btn btn-ghost btn-sm" id="btn-verif-video" onclick="toggleVerifDest('video')">◇ Destinations</button>
       <button class="btn btn-ghost btn-sm" onclick="openMessagesOverlay('video')">📨 Messages</button>
       <button class="btn btn-ghost btn-sm" onclick="copySection('video')">📋 Copier</button>
+      <button class="btn btn-ghost btn-sm" onclick="openExportMenu()">⬇️ Export</button>
       <div class="view-toggle" id="view-toggle-video">
         <button class="on" data-view="list" onclick="setView('video','list')" title="Vue liste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <button data-view="grid" onclick="setView('video','grid')" title="Vue grille"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
@@ -2793,6 +2795,236 @@ function fmtDate(iso) {
   const d = new Date(iso);
   return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 }
+
+// ══════════════════════════════════════════════════
+// EXPORT — CSV data + designed PDF report (snapshot)
+// ══════════════════════════════════════════════════
+function openExportMenu() {
+  if(photoState.length===0 && videoState.length===0){ toast('⚠️ Aucun événement chargé','warn'); return; }
+  let modal = document.getElementById('export-modal');
+  if(modal) modal.remove();
+  modal = document.createElement('div');
+  modal.id = 'export-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.onclick = e => { if(e.target===modal) modal.remove(); };
+  modal.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border-h);border-radius:14px;padding:22px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:6px;">Exporter un snapshot</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:18px;line-height:1.6;">Scanne tous les dossiers de l'événement (nombre de fichiers, taille, 1er upload) puis génère ton export.</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-ghost" style="justify-content:flex-start;padding:14px 16px;text-align:left;" onclick="runExport('csv')">
+          <div><div style="font-weight:700;color:var(--text);">📊 CSV — données brutes</div><div style="font-size:12px;color:var(--text-dim);font-weight:400;margin-top:2px;">Toutes les infos + stats par personne, pour tableur</div></div>
+        </button>
+        <button class="btn btn-primary" style="justify-content:flex-start;padding:14px 16px;text-align:left;" onclick="runExport('pdf')">
+          <div><div style="font-weight:700;">📄 Rapport PDF — 1 page</div><div style="font-size:12px;opacity:0.85;font-weight:400;margin-top:2px;">Snapshot designé pour le/la responsable com'</div></div>
+        </button>
+      </div>
+      <div id="export-progress" style="font-size:12px;color:var(--amber);margin-top:14px;text-align:center;min-height:16px;"></div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px;justify-content:center;" onclick="document.getElementById('export-modal').remove()">Annuler</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+// Scan every person's slot folders and return structured stats
+async function gatherEventStats() {
+  const keys = ['j1','j2','j3','p3'];
+  const prog = document.getElementById('export-progress');
+  const result = { photo:[], video:[], generatedAt:new Date() };
+  for(const [type, state] of [['photo',photoState],['video',videoState]]){
+    for(let i=0;i<state.length;i++){
+      const row = state[i];
+      const name = row.realName.trim() || `${type==='photo'?'Photographe':'Vidéaste'} ${row.n}`;
+      if(prog) prog.textContent = `⏳ ${name}…`;
+      const person = { n:row.n, name, files:0, bytes:0, firstUpload:null, lastUpload:null, slots:{} };
+      for(const key of keys){
+        const dest = row.links[key] && row.links[key].dest;
+        person.slots[key] = { files:0, hasLink: !!(row.links[key] && row.links[key].url) };
+        if(!dest) continue;
+        try {
+          let entries=[];
+          let data = await apiPost('files/list_folder',{path:dest,recursive:true,include_non_downloadable_files:false});
+          entries = entries.concat(data.entries||[]);
+          while(data.has_more){ data = await apiPost('files/list_folder/continue',{cursor:data.cursor}); entries=entries.concat(data.entries||[]); }
+          const files = entries.filter(e=>e['.tag']==='file');
+          person.slots[key].files = files.length;
+          person.files += files.length;
+          files.forEach(f=>{
+            if(f.size) person.bytes += f.size;
+            if(f.server_modified){
+              const d = new Date(f.server_modified);
+              if(!person.firstUpload || d < person.firstUpload) person.firstUpload = d;
+              if(!person.lastUpload  || d > person.lastUpload)  person.lastUpload = d;
+            }
+          });
+        } catch(e){}
+        await new Promise(r=>setTimeout(r,60));
+      }
+      result[type].push(person);
+    }
+  }
+  return result;
+}
+
+async function runExport(kind) {
+  if(!getToken()){ toast('⚠️ Connecte Dropbox d\'abord','warn'); return; }
+  const prog = document.getElementById('export-progress');
+  if(prog) prog.textContent = '⏳ Scan des dossiers…';
+  try {
+    const stats = await gatherEventStats();
+    if(kind==='csv') exportCsv(stats);
+    else exportPdf(stats);
+    const modal = document.getElementById('export-modal'); if(modal) modal.remove();
+  } catch(e){
+    if(prog) prog.textContent = '✗ '+e.message;
+    toast('✗ Export échoué : '+e.message,'error');
+  }
+}
+
+function eventLabel() {
+  return EVENT_CONFIG.edition || EVENT_CONFIG.city || EVENT_CONFIG.name || 'Événement ML';
+}
+
+function exportCsv(stats) {
+  const dayLabel = {j1:'Jour 1',j2:'Jour 2',j3:'Jour 3',p3:'Partenaires/BAB'};
+  const rows = [['Type','#','Nom','Fichiers total','Taille','1er upload','Dernier upload','J1 fichiers','J2 fichiers','J3 fichiers','Part/BAB fichiers']];
+  const addRows = (type, arr)=> arr.forEach(p=>{
+    rows.push([
+      type==='photo'?'Photographe':'Vidéaste',
+      String(p.n).padStart(2,'0'),
+      '"'+p.name.replace(/"/g,'""')+'"',
+      p.files,
+      p.bytes?fmtSize(p.bytes):'0',
+      p.firstUpload?p.firstUpload.toLocaleString('fr-FR'):'',
+      p.lastUpload?p.lastUpload.toLocaleString('fr-FR'):'',
+      p.slots.j1.files, p.slots.j2.files, p.slots.j3.files, p.slots.p3.files
+    ]);
+  });
+  addRows('photo', stats.photo);
+  addRows('video', stats.video);
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const blob = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`snapshot-${eventLabel().replace(/[^\w]+/g,'-')}.csv`;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast('✓ CSV exporté','success');
+}
+
+function exportPdf(stats) {
+  const label = eventLabel();
+  const date = EVENT_CONFIG.date || '';
+  const allPeople = [...stats.photo, ...stats.video];
+  const totalFiles = allPeople.reduce((a,p)=>a+p.files,0);
+  const totalBytes = allPeople.reduce((a,p)=>a+p.bytes,0);
+  const photoFiles = stats.photo.reduce((a,p)=>a+p.files,0);
+  const videoFiles = stats.video.reduce((a,p)=>a+p.files,0);
+  const withUploads = allPeople.filter(p=>p.files>0).length;
+  const named = allPeople.filter(p=>!/^(Photographe|Vidéaste) \d+$/.test(p.name)).length;
+  const allFirst = allPeople.map(p=>p.firstUpload).filter(Boolean).sort((a,b)=>a-b);
+  const allLast  = allPeople.map(p=>p.lastUpload).filter(Boolean).sort((a,b)=>b-a);
+  const firstUp = allFirst[0] ? allFirst[0].toLocaleString('fr-FR') : '—';
+  const lastUp  = allLast[0]  ? allLast[0].toLocaleString('fr-FR')  : '—';
+  const pct = allPeople.length ? Math.round(withUploads/allPeople.length*100) : 0;
+
+  const personRow = (p, type)=>`
+    <tr>
+      <td class="c-num">${String(p.n).padStart(2,'0')}</td>
+      <td class="c-name">${escapeHtml(p.name)}</td>
+      <td class="c-files ${p.files>0?'ok':'zero'}">${p.files}</td>
+      <td class="c-size">${p.bytes?fmtSize(p.bytes):'—'}</td>
+      <td class="c-date">${p.firstUpload?p.firstUpload.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}):'—'}</td>
+    </tr>`;
+  const section = (title, emoji, arr, type, filesTot)=>`
+    <div class="sect">
+      <div class="sect-h"><span>${emoji} ${title}</span><span class="sect-meta">${arr.length} personnes · ${filesTot} fichiers</span></div>
+      <table class="ptable">
+        <thead><tr><th>#</th><th>Nom</th><th>Fichiers</th><th>Taille</th><th>1er upload</th></tr></thead>
+        <tbody>${arr.map(p=>personRow(p,type)).join('')}</tbody>
+      </table>
+    </div>`;
+
+  const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+<title>Snapshot Médias — ${escapeHtml(label)}</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,'Segoe UI',Roboto,sans-serif; color:#1a1a25; font-size:11px; line-height:1.5; }
+  .hdr { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #6366f1; padding-bottom:12px; margin-bottom:16px; }
+  .hdr h1 { font-size:22px; font-weight:800; letter-spacing:-0.5px; }
+  .hdr .sub { color:#6b6b7b; font-size:12px; margin-top:3px; }
+  .hdr .brand { text-align:right; font-size:10px; color:#9a9aa8; }
+  .hdr .brand b { color:#6366f1; font-size:13px; display:block; }
+  .intro { background:#f4f4fb; border-left:3px solid #6366f1; padding:10px 14px; border-radius:6px; margin-bottom:16px; font-size:11px; color:#3a3a4a; }
+  .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:18px; }
+  .kpi { border:1px solid #e3e3ee; border-radius:8px; padding:12px; }
+  .kpi .v { font-size:22px; font-weight:800; color:#1a1a25; }
+  .kpi .l { font-size:9px; text-transform:uppercase; letter-spacing:0.5px; color:#8a8a98; margin-top:2px; font-weight:600; }
+  .kpi.accent .v { color:#6366f1; }
+  .bar-wrap { margin-bottom:18px; }
+  .bar-lbl { display:flex; justify-content:space-between; font-size:10px; color:#6b6b7b; margin-bottom:4px; }
+  .bar { height:8px; background:#e8e8f0; border-radius:4px; overflow:hidden; }
+  .bar-fill { height:100%; background:linear-gradient(90deg,#6366f1,#a855f7); }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .sect-h { display:flex; justify-content:space-between; align-items:baseline; font-weight:700; font-size:13px; margin-bottom:6px; padding-bottom:4px; border-bottom:1px solid #e3e3ee; }
+  .sect-meta { font-size:9px; color:#9a9aa8; font-weight:500; }
+  .ptable { width:100%; border-collapse:collapse; }
+  .ptable th { text-align:left; font-size:8px; text-transform:uppercase; letter-spacing:0.4px; color:#9a9aa8; padding:4px 5px; border-bottom:1px solid #e8e8f0; }
+  .ptable td { padding:4px 5px; border-bottom:1px solid #f0f0f5; font-size:10px; }
+  .c-num { color:#b0b0bc; font-variant-numeric:tabular-nums; }
+  .c-name { font-weight:600; }
+  .c-files { text-align:center; font-weight:700; font-variant-numeric:tabular-nums; }
+  .c-files.ok { color:#16a34a; }
+  .c-files.zero { color:#c0c0cc; }
+  .c-size, .c-date { color:#6b6b7b; font-variant-numeric:tabular-nums; }
+  .foot { margin-top:18px; padding-top:10px; border-top:1px solid #e8e8f0; font-size:9px; color:#a0a0ac; display:flex; justify-content:space-between; }
+  @media print { .noprint { display:none; } }
+  .noprint { position:fixed; top:10px; right:10px; }
+  .noprint button { background:#6366f1; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
+</style></head><body>
+  <div class="noprint"><button onclick="window.print()">🖨️ Enregistrer en PDF</button></div>
+  <div class="hdr">
+    <div>
+      <h1>Snapshot Médias</h1>
+      <div class="sub">${escapeHtml(label)}${date?' · '+escapeHtml(date):''}</div>
+    </div>
+    <div class="brand"><b>Madame Loyal</b>Festiflow · Médias<br>${stats.generatedAt.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}</div>
+  </div>
+
+  <div class="intro">
+    Ce rapport résume la collecte média de l'événement <b>${escapeHtml(label)}</b> : ${stats.photo.length} photographe(s) et ${stats.video.length} vidéaste(s) ont reçu des liens d'upload Dropbox dédiés. À ce jour, <b>${withUploads}</b> sur <b>${allPeople.length}</b> contributeurs ont commencé à déposer leurs fichiers, pour un total de <b>${totalFiles}</b> fichiers (${fmtSize(totalBytes)}). Premier dépôt le ${firstUp}, dernier le ${lastUp}.
+  </div>
+
+  <div class="kpis">
+    <div class="kpi accent"><div class="v">${totalFiles}</div><div class="l">Fichiers déposés</div></div>
+    <div class="kpi"><div class="v">${fmtSize(totalBytes)}</div><div class="l">Volume total</div></div>
+    <div class="kpi"><div class="v">${photoFiles}<span style="font-size:11px;color:#9a9aa8;"> / ${videoFiles}</span></div><div class="l">Photo / Vidéo</div></div>
+    <div class="kpi"><div class="v">${named}/${allPeople.length}</div><div class="l">Contributeurs nommés</div></div>
+  </div>
+
+  <div class="bar-wrap">
+    <div class="bar-lbl"><span>Progression des dépôts</span><span>${withUploads}/${allPeople.length} ont uploadé (${pct}%)</span></div>
+    <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
+  </div>
+
+  <div class="cols">
+    ${section('Photographes','📷',stats.photo,'photo',photoFiles)}
+    ${section('Vidéastes','🎬',stats.video,'video',videoFiles)}
+  </div>
+
+  <div class="foot">
+    <span>Généré automatiquement via Festiflow Médias · Dropbox Manager</span>
+    <span>${stats.generatedAt.toLocaleString('fr-FR')}</span>
+  </div>
+</body></html>`;
+
+  const w = window.open('', '_blank');
+  if(!w){ toast('⚠️ Autorise les pop-ups pour générer le PDF','warn'); return; }
+  w.document.write(html);
+  w.document.close();
+  toast('✓ Rapport prêt — utilise « Enregistrer en PDF »','success');
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
 async function runVerify(scope) {
   if(!getToken()){toast('⚠️ Entre le token d\'abord','warn');return;}
