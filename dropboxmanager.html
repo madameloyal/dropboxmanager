@@ -70,7 +70,7 @@ body{
 .wrap{max-width:1020px;margin:0 auto;padding:18px 20px 80px;}
 
 /* ── KPI ROW (canonical module-dates) ── */
-.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;margin-top:4px;}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;margin-top:18px;}
 .kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;position:relative;overflow:hidden;}
 .kpi-edge{position:absolute;left:0;top:0;bottom:0;width:3px;}
 .kpi-edge.photo{background:var(--purple);}
@@ -385,36 +385,28 @@ td.actions{white-space:nowrap;width:1px;}
   </div>
 </div>
 
-<!-- PATHS + SCANNER -->
+<!-- SCANNER (global — populates the event switcher) -->
 <div class="card" id="paths-card" style="padding:14px 16px;">
-  <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
-    <div class="card-label" style="margin-bottom:0;white-space:nowrap;">📁 Chemin Dropbox & événements</div>
-    <div id="active-event-badge" style="display:none;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--green);font-weight:600;"></div>
-  </div>
-  <div class="liste-filterbar" style="margin-bottom:10px;">
+  <div class="card-label" style="margin-bottom:4px;">📁 Dossier racine des médias</div>
+  <div style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:10px;">Le dossier Dropbox qui contient tous tes événements. Scanne-le pour remplir le sélecteur d'événements en haut à gauche.</div>
+  <div class="liste-filterbar" style="margin-bottom:0;">
     <label class="liste-search" style="min-width:0;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dim);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input type="text" id="paths-scan-root" placeholder="/01_ALL MEDIAS ML 2026" value="/01_ALL MEDIAS ML 2026" style="font-family:'JetBrains Mono',monospace;font-size:12px;" oninput="saveScanRoot(this.value)" onfocus="showScanSuggestions('paths-scan-root','paths-scan-sugg')" autocomplete="off">
     </label>
-    <button class="vocab-add-btn" onclick="scanEventsFromPaths()">🔍 Scanner les événements</button>
+    <button class="vocab-add-btn" onclick="scanEventsFromPaths()">Scanner</button>
   </div>
   <div class="scan-input-wrap" style="position:relative;">
     <div class="scan-suggestions" id="paths-scan-sugg"></div>
   </div>
-  <div id="paths-scan-results" style="display:none;margin-top:8px;">
+  <div id="paths-scan-results" style="display:none;margin-top:10px;">
     <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:700;margin-bottom:8px;font-family:'JetBrains Mono',monospace;">Événements trouvés — clique pour charger</div>
     <div id="paths-event-list" style="display:flex;flex-direction:column;gap:5px;"></div>
   </div>
-  <!-- Hidden base path inputs — auto-filled by scanner -->
-  <div id="paths-manual" style="display:none;margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-    <div>
-      <label class="field-label">📷 Base Photographes</label>
-      <input type="text" id="path-photo" placeholder="/01_ALL MEDIAS ML 2026/.../Photographes Pro" style="font-size:12px;font-family:'JetBrains Mono',monospace;">
-    </div>
-    <div>
-      <label class="field-label">🎬 Base Vidéastes</label>
-      <input type="text" id="path-video" placeholder="/01_ALL MEDIAS ML 2026/.../Videastes Pro" style="font-size:12px;font-family:'JetBrains Mono',monospace;">
-    </div>
+  <!-- Internal plumbing: resolved base paths (auto-filled, hidden from the user) -->
+  <div id="paths-manual" style="display:none;">
+    <input type="text" id="path-photo">
+    <input type="text" id="path-video">
   </div>
   <!-- Base folder logic explainer -->
   <div style="margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
@@ -423,13 +415,13 @@ td.actions{white-space:nowrap;width:1px;}
       L'outil lit cette arborescence dans Dropbox :
       <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin:8px 0;line-height:1.8;white-space:pre;overflow-x:auto;">/01_ALL MEDIAS ML 2026/
   01_MARS ML XXL PARIS/        ← <span style="color:var(--day-0);">événement</span>
-    Photographes Pro - ML …/   ← <span style="color:var(--day-0);">base photo</span>
-      01_Timo-Leo - ML …/      ← <span style="color:var(--day-0);">personne</span>
-        JOUR 1 (13.03.26) - ML …/  ← <span style="color:var(--day-0);">slot + lien upload</span>
-    Videastes Pro - ML …/      ← base vidéo</div>
-      Seuls le <strong>nom de l'événement</strong>, les <strong>dates des jours</strong> et les <strong>noms</strong> changent. Le suffixe « ML … » et les libellés (Photographes Pro, JOUR N, PARTENAIRES, BAB & Montages) restent identiques.
+    Photographes Pro - …/      ← <span style="color:var(--day-0);">base photo</span>
+      01_Timo-Leo - …/         ← <span style="color:var(--day-0);">personne</span>
+        JOUR 1 (13.03.26) - …/ ← <span style="color:var(--day-0);">slot + lien upload</span>
+    Videastes Pro - …/         ← base vidéo</div>
+      Seuls le <strong>nom de l'événement</strong>, les <strong>dates des jours</strong> et les <strong>noms</strong> changent. Les libellés (Photographes Pro, JOUR N, PARTENAIRES, BAB & Montages) restent identiques.
       <br><br>
-      <strong style="color:var(--text);">Pour l'an prochain :</strong> crée un nouveau dossier racine (ex: <code>/01_ALL MEDIAS ML 2027</code>) en gardant exactement la même structure et les mêmes intitulés, puis change simplement le chemin ci-dessus. L'outil le lira automatiquement.
+      <strong style="color:var(--text);">Pour l'an prochain :</strong> crée un nouveau dossier racine (ex: <code>/01_ALL MEDIAS ML 2027</code>) en gardant exactement la même structure, puis change simplement le chemin ci-dessus. L'outil le lira automatiquement.
     </div>
   </div>
 </div>
@@ -441,7 +433,7 @@ td.actions{white-space:nowrap;width:1px;}
       <div class="card-label" style="margin-bottom:4px;">✉️ Modèles de messages</div>
       <div style="font-size:13px;color:var(--text-muted);line-height:1.6;">Personnalise les emails et WhatsApp envoyés aux photographes/vidéastes.</div>
     </div>
-    <button class="btn btn-primary btn-sm" onclick="openTemplateEditor()">✏️ Modifier les modèles</button>
+    <button class="vocab-add-btn" onclick="openTemplateEditor()">Modifier les modèles</button>
   </div>
 </div>
 </div>
@@ -453,8 +445,8 @@ td.actions{white-space:nowrap;width:1px;}
   <div class="section-header">
     <span class="section-title-text">Photographes <span id="section-photo-count" style="color:var(--text-dim);font-weight:400;"></span></span>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-      <button class="lchip" onclick="openMessagesOverlay('photo')">📨 Messages</button>
-      <button class="lchip" onclick="openExportMenu(this)">⬇️ Export</button>
+      <button class="lchip" onclick="openMessagesOverlay('photo')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg> Messages</button>
+      <button class="lchip" onclick="openExportMenu(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export</button>
       <div class="view-toggle" id="view-toggle-photo">
         <button class="on" data-view="list" onclick="setView('photo','list')" title="Vue liste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <button data-view="grid" onclick="setView('photo','grid')" title="Vue grille"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
@@ -487,8 +479,8 @@ td.actions{white-space:nowrap;width:1px;}
   <div class="section-header">
     <span class="section-title-text">Vidéastes <span id="section-video-count" style="color:var(--text-dim);font-weight:400;"></span></span>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-      <button class="lchip" onclick="openMessagesOverlay('video')">📨 Messages</button>
-      <button class="lchip" onclick="openExportMenu(this)">⬇️ Export</button>
+      <button class="lchip" onclick="openMessagesOverlay('video')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg> Messages</button>
+      <button class="lchip" onclick="openExportMenu(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export</button>
       <div class="view-toggle" id="view-toggle-video">
         <button class="on" data-view="list" onclick="setView('video','list')" title="Vue liste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <button data-view="grid" onclick="setView('video','grid')" title="Vue grille"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
@@ -749,9 +741,9 @@ td.actions{white-space:nowrap;width:1px;}
 
       <!-- Event name — the ONE thing that drives all folder names -->
       <div class="field-group">
-        <label class="field-label">Nom de l'événement <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">— ex: PARIS XXL 2026 (sera préfixé par « ML »)</span></label>
+        <label class="field-label">Nom de l'événement <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">— ex: MARS ML XXL PARIS 2026 (le nom complet)</span></label>
         <input type="text" id="smart-event-name" placeholder="PARIS XXL 2026" oninput="onSmartEventName(this.value)" style="font-size:15px;">
-        <div class="hint" id="smart-suffix-hint">Suffixe des dossiers : <code>ML …</code></div>
+        <div class="hint" id="smart-suffix-hint">Suffixe des dossiers : <code>…</code></div>
       </div>
 
       <!-- Days with date pickers -->
@@ -950,10 +942,9 @@ function toggleSmartPersonDay(type,i,key){
 }
 
 function smartSuffix() {
-  let n = (smartSetup.eventName||'').trim();
-  // Strip a redundant leading/inner "ML " the user may have typed, to avoid "ML JUIN ML X…"
-  n = n.replace(/\bML\s+/gi,'').replace(/\s{2,}/g,' ').trim();
-  return n ? `ML ${n}` : 'ML EVENT 2026';
+  // The suffix is simply the event name as the user typed it (no forced "ML " prefix).
+  const n = (smartSetup.eventName||'').trim().replace(/\s{2,}/g,' ');
+  return n || 'EVENT 2026';
 }
 function smartPhotoBase(){ return `Photographes Pro - ${smartSuffix()}`; }
 function smartVideoBase(){ return `Videastes Pro - ${smartSuffix()}`; }
@@ -1003,33 +994,40 @@ function parseNamesInput(raw) {
 
 // ── CSV IMPORT / EXPORT ──
 function downloadCsvTemplate() {
-  // Intuitive grid: one row per person, columns for name + which days they cover.
-  // Top rows capture the event name + day dates. Users just type a name and "oui".
+  // Intuitive grid with clear instructions. One row per person, day columns to mark "oui".
   const q = s => `"${String(s).replace(/"/g,'""')}"`;
   const lines = [];
-  // ── Event header block (fill the value cells) ──
-  lines.push([q('ÉVÉNEMENT (ex: PARIS XXL 2026)'), q(''), '', '', '', ''].join(','));
-  lines.push([q('DATE JOUR 1 (AAAA-MM-JJ)'), q(''), '', '', '', ''].join(','));
-  lines.push([q('DATE JOUR 2 (AAAA-MM-JJ)'), q(''), '', '', '', ''].join(','));
-  lines.push([q('DATE JOUR 3 (AAAA-MM-JJ, optionnel)'), q(''), '', '', '', ''].join(','));
+  // ── Instruction rows (kept short; importer ignores them) ──
+  lines.push([q('# MODE D\'EMPLOI — ne touche pas à la colonne A'), '', '', '', '', ''].join(','));
+  lines.push([q('# 1) Remplis le NOM de l\'événement et les DATES ci-dessous'), '', '', '', '', ''].join(','));
+  lines.push([q('# 2) Pour chaque personne : écris son NOM dans la colonne B'), '', '', '', '', ''].join(','));
+  lines.push([q('# 3) Mets "oui" dans Jour 1/2/3 ou Partenaires/BAB qu\'elle couvre'), '', '', '', '', ''].join(','));
+  lines.push([q('#    (laisse vide = la personne couvre TOUS les jours)'), '', '', '', '', ''].join(','));
+  lines.push([q('# 4) Laisse vide les lignes des personnes inutilisées'), '', '', '', '', ''].join(','));
+  lines.push(['', '', '', '', '', ''].join(','));
+  // ── Event header block (fill column B) ──
+  lines.push([q('NOM DE L\'ÉVÉNEMENT'), q('ex: MARS ML XXL PARIS 2026'), '', '', '', ''].join(','));
+  lines.push([q('DATE JOUR 1'), q('ex: 2026-03-13'), '', '', '', ''].join(','));
+  lines.push([q('DATE JOUR 2'), q('ex: 2026-03-14'), '', '', '', ''].join(','));
+  lines.push([q('DATE JOUR 3 (optionnel)'), q(''), '', '', '', ''].join(','));
   lines.push(['', '', '', '', '', ''].join(','));
   // ── Person grid header ──
   lines.push([q('RÔLE'), q('NOM'), q('JOUR 1'), q('JOUR 2'), q('JOUR 3'), q('PARTENAIRES / BAB')].join(','));
-  // ── 15 photographers + 15 videasts, pre-filled role + placeholder, "oui" on day 1 as example on first row only ──
+  // ── 15 photographers + 15 videasts with explicit numbered placeholder names in col B ──
   for(let i=1;i<=15;i++){
-    lines.push([q('photo'), q(''), '', '', '', ''].join(','));
+    lines.push([q('photo'), q(`Photographe ${i}`), '', '', '', ''].join(','));
   }
   for(let i=1;i<=15;i++){
-    lines.push([q('video'), q(''), '', '', '', ''].join(','));
+    lines.push([q('video'), q(`Vidéaste ${i}`), '', '', '', ''].join(','));
   }
   const csv = '\ufeff'+lines.join('\r\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = 'modele-evenement-ML.csv';
+  a.href = url; a.download = 'modele-evenement.csv';
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
-  toast('✓ Modèle CSV téléchargé — remplis les noms + « oui » par jour','success');
+  toast('✓ Modèle CSV téléchargé — remplace les noms « Photographe 1 » par les vrais','success');
 }
 
 function onCsvUpload(ev) {
@@ -1076,16 +1074,21 @@ function applyCsv(text) {
     const c0 = (cols[0]||'').toLowerCase();
     const label = (cols[0]||'').toUpperCase();
     // Event header rows (label in col 0, value in col 1)
-    if(label.startsWith('ÉVÉNEMENT') || label.startsWith('EVENEMENT')){ if(cols[1]) eventName = cols[1]; continue; }
+    if(label.startsWith('NOM DE') || label.startsWith('ÉVÉNEMENT') || label.startsWith('EVENEMENT')){
+      const v=(cols[1]||'').trim();
+      if(v && !/^ex\s*:/i.test(v)) eventName = v; // ignore the "ex: ..." placeholder
+      continue;
+    }
     const dm = label.match(/DATE JOUR\s*(\d)/);
-    if(dm){ if(cols[1]) days[parseInt(dm[1])-1] = {date:cols[1]}; continue; }
+    if(dm){ const v=(cols[1]||'').trim(); if(v && !/^ex\s*:/i.test(v)) days[parseInt(dm[1])-1] = {date:v}; continue; }
     // Grid header
     if(c0==='rôle' || c0==='role'){ continue; }
     // Person rows: RÔLE, NOM, JOUR1, JOUR2, JOUR3, PARTENAIRES/BAB
     if(c0==='photo' || c0==='video'){
       const name = (cols[1]||'').trim();
-      if(name){
-        // Columns 2,3,4 = days; column 5 = extra (partenaires/bab)
+      // Skip rows left at the placeholder ("Photographe 3", "Vidéaste 7") or empty
+      const isPlaceholder = /^(photographe|vid[eé]aste)\s*\d+$/i.test(name);
+      if(name && !isPlaceholder){
         const anyDayCol = cols.slice(2,6).some(v=>v && v.trim());
         const days_t = anyDayCol
           ? { j1:isYes(cols[2]), j2:isYes(cols[3]), j3:isYes(cols[4]), p3:isYes(cols[5]) }
@@ -2177,16 +2180,11 @@ async function scanEventsFromPaths() {
       });
     }
     document.getElementById('paths-scan-results').style.display='block';
-    toast(`✓ ${folders.length} événement(s) trouvé(s)`,'success');
-    // Auto-load the most recent event (last in list) so everything is ready when leaving the tab
-    if(folders.length){
-      const last = scannedEvents[scannedEvents.length-1];
-      const sw = document.getElementById('session-sw');
-      if(sw) sw.value = String(scannedEvents.length-1);
-      selectEventFromPaths(last.path, last.name);
-    }
+    toast(`✓ ${folders.length} événement(s) trouvé(s) — choisis-en un`,'success');
+    // No auto-load: the switcher is now populated and the found list is shown.
+    // The user picks an event from the list or the top-left switcher.
   } catch(e){ toast('✗ '+e.message,'error'); }
-  btn.disabled=false; btn.textContent='🔍 Scanner';
+  btn.disabled=false; btn.textContent='Scanner';
 }
 
 function selectEventFromPaths(path, name) {
@@ -3438,9 +3436,6 @@ function exportPdf(stats) {
   .foot { margin-top:24px; padding-top:12px; border-top:1px solid #e2e8f0; font-size:9px; color:#94a3b8; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
 </style></head><body>
 <div class="page">
-  <div class="noprint">
-    <button onclick="window.print()" title="Enregistrer en PDF : Imprimer → écarte 2 doigts → Partager → Enregistrer dans Fichiers">🖨️ PDF</button>
-  </div>
 
   <div class="hdr">
     <div>
