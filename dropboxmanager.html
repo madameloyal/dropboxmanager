@@ -776,6 +776,8 @@ td.actions{white-space:nowrap;width:1px;}
       <div id="smart-preview" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim);line-height:1.8;white-space:pre;overflow-x:auto;"></div>
     </div>
 
+    <div id="setup-lock-banner" style="display:none;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#fca5a5;line-height:1.6;"></div>
+
     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
       <button class="btn btn-primary" id="btn-run-setup" onclick="runSmartSetup()">🚀 Tout créer (dossiers + upload links)</button>
       <button class="btn btn-ghost btn-sm" onclick="clearLog()">Vider le log</button>
@@ -2304,7 +2306,7 @@ async function scanEvents() {
   btn.disabled=false; btn.textContent='🔍 Scanner';
 }
 
-function selectEvent(path, name) {
+async function selectEvent(path, name) {
   selectedEventPath = path;
   document.getElementById('selected-event-name').textContent = name;
   document.getElementById('selected-event-path').textContent = path;
@@ -2322,6 +2324,48 @@ function selectEvent(path, name) {
   document.getElementById('setup-config').scrollIntoView({behavior:'smooth',block:'start'});
   renderSmartPreview();
   updateHeader('setup');
+  // Check whether this event is already set up AND past → lock creation
+  await checkSetupLock(path);
+}
+
+// Parse "JOUR N (DD.MM.YY)" → Date, return the latest day date found under the event
+async function getEventLatestDate(eventPath){
+  let latest = null;
+  try {
+    const data = await apiPost('files/list_folder',{path:eventPath,recursive:true,include_non_downloadable_files:false});
+    let entries = data.entries||[];
+    let d = data;
+    while(d.has_more){ d = await apiPost('files/list_folder/continue',{cursor:d.cursor}); entries=entries.concat(d.entries||[]); }
+    entries.filter(e=>e['.tag']==='folder').forEach(f=>{
+      const m = f.name.match(/\((\d{2})\.(\d{2})\.(\d{2})\)/); // (DD.MM.YY)
+      if(m){
+        const dt = new Date(2000+parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
+        if(!latest || dt>latest) latest = dt;
+      }
+    });
+  } catch(e){}
+  return latest;
+}
+
+let setupLocked = false;
+async function checkSetupLock(path){
+  setupLocked = false;
+  const btn = document.getElementById('btn-run-setup');
+  const banner = document.getElementById('setup-lock-banner');
+  if(banner) banner.style.display='none';
+  if(btn){ btn.disabled=false; btn.style.opacity=''; }
+  const latest = await getEventLatestDate(path);
+  if(latest){
+    const today = new Date(); today.setHours(0,0,0,0);
+    if(latest < today){
+      setupLocked = true;
+      if(btn){ btn.disabled=true; btn.style.opacity='0.45'; }
+      if(banner){
+        banner.style.display='block';
+        banner.innerHTML = `🔒 <strong>Événement verrouillé</strong> — le dernier jour (${latest.toLocaleDateString('fr-FR')}) est passé. La création est désactivée pour protéger les fichiers déjà déposés. Tu peux toujours modifier ou supprimer des dossiers/noms depuis le tableau Photographes/Vidéastes.`;
+      }
+    }
+  }
 }
 
 function resetEventSelection() {
@@ -2384,6 +2428,7 @@ function clearLog(){document.getElementById('setup-log').innerHTML='En attente�
 
 async function runSmartSetup(){
   if(!getToken()){toast('⚠️ Connecte Dropbox d\'abord','warn');toggleTokenDropdown();return;}
+  if(setupLocked){ toast('🔒 Événement verrouillé (date passée) — création désactivée','warn'); return; }
   const evRoot = (selectedEventPath||'').replace(/\/$/,'');
   if(!evRoot){toast('⚠️ Sélectionne un événement (Étape 1)','warn');return;}
   if(!smartSetup.eventName.trim()){toast('⚠️ Entre le nom de l\'événement','warn');return;}
