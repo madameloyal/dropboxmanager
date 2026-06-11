@@ -189,6 +189,18 @@ td.actions{white-space:nowrap;width:1px;}
 .lchip.on{background:var(--surface-2);border-color:var(--border-h);color:var(--text);}
 .vocab-add-btn{padding:7px 14px;border-radius:7px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;}
 .vocab-add-btn:hover{border-color:var(--green);color:var(--green);}
+/* ── Smart-setup per-person editor ── */
+.person-row{background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:9px 10px;margin-bottom:7px;}
+.person-row-top{display:flex;align-items:center;gap:8px;}
+.person-num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);flex-shrink:0;width:20px;}
+.person-name-input{flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:8px 11px;outline:none;}
+.person-name-input:focus{border-color:var(--border-h);}
+.person-del{flex-shrink:0;width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;font-size:13px;transition:all .15s;}
+.person-del:hover{border-color:var(--red);color:var(--red);}
+.person-toggles{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;padding-left:28px;}
+.day-toggle{padding:4px 11px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;}
+.day-toggle:hover{border-color:var(--border-h);color:var(--text-muted);}
+.day-toggle.on{background:rgba(52,211,153,0.12);border-color:rgba(52,211,153,0.35);color:var(--green);}
 @media(max-width:640px){.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}}
 
 /* ── VIEW TOGGLE (module-dates segmented control) ── */
@@ -721,7 +733,7 @@ td.actions{white-space:nowrap;width:1px;}
         </label>
         <span id="csv-import-status" style="font-size:12px;color:var(--text-muted);"></span>
       </div>
-      <p class="hint" style="margin-top:8px;">Le modèle est un tableau simple : en haut tu mets le <b>nom de l'événement</b> et les <b>dates</b> des jours ; en dessous, une ligne par personne (Photographe / Vidéaste) où tu tapes le <b>nom</b>. Ouvre-le dans Numbers ou Excel, remplis, ré-importe — tout se pré-remplit ci-dessous.</p>
+      <p class="hint" style="margin-top:8px;">Le modèle est un tableau simple : en haut le <b>nom de l'événement</b> + les <b>dates</b> ; en dessous une ligne par personne. Tape le <b>nom</b>, et mets <b>« oui »</b> dans les colonnes Jour 1/2/3 ou Partenaires/BAB que la personne couvre (laisse vide = tout). Ré-importe : chaque personne arrive avec ses jours pré-cochés.</p>
     </div>
 
     <div class="card" style="margin-bottom:14px;border-color:rgba(244,114,182,0.25);">
@@ -749,15 +761,17 @@ td.actions{white-space:nowrap;width:1px;}
         <button class="btn btn-ghost btn-sm" style="margin-top:4px;" onclick="addSmartDay()">+ Ajouter un jour</button>
       </div>
 
-      <!-- Names -->
+      <!-- People with per-person day toggles -->
       <div class="ev-grid" style="margin-top:6px;">
         <div class="field-group">
-          <label class="field-label">📷 Photographes <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">— un nom par ligne</span></label>
-          <textarea id="smart-photo-names" placeholder="Timo-Leo&#10;Etienne&#10;Mickael&#10;Brice…" oninput="onSmartNames('photo', this.value)" style="min-height:120px;font-size:14px;line-height:1.7;"></textarea>
+          <label class="field-label">📷 Photographes <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">— nom + jours couverts</span></label>
+          <div id="smart-photo-people"></div>
+          <button class="vocab-add-btn" style="margin-top:8px;" onclick="addSmartPerson('photo')">+ Ajouter un photographe</button>
         </div>
         <div class="field-group">
-          <label class="field-label">🎬 Vidéastes <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">— un nom par ligne</span></label>
-          <textarea id="smart-video-names" placeholder="Louis&#10;Killian&#10;Loic…" oninput="onSmartNames('video', this.value)" style="min-height:120px;font-size:14px;line-height:1.7;"></textarea>
+          <label class="field-label">🎬 Vidéastes <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">— nom + jours couverts</span></label>
+          <div id="smart-video-people"></div>
+          <button class="vocab-add-btn" style="margin-top:8px;" onclick="addSmartPerson('video')">+ Ajouter un vidéaste</button>
         </div>
       </div>
     </div>
@@ -854,7 +868,9 @@ function loadEventState(newPhotoState, newVideoState) {
   const _dv=document.getElementById('dt-video-count'); if(_dv) _dv.textContent='('+videoState.length+')';
   updateHeader('photo');
   switchTab('photo');
-  toast(`✓ Événement chargé — ${photoState.length} photographes · ${videoState.length} vidéastes`, 'success');
+  if(photoState.length || videoState.length){
+    toast(`✓ Événement chargé — ${photoState.length} photographes · ${videoState.length} vidéastes`, 'success');
+  }
 }
 
 // ══════════════════════════════════════════════════
@@ -898,9 +914,40 @@ let setupResults = [];
 const smartSetup = {
   eventName: '',          // e.g. "PARIS XXL 2026"
   days: [],               // [{date:'2026-03-13'}, ...]
-  photoNames: [],         // ['Timo-Leo','Etienne',...]
-  videoNames: [],
+  // Per-person rows. Each: {name, days:{j1,j2,j3,p3}} — toggles decide which subfolders to create.
+  photoPeople: [],        // [{name:'Timo-Leo', days:{j1:true,j2:true,j3:false,p3:true}}, ...]
+  videoPeople: [],
+  // Derived flat-name arrays kept in sync for legacy consumers (preview/create/CSV).
+  get photoNames(){ return this.photoPeople.map(p=>p.name).filter(Boolean); },
+  get videoNames(){ return this.videoPeople.map(p=>p.name).filter(Boolean); },
 };
+
+// Default day-toggle set for a freshly added person (all days + extra on)
+function defaultPersonDays(){
+  const d = {p3:true};
+  smartSetup.days.forEach((_,i)=>{ d['j'+(i+1)] = true; });
+  return d;
+}
+function addSmartPerson(type){
+  const arr = type==='photo'?smartSetup.photoPeople:smartSetup.videoPeople;
+  arr.push({name:'', days:defaultPersonDays()});
+  renderSmartPeople(type); renderSmartPreview();
+}
+function removeSmartPerson(type,i){
+  const arr = type==='photo'?smartSetup.photoPeople:smartSetup.videoPeople;
+  arr.splice(i,1);
+  renderSmartPeople(type); renderSmartPreview();
+}
+function setSmartPersonName(type,i,val){
+  const arr = type==='photo'?smartSetup.photoPeople:smartSetup.videoPeople;
+  if(arr[i]) arr[i].name = val;
+  renderSmartPreview();
+}
+function toggleSmartPersonDay(type,i,key){
+  const arr = type==='photo'?smartSetup.photoPeople:smartSetup.videoPeople;
+  if(arr[i]){ arr[i].days[key] = !arr[i].days[key]; }
+  renderSmartPeople(type); renderSmartPreview();
+}
 
 function smartSuffix() {
   let n = (smartSetup.eventName||'').trim();
@@ -937,6 +984,17 @@ function smartSubfolders(type) {
     subs.push({folder:`BAB & Montages - ${suffix}`, title:`Vidéos BAB & Montages - "{nom}" - ${suffix}`, desc:"Tous tes montages finaux en 4k. N'oublie pas de mettre ton @ sur le nom des fichiers."});
   }
   return subs;
+}
+
+// Build the subfolder list for a person of a given type, filtered by their day toggles
+function smartSubfoldersFor(type, personDays) {
+  const all = smartSubfolders(type);
+  // all = [J1, J2, J3..., EXTRA]. Map each to a toggle key: j1,j2,j3..., p3 for the last.
+  return all.filter((sub, idx) => {
+    const isExtra = idx === all.length-1;
+    const key = isExtra ? 'p3' : ('j'+(idx+1));
+    return personDays ? !!personDays[key] : true;
+  });
 }
 
 function parseNamesInput(raw) {
@@ -1008,8 +1066,8 @@ function applyCsv(text) {
   const rawLines = text.split(/\r?\n/);
   let eventName = '';
   const days = [];
-  const photoNames = [];
-  const videoNames = [];
+  const photoPeople = [];
+  const videoPeople = [];
   const isYes = v => /^(oui|yes|o|y|x|1|✓|true)$/i.test((v||'').trim());
 
   for(const raw of rawLines){
@@ -1023,12 +1081,16 @@ function applyCsv(text) {
     if(dm){ if(cols[1]) days[parseInt(dm[1])-1] = {date:cols[1]}; continue; }
     // Grid header
     if(c0==='rôle' || c0==='role'){ continue; }
-    // Person rows
+    // Person rows: RÔLE, NOM, JOUR1, JOUR2, JOUR3, PARTENAIRES/BAB
     if(c0==='photo' || c0==='video'){
-      const name = cols[1]||'';
-      if(name.trim()){
-        if(c0==='photo') photoNames.push(name.trim());
-        else videoNames.push(name.trim());
+      const name = (cols[1]||'').trim();
+      if(name){
+        // Columns 2,3,4 = days; column 5 = extra (partenaires/bab)
+        const anyDayCol = cols.slice(2,6).some(v=>v && v.trim());
+        const days_t = anyDayCol
+          ? { j1:isYes(cols[2]), j2:isYes(cols[3]), j3:isYes(cols[4]), p3:isYes(cols[5]) }
+          : defaultPersonDays(); // no toggles filled → default all on
+        (c0==='photo'?photoPeople:videoPeople).push({name, days:days_t});
       }
       continue;
     }
@@ -1042,18 +1104,13 @@ function applyCsv(text) {
     onSmartEventName(eventName);
   }
   if(cleanDays.length){ smartSetup.days = cleanDays; renderSmartDays(); }
-  if(photoNames.length){
-    smartSetup.photoNames = photoNames;
-    const pt = document.getElementById('smart-photo-names'); if(pt) pt.value = photoNames.join('\n');
-  }
-  if(videoNames.length){
-    smartSetup.videoNames = videoNames;
-    const vt = document.getElementById('smart-video-names'); if(vt) vt.value = videoNames.join('\n');
-  }
+  // Build per-person rows from CSV. If the CSV had day columns ("oui"), respect them; else default all on.
+  if(photoPeople.length){ smartSetup.photoPeople = photoPeople; renderSmartPeople('photo'); }
+  if(videoPeople.length){ smartSetup.videoPeople = videoPeople; renderSmartPeople('video'); }
   renderSmartPreview();
   const status = document.getElementById('csv-import-status');
-  if(status) status.textContent = `✓ ${photoNames.length} photo · ${videoNames.length} vidéo · ${cleanDays.length} jours`;
-  toast(`✓ CSV importé — ${photoNames.length+videoNames.length} personnes`,'success');
+  if(status) status.textContent = `✓ ${photoPeople.length} photo · ${videoPeople.length} vidéo · ${cleanDays.length} jours`;
+  toast(`✓ CSV importé — ${photoPeople.length+videoPeople.length} personnes`,'success');
 }
 
 function onSmartEventName(val) {
@@ -1065,19 +1122,47 @@ function onSmartEventName(val) {
   renderSmartPreview();
   updateHeader('setup');
 }
-function onSmartNames(type, val) {
-  if(type==='photo') smartSetup.photoNames = parseNamesInput(val);
-  else smartSetup.videoNames = parseNamesInput(val);
-  renderSmartPreview();
+// Render the per-person editor rows (name input + day-toggle chips) for a role
+function renderSmartPeople(type){
+  const host = document.getElementById('smart-'+type+'-people');
+  if(!host) return;
+  const arr = type==='photo'?smartSetup.photoPeople:smartSetup.videoPeople;
+  const extraLabel = type==='photo' ? 'Part.' : 'BAB';
+  if(arr.length===0){
+    host.innerHTML = `<div style="font-size:12px;color:var(--text-dim);padding:8px 2px;">Aucun ${type==='photo'?'photographe':'vidéaste'} — clique « + Ajouter ».</div>`;
+    return;
+  }
+  host.innerHTML = arr.map((p,i)=>{
+    // Build a toggle chip per day + the extra
+    const dayChips = smartSetup.days.map((_,di)=>{
+      const key='j'+(di+1); const on=!!p.days[key];
+      return `<button type="button" class="day-toggle ${on?'on':''}" onclick="toggleSmartPersonDay('${type}',${i},'${key}')">J${di+1}</button>`;
+    }).join('');
+    const extraOn = !!p.days.p3;
+    const extraChip = `<button type="button" class="day-toggle ${extraOn?'on':''}" onclick="toggleSmartPersonDay('${type}',${i},'p3')">${extraLabel}</button>`;
+    return `<div class="person-row">
+      <div class="person-row-top">
+        <span class="person-num">${String(i+1).padStart(2,'0')}</span>
+        <input type="text" class="person-name-input" value="${(p.name||'').replace(/"/g,'&quot;')}" placeholder="Nom…" oninput="setSmartPersonName('${type}',${i},this.value)">
+        <button type="button" class="person-del" title="Retirer" onclick="removeSmartPerson('${type}',${i})">✕</button>
+      </div>
+      <div class="person-toggles">${dayChips}${extraChip}</div>
+    </div>`;
+  }).join('');
 }
 function addSmartDay() {
   smartSetup.days.push({date:''});
+  // New day defaults to ON for every existing person
+  smartSetup.photoPeople.forEach(p=>p.days['j'+smartSetup.days.length]=true);
+  smartSetup.videoPeople.forEach(p=>p.days['j'+smartSetup.days.length]=true);
   renderSmartDays();
+  renderSmartPeople('photo'); renderSmartPeople('video');
   renderSmartPreview();
 }
 function removeSmartDay(i) {
   smartSetup.days.splice(i,1);
   renderSmartDays();
+  renderSmartPeople('photo'); renderSmartPeople('video');
   renderSmartPreview();
 }
 function setSmartDayDate(i, val) {
@@ -2133,6 +2218,15 @@ function selectEventFromPaths(path, name) {
 }
 
 async function autoFillBasePaths(eventPath, eventName) {
+  // Clear any previously-loaded event so we never show stale data under a new name
+  photoState = []; videoState = [];
+  document.getElementById('path-photo').value = '';
+  document.getElementById('path-video').value = '';
+  renderTable('photo'); renderTable('video');
+  const _dp=document.getElementById('dt-photo-count'); if(_dp) _dp.textContent='(0)';
+  const _dv=document.getElementById('dt-video-count'); if(_dv) _dv.textContent='(0)';
+  const navSub = document.getElementById('nav-session-sub');
+  if(navSub) navSub.textContent = '⏳ Chargement…';
   try {
     // Scan the event folder
     const data = await apiPost('files/list_folder',{path:eventPath,include_non_downloadable_files:false});
@@ -2155,15 +2249,58 @@ async function autoFillBasePaths(eventPath, eventName) {
 
     if(photoF) document.getElementById('path-photo').value = photoF.path_display;
     if(videoF) document.getElementById('path-video').value = videoF.path_display;
+
+    // ── STATE A: event folder exists but NO Photo/Video base folders → not configured ──
     if(!photoF && !videoF){
-      // Not an error — this event just hasn't been set up yet
-      toast('ℹ️ Événement pas encore configuré — va dans « Nouvel événement »','info');
+      if(navSub) navSub.textContent = '⚠️ Dossier créé, pas encore configuré';
+      showEmptyEventBanner('notconfigured', eventName);
+      toast('ℹ️ « '+eventName+' » : dossier créé mais pas encore configuré (va dans « Nouvel événement »)','info');
       return;
     }
+
     updateHeader('photo');
-    // Auto-load existing folders + links immediately (no creation)
+    // Load existing folders + links (creates nothing). This repopulates state.
     await loadEventFromPaths();
-  } catch(e){ toast('⚠️ Could not scan paths: '+e.message,'warn'); }
+
+    // ── STATE B: base folders exist but no person folders inside → configured, empty ──
+    if(photoState.length===0 && videoState.length===0){
+      if(navSub) navSub.textContent = 'Configuré · aucun média pour l\'instant';
+      showEmptyEventBanner('noppl', eventName);
+    } else {
+      if(navSub) navSub.textContent = `${photoState.length} photo · ${videoState.length} vidéo`;
+      hideEmptyEventBanner();
+    }
+  } catch(e){
+    if(navSub) navSub.textContent = 'Erreur de chargement';
+    toast('⚠️ Could not scan paths: '+e.message,'warn');
+  }
+}
+
+// Small contextual banner shown on the Photo/Video tabs when an event is empty
+function showEmptyEventBanner(kind, eventName){
+  ['photo','video'].forEach(type=>{
+    const host = document.getElementById('list-'+type);
+    if(!host) return;
+    let b = document.getElementById('empty-banner-'+type);
+    if(!b){
+      b = document.createElement('div');
+      b.id = 'empty-banner-'+type;
+      b.style.cssText='background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.22);border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:13px;color:#fcd34d;line-height:1.6;';
+      host.parentNode.insertBefore(b, host);
+    }
+    if(kind==='notconfigured'){
+      b.innerHTML = `⚠️ <b>${eventName}</b> — le dossier existe dans Dropbox mais les bases <i>Photographes</i> / <i>Vidéastes</i> n'ont pas encore été créées.<br>Va dans <b>＋ Nouvel événement</b>, sélectionne cet événement et lance « Tout créer ».`;
+    } else {
+      b.innerHTML = `📂 <b>${eventName}</b> est configuré, mais aucun photographe/vidéaste n'a encore été ajouté.<br>Va dans <b>＋ Nouvel événement</b> pour ajouter les personnes.`;
+    }
+    b.style.display='block';
+  });
+}
+function hideEmptyEventBanner(){
+  ['photo','video'].forEach(type=>{
+    const b = document.getElementById('empty-banner-'+type);
+    if(b) b.style.display='none';
+  });
 }
 
 async function loadEventFromPaths() {
@@ -2312,20 +2449,38 @@ async function scanEvents() {
     if(folders.length===0){
       list.innerHTML='<div style="font-size:0.78em;color:var(--text-dim);padding:8px 0;">Aucun sous-dossier trouvé dans ce chemin.</div>';
     } else {
-      folders.forEach(f=>{
+      for(const f of folders){
         const card = document.createElement('div');
-        card.style.cssText='background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;cursor:pointer;transition:border-color .15s,background .15s;display:flex;justify-content:space-between;align-items:center;';
-        card.onmouseenter=()=>{card.style.borderColor='rgba(244,114,182,0.3)';card.style.background='rgba(244,114,182,0.05)';};
-        card.onmouseleave=()=>{card.style.borderColor='rgba(255,255,255,0.05)';card.style.background='var(--surface-2)';};
-        card.innerHTML=`
-          <div>
-            <div style="font-size:0.85em;font-weight:600;color:#fff;">${f.name}</div>
-            <div style="font-size:0.68em;color:var(--text-dim);font-family:monospace;margin-top:2px;">${f.path_display}</div>
-          </div>
-          <span style="font-size:0.72em;color:var(--day-2);font-weight:600;">Sélectionner →</span>`;
-        card.onclick=()=>selectEvent(f.path_display, f.name);
+        card.style.cssText='background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;cursor:pointer;transition:border-color .15s,background .15s;display:flex;justify-content:space-between;align-items:center;gap:10px;';
+        // Determine lock state (last day in the past)
+        let locked = false;
+        try {
+          const latest = await getEventLatestDate(f.path_display);
+          if(latest){ const t=new Date(); t.setHours(0,0,0,0); locked = latest < t; }
+        } catch(e){}
+        if(locked){
+          card.style.cursor='default';
+          card.innerHTML=`
+            <div style="min-width:0;">
+              <div style="font-size:0.85em;font-weight:600;color:var(--text-muted);">${f.name}</div>
+              <div style="font-size:0.68em;color:var(--text-dim);font-family:monospace;margin-top:2px;word-break:break-all;">${f.path_display}</div>
+            </div>
+            <span style="font-size:0.72em;color:var(--amber);font-weight:700;flex-shrink:0;white-space:nowrap;">🔒 Verrouillé</span>`;
+          card.title = 'Événement passé — protégé. Tu peux quand même le consulter via le switcher en haut.';
+          card.onclick=()=>{ toast('🔒 Événement passé — protégé contre la re-création. Consulte-le via le switcher en haut.','warn'); };
+        } else {
+          card.onmouseenter=()=>{card.style.borderColor='rgba(244,114,182,0.3)';card.style.background='rgba(244,114,182,0.05)';};
+          card.onmouseleave=()=>{card.style.borderColor='rgba(255,255,255,0.05)';card.style.background='var(--surface-2)';};
+          card.innerHTML=`
+            <div style="min-width:0;">
+              <div style="font-size:0.85em;font-weight:600;color:#fff;">${f.name}</div>
+              <div style="font-size:0.68em;color:var(--text-dim);font-family:monospace;margin-top:2px;word-break:break-all;">${f.path_display}</div>
+            </div>
+            <span style="font-size:0.72em;color:var(--day-2);font-weight:600;flex-shrink:0;">Sélectionner →</span>`;
+          card.onclick=()=>selectEvent(f.path_display, f.name);
+        }
         list.appendChild(card);
-      });
+      }
     }
     document.getElementById('scan-results').style.display='block';
     toast(`✓ ${folders.length} dossier(s) trouvé(s)`,'success');
@@ -2348,6 +2503,10 @@ async function selectEvent(path, name) {
   // Seed two days by default if none yet
   if(smartSetup.days.length===0){ smartSetup.days=[{date:''},{date:''}]; }
   renderSmartDays();
+  // Seed one empty person each if none yet, then render the editors
+  if(smartSetup.photoPeople.length===0){ smartSetup.photoPeople=[{name:'',days:defaultPersonDays()}]; }
+  if(smartSetup.videoPeople.length===0){ smartSetup.videoPeople=[{name:'',days:defaultPersonDays()}]; }
+  renderSmartPeople('photo'); renderSmartPeople('video');
   // Show config section
   document.getElementById('setup-config').style.display='block';
   document.getElementById('setup-config').scrollIntoView({behavior:'smooth',block:'start'});
@@ -2488,25 +2647,36 @@ async function runSmartSetup(){
   log('📁 Racine : '+evRoot,'log-info');
 
   const types=[
-    {key:'photo',label:'Photographe',base:`${evRoot}/${smartPhotoBase()}`,names:smartSetup.photoNames,subs:smartSubfolders('photo')},
-    {key:'video',label:'Vidéaste',base:`${evRoot}/${smartVideoBase()}`,names:smartSetup.videoNames,subs:smartSubfolders('video')},
+    {key:'photo',label:'Photographe',base:`${evRoot}/${smartPhotoBase()}`,people:smartSetup.photoPeople},
+    {key:'video',label:'Vidéaste',base:`${evRoot}/${smartVideoBase()}`,people:smartSetup.videoPeople},
   ];
   let totalCreated=0,totalErrors=0;
   setupResults=[];
 
+  // Map a subfolder name to its slot key (j1/j2/j3/p3) for state building
+  const slotKeyFor = (folderName)=>{
+    const s = folderName.toLowerCase();
+    if(s.includes('jour 1')) return 'j1';
+    if(s.includes('jour 2')) return 'j2';
+    if(s.includes('jour 3')) return 'j3';
+    return 'p3';
+  };
+
   for(const t of types){
-    if(t.names.length===0) continue;
+    const people = (t.people||[]).filter(p=>p.name && p.name.trim());
+    if(people.length===0) continue;
     log('','');
-    log('── '+(t.key==='photo'?'📷':'🎬')+' '+t.label+'s ('+t.names.length+') ──','log-info');
+    log('── '+(t.key==='photo'?'📷':'🎬')+' '+t.label+'s ('+people.length+') ──','log-info');
     try{ await apiPost('files/create_folder_v2',{path:t.base,autorename:false}); }catch(e){}
-    for(let idx=0; idx<t.names.length; idx++){
+    for(let idx=0; idx<people.length; idx++){
       const n = idx+1;
       const num = String(n).padStart(2,'0');
-      const personName = t.names[idx];
+      const personName = people[idx].name.trim();
+      const subs = smartSubfoldersFor(t.key, people[idx].days); // only toggled-on subfolders
       const personFolder = `${t.base}/${num}_${personName} - ${suffix}`;
       const personResult={type:t.key,n,name:personName,slots:[]};
       try{ await apiPost('files/create_folder_v2',{path:personFolder,autorename:false}); }catch(e){}
-      for(const slot of t.subs){
+      for(const slot of subs){
         const dest=`${personFolder}/${slot.folder}`;
         const title=slot.title.replace(/\{nom\}/g, personName);
         const prog=document.getElementById('setup-progress'); if(prog) prog.textContent=`⏳ ${personName} / ${slot.folder}`;
@@ -2516,18 +2686,18 @@ async function runSmartSetup(){
         }catch(e){
           const msg=(e.message||'').toLowerCase();
           if(msg.includes('conflict')||msg.includes('already')) log('  ~ Dossier existant : '+dest,'log-warn');
-          else{log('  ✗ Dossier ERREUR ('+e.message+') : '+dest,'log-err');totalErrors++;personResult.slots.push({folder:slot.folder,title,url:null});continue;}
+          else{log('  ✗ Dossier ERREUR ('+e.message+') : '+dest,'log-err');totalErrors++;personResult.slots.push({key:slotKeyFor(slot.folder),folder:slot.folder,title,url:null});continue;}
         }
         try{
           const body={destination:dest,title};
           if(slot.desc) body.description=slot.desc;
           const data=await fileRequestsPost('file_requests/create',body);
           log('  ✓ Lien : '+title,'log-ok');
-          personResult.slots.push({folder:slot.folder,title,url:data.url,id:data.id,dest});
+          personResult.slots.push({key:slotKeyFor(slot.folder),folder:slot.folder,title,url:data.url,id:data.id,dest});
           totalCreated++;
         }catch(e){
           log('  ✗ Lien ERREUR ('+e.message+') : '+title,'log-err');
-          personResult.slots.push({folder:slot.folder,title,url:null});
+          personResult.slots.push({key:slotKeyFor(slot.folder),folder:slot.folder,title,url:null});
           totalErrors++;
         }
         await new Promise(r=>setTimeout(r,350));
@@ -2545,7 +2715,7 @@ async function runSmartSetup(){
   if(setupResults.length>0){
     const buildState = (kind)=> setupResults.filter(r=>r.type===kind).map((r)=>{
       const linkMap={};
-      r.slots.forEach((s,si)=>{const k=['j1','j2','j3','p3'][si]||'s'+si; linkMap[k]={url:s.url||'',id:s.id||'',dest:s.dest||''};});
+      r.slots.forEach((s)=>{const k=s.key||'p3'; linkMap[k]={url:s.url||'',id:s.id||'',dest:s.dest||''};});
       ['j1','j2','j3','p3'].forEach(k=>{ if(!linkMap[k]) linkMap[k]={url:'',id:'',dest:''}; });
       return {n:r.n, realName:r.name, editorUrl:'', links:linkMap};
     });
@@ -3656,6 +3826,8 @@ renderTable('video');
 renderSlotConfig('photo');
 renderSlotConfig('video');
 renderSmartDays();
+renderSmartPeople('photo');
+renderSmartPeople('video');
 renderSmartPreview();
 // Start on the Photographes tab (sets KPI visibility + dept-tab highlight)
 switchTab('photo');
