@@ -53,6 +53,8 @@ body{
 .dt{padding:8px 12px;font-size:12px;font-weight:500;color:var(--text-dim);white-space:nowrap;border:none;border-bottom:2px solid transparent;background:none;font-family:inherit;cursor:pointer;transition:color .15s}
 .dt:hover{color:var(--text-muted)}
 .dt.on{color:#fff;font-weight:600;border-bottom:2px solid #fff;background:rgba(255,255,255,.06)}
+.dt-count{color:var(--text-dim);font-weight:400;font-size:11px;margin-left:2px;}
+.dt.on .dt-count{color:var(--text-muted);}
 
 /* ── LAYOUT ── */
 .wrap{max-width:1020px;margin:0 auto;padding:18px 20px 80px;}
@@ -82,13 +84,14 @@ body{
 .field-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 
 /* ── INPUTS ── */
-input[type=text],input[type=password],textarea{
-  flex:1;min-width:160px;
+input[type=text],input[type=password],input[type=date],textarea{
+  flex:1;min-width:0;width:100%;
   background:var(--surface-2);border:1px solid var(--border);border-radius:8px;
-  padding:9px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;
+  padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;
   outline:none;transition:border-color .15s;
 }
-input[type=text]:focus,input[type=password]:focus,textarea:focus{border-color:var(--indigo);}
+input[type=date]{color-scheme:dark;}
+input[type=text]:focus,input[type=password]:focus,input[type=date]:focus,textarea:focus{border-color:var(--indigo);}
 input::placeholder,textarea::placeholder{color:var(--text-dim);}
 textarea{resize:vertical;min-height:56px;line-height:1.5;}
 .hint{font-size:12px;color:var(--text-dim);margin-top:8px;line-height:1.7;}
@@ -178,6 +181,37 @@ td.actions{white-space:nowrap;width:1px;}
 .vocab-add-btn:hover{border-color:var(--green);color:var(--green);}
 @media(max-width:640px){.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}}
 
+/* ── VIEW TOGGLE (module-dates segmented control) ── */
+.view-toggle{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0;}
+.view-toggle button{padding:7px 10px;background:transparent;border:none;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;transition:all .15s;}
+.view-toggle button.on{background:var(--surface-2);color:var(--text);}
+.view-toggle button svg{display:block;}
+
+/* ── PERSON CARD GRID ── */
+.person-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:14px;}
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;}
+.pcard:hover{border-color:var(--border-h);}
+.pcard-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.pcard-num{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--text-dim);}
+.pcard-name-row{display:flex;align-items:center;gap:6px;flex:1;min-width:0;}
+.pcard-name{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pcard-name.unset{color:var(--text-dim);font-style:italic;font-weight:500;}
+.pcard-slots{display:flex;flex-direction:column;gap:6px;}
+.pslot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;}
+.pslot-label{font-size:12px;font-weight:600;color:var(--text-muted);white-space:nowrap;}
+.pslot-actions{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.pcard-foot{display:flex;align-items:center;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:10px;}
+
+/* ── NAME CELL (read-only + edit toggle) ── */
+.name-display{display:flex;align-items:center;gap:6px;min-width:0;}
+.name-text{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.name-text.unset{color:var(--text-dim);font-style:italic;font-weight:500;}
+.icon-btn{background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text-dim);font-size:13px;padding:4px 7px;line-height:1;transition:all .15s;flex-shrink:0;}
+.icon-btn:hover{border-color:var(--border-h);color:var(--text);}
+.icon-btn.edit:hover{border-color:var(--purple);color:#c084fc;}
+.icon-btn.del:hover{border-color:var(--red);color:var(--red);}
+.icon-btn.go{text-decoration:none;display:inline-flex;align-items:center;}
+
 /* ── SETUP TAB ── */
 .setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
 @media(max-width:680px){.setup-grid{grid-template-columns:1fr;}}
@@ -249,35 +283,49 @@ td.actions{white-space:nowrap;width:1px;}
 
 <nav class="nav">
   <div class="nav-top">
-    <div class="nav-sw">
+    <div class="nav-sw" style="position:relative">
       <div class="nav-sw-av">ML</div>
-      <div>
-        <div class="nav-sw-name">Madame Loyal<span class="dot"></span></div>
-        <div class="nav-sw-sub" id="nav-session-sub">Générale 2026 · Madame Loyal</div>
+      <div style="min-width:0;">
+        <div class="nav-sw-name" id="nav-session-name">Madame Loyal<span class="dot"></span></div>
+        <div class="nav-sw-sub" id="nav-session-sub">Aucun événement chargé</div>
       </div>
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2.5" style="margin-left:2px;flex-shrink:0"><path d="M6 9l6 6 6-6"/></svg>
+      <select id="session-sw" style="position:absolute;inset:0;width:100%;height:100%;opacity:0.01;cursor:pointer;z-index:2;font-size:16px" onchange="onSessionSwitch(this.value)">
+        <option value="" disabled selected>Changer d'événement</option>
+      </select>
     </div>
     <button class="nm on"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;opacity:.7"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14"/><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>Médias</button>
     <div class="nav-user">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.85"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     </div>
   </div>
+  <div class="dept-tabs-bg">
+    <div class="dept-tabs" id="dept-tabs">
+      <button class="dt on" data-tab="photo" onclick="switchTab('photo')">📷 Photographes <span id="dt-photo-count" class="dt-count"></span></button>
+      <button class="dt" data-tab="video" onclick="switchTab('video')">🎬 Vidéastes <span id="dt-video-count" class="dt-count"></span></button>
+      <button class="dt" data-tab="verify" onclick="switchTab('verify')">◇ Vérification</button>
+      <button class="dt" data-tab="setup" onclick="switchTab('setup')">⚙️ Nouvel événement</button>
+      <button class="dt" data-tab="settings" onclick="switchTab('settings')">🔧 Réglages</button>
+    </div>
+  </div>
 </nav>
 
 <main class="wrap">
 
-<!-- KPI ROW — canonical module-dates pattern -->
-<div class="kpi-row">
+<!-- KPI ROW — canonical module-dates pattern, wired to loaded event -->
+<div class="kpi-row" id="kpi-row">
   <div class="kpi"><div class="kpi-edge photo"></div><div class="kpi-label" id="stat-label-1">Liens photo</div><div class="kpi-val" id="stat-photo-done">—</div></div>
   <div class="kpi"><div class="kpi-edge video"></div><div class="kpi-label" id="stat-label-2">Liens vidéo</div><div class="kpi-val" id="stat-video-done">—</div></div>
-  <div class="kpi" style="cursor:pointer;" onclick="countAllFilesForHeader()" title="Compter les fichiers uploadés">
-    <div class="kpi-edge photo"></div><div class="kpi-label">📷 Fichiers uploadés</div><div class="kpi-val" id="stat-files-photo">—</div>
+  <div class="kpi" style="cursor:pointer;" onclick="countAllFilesForHeader()" title="Cliquer pour compter les fichiers uploadés">
+    <div class="kpi-edge photo"></div><div class="kpi-label">📷 Fichiers <span style="color:var(--text-dim);font-weight:400;">· cliquer</span></div><div class="kpi-val" id="stat-files-photo">—</div>
   </div>
-  <div class="kpi" style="cursor:pointer;" onclick="countAllFilesForHeader()" title="Compter les fichiers uploadés">
-    <div class="kpi-edge video"></div><div class="kpi-label">🎬 Fichiers uploadés</div><div class="kpi-val" id="stat-files-video">—</div>
+  <div class="kpi" style="cursor:pointer;" onclick="countAllFilesForHeader()" title="Cliquer pour compter les fichiers uploadés">
+    <div class="kpi-edge video"></div><div class="kpi-label">🎬 Fichiers <span style="color:var(--text-dim);font-weight:400;">· cliquer</span></div><div class="kpi-val" id="stat-files-video">—</div>
   </div>
 </div>
 
+<!-- SETTINGS TAB (Réglages) — connection + paths -->
+<div id="tab-settings" style="display:none;">
 <!-- TOKEN PANEL — inline card, not a cut-off dropdown -->
 <div class="card" id="token-card" style="padding:14px 18px;">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
@@ -318,7 +366,7 @@ td.actions{white-space:nowrap;width:1px;}
 <!-- PATHS + SCANNER -->
 <div class="card" id="paths-card" style="padding:14px 16px;">
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
-    <div class="card-label" style="margin-bottom:0;white-space:nowrap;">📁 Chemins Dropbox</div>
+    <div class="card-label" style="margin-bottom:0;white-space:nowrap;">📁 Chemin Dropbox & événements</div>
     <div id="active-event-badge" style="display:none;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--green);font-weight:600;"></div>
   </div>
   <div class="liste-filterbar" style="margin-bottom:10px;">
@@ -326,13 +374,13 @@ td.actions{white-space:nowrap;width:1px;}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dim);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input type="text" id="paths-scan-root" placeholder="/01_ALL MEDIAS ML 2026" value="/01_ALL MEDIAS ML 2026" style="font-family:'JetBrains Mono',monospace;font-size:12px;" oninput="saveScanRoot(this.value)" onfocus="showScanSuggestions('paths-scan-root','paths-scan-sugg')" autocomplete="off">
     </label>
-    <button class="vocab-add-btn" onclick="scanEventsFromPaths()">🔍 Scanner</button>
-    <button class="btn btn-primary btn-sm" onclick="loadEventFromPaths()">⚡ Charger l'événement</button>
+    <button class="vocab-add-btn" onclick="scanEventsFromPaths()">🔍 Scanner les événements</button>
   </div>
   <div class="scan-input-wrap" style="position:relative;">
     <div class="scan-suggestions" id="paths-scan-sugg"></div>
   </div>
   <div id="paths-scan-results" style="display:none;margin-top:8px;">
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:700;margin-bottom:8px;font-family:'JetBrains Mono',monospace;">Événements trouvés — clique pour charger</div>
     <div id="paths-event-list" style="display:flex;flex-direction:column;gap:5px;"></div>
   </div>
   <!-- Hidden base path inputs — auto-filled by scanner -->
@@ -358,56 +406,55 @@ td.actions{white-space:nowrap;width:1px;}
     </div>
   </div>
 </div>
-
-<!-- TABS -->
-<div class="tab-row">
-  <button class="tab-btn active" id="tab-btn-photo" onclick="switchTab('photo')">📷 Photographes (<span id="tab-photo-count"></span>)</button>
-  <button class="tab-btn" id="tab-btn-video" onclick="switchTab('video')">🎬 Vidéastes (<span id="tab-video-count"></span>)</button>
-  <button class="tab-btn" id="tab-btn-verify" onclick="switchTab('verify')">✅ Vérif / Templates</button>
-  <button class="tab-btn setup" id="tab-btn-setup" onclick="switchTab('setup')">⚙️ Setup nouvel événement</button>
-  <div class="section-divider-line" style="margin-left:8px;"></div>
 </div>
+<!-- end settings tab -->
 
 <!-- PHOTO TAB -->
 <div id="tab-photo">
   <div class="prog-wrap"><div class="prog-fill prog-photo" id="prog-photo"></div></div>
-  <div class="callout"><strong>Assignation des noms :</strong> Entre le vrai nom, puis clique <strong>✏️</strong> pour renommer le dossier Dropbox + mettre à jour les titres des liens.</div>
   <div class="section-header">
     <span class="section-title-text">Photographes <span id="section-photo-count" style="color:var(--text-dim);font-weight:400;"></span></span>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      <button class="btn btn-ghost btn-sm" onclick="autoFetchLinks('photo')">🔄 Recharger liens</button>
-      <button class="btn btn-ghost btn-sm" id="btn-verif-photo" onclick="toggleVerifDest('photo')">🔍 Vérif destinations</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-ghost btn-sm" id="btn-verif-photo" onclick="toggleVerifDest('photo')">◇ Destinations</button>
       <button class="btn btn-ghost btn-sm" onclick="openMessagesOverlay('photo')">📨 Messages</button>
-      <button class="btn btn-ghost btn-sm" onclick="copySection('photo')">📋 Copier tableau</button>
+      <button class="btn btn-ghost btn-sm" onclick="copySection('photo')">📋 Copier</button>
+      <div class="view-toggle" id="view-toggle-photo">
+        <button class="on" data-view="list" onclick="setView('photo','list')" title="Vue liste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <button data-view="grid" onclick="setView('photo','grid')" title="Vue grille"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
+      </div>
     </div>
   </div>
-  <div class="tbl-wrap">
+  <div class="tbl-wrap" id="list-photo">
     <table>
-      <thead><tr><th>#</th><th>Slot / Nom réel</th><th>Lien Jour 1</th><th>Lien Jour 2</th><th>Lien Jour 3</th><th>Lien Partenaires</th><th>Actions</th></tr></thead>
+      <thead><tr><th>#</th><th>Nom</th><th>Jour 1</th><th>Jour 2</th><th>Jour 3</th><th>Partenaires</th><th>Actions</th></tr></thead>
       <tbody id="tbody-photo"></tbody>
     </table>
   </div>
+  <div class="person-grid" id="grid-photo" style="display:none;"></div>
 </div>
 
 <!-- VIDEO TAB -->
 <div id="tab-video" style="display:none;">
   <div class="prog-wrap"><div class="prog-fill prog-video" id="prog-video"></div></div>
-  <div class="callout"><strong>Assignation des noms :</strong> Entre le vrai nom, puis clique <strong>✏️</strong> pour renommer le dossier Dropbox + mettre à jour les titres des liens.</div>
   <div class="section-header">
     <span class="section-title-text">Vidéastes <span id="section-video-count" style="color:var(--text-dim);font-weight:400;"></span></span>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      <button class="btn btn-ghost btn-sm" onclick="autoFetchLinks('video')">🔄 Recharger liens</button>
-      <button class="btn btn-ghost btn-sm" id="btn-verif-video" onclick="toggleVerifDest('video')">🔍 Vérif destinations</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-ghost btn-sm" id="btn-verif-video" onclick="toggleVerifDest('video')">◇ Destinations</button>
       <button class="btn btn-ghost btn-sm" onclick="openMessagesOverlay('video')">📨 Messages</button>
-      <button class="btn btn-ghost btn-sm" onclick="copySection('video')">📋 Copier tableau</button>
+      <button class="btn btn-ghost btn-sm" onclick="copySection('video')">📋 Copier</button>
+      <div class="view-toggle" id="view-toggle-video">
+        <button class="on" data-view="list" onclick="setView('video','list')" title="Vue liste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <button data-view="grid" onclick="setView('video','grid')" title="Vue grille"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
+      </div>
     </div>
   </div>
-  <div class="tbl-wrap">
+  <div class="tbl-wrap" id="list-video">
     <table>
-      <thead><tr><th>#</th><th>Slot / Nom réel</th><th>Lien Jour 1</th><th>Lien Jour 2</th><th>Lien Jour 3</th><th>Lien BAB / Montages</th><th>Actions</th></tr></thead>
+      <thead><tr><th>#</th><th>Nom</th><th>Jour 1</th><th>Jour 2</th><th>Jour 3</th><th>BAB / Montages</th><th>Actions</th></tr></thead>
       <tbody id="tbody-video"></tbody>
     </table>
   </div>
+  <div class="person-grid" id="grid-video" style="display:none;"></div>
 </div>
 
 <!-- VERIFY TAB -->
@@ -618,72 +665,74 @@ td.actions{white-space:nowrap;width:1px;}
     </div>
   </div>
 
-  <!-- STEP 2+3: CONFIG (hidden until event picked) -->
+  <!-- STEP 2: SMART CONFIG (hidden until event picked) -->
   <div id="setup-config" style="display:none;">
 
+    <!-- CSV import/export -->
+    <div class="card" style="margin-bottom:14px;border-color:rgba(99,102,241,0.25);">
+      <div class="card-label">📄 Import rapide par CSV <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">— remplit tout d'un coup</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <button class="btn btn-ghost btn-sm" onclick="downloadCsvTemplate()">⬇️ Télécharger le modèle CSV</button>
+        <label class="btn btn-primary btn-sm" style="cursor:pointer;margin:0;">
+          ⬆️ Importer un CSV
+          <input type="file" accept=".csv,text/csv" style="display:none;" onchange="onCsvUpload(event)">
+        </label>
+        <span id="csv-import-status" style="font-size:12px;color:var(--text-muted);"></span>
+      </div>
+      <p class="hint" style="margin-top:8px;">Le CSV contient le nom de l'événement, les jours (dates), et la liste photo/vidéo. Une fois importé, tout est pré-rempli ci-dessous — vérifie puis clique « Tout créer ».</p>
+    </div>
+
     <div class="card" style="margin-bottom:14px;border-color:rgba(244,114,182,0.25);">
-      <div class="card-label">📌 Étape 2 — Configuration de l'événement</div>
-      <div id="selected-event-banner" style="background:rgba(244,114,182,0.07);border:1px solid rgba(244,114,182,0.15);border-radius:8px;padding:10px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div style="font-size:0.68em;text-transform:uppercase;letter-spacing:1px;color:var(--day-2);font-weight:700;margin-bottom:3px;">Événement sélectionné</div>
-          <div id="selected-event-name" style="font-family:'Space Grotesk',sans-serif;font-size:0.95em;font-weight:700;color:#fff;"></div>
-          <div id="selected-event-path" style="font-size:0.7em;color:var(--text-dim);font-family:monospace;margin-top:2px;"></div>
+      <div class="card-label">📌 Étape 2 — Configuration</div>
+      <div id="selected-event-banner" style="background:rgba(244,114,182,0.07);border:1px solid rgba(244,114,182,0.15);border-radius:8px;padding:10px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="min-width:0;flex:1;">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--day-2);font-weight:700;margin-bottom:3px;">Événement sélectionné</div>
+          <div id="selected-event-name" style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#fff;"></div>
+          <div id="selected-event-path" style="font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-top:2px;word-break:break-all;"></div>
         </div>
-        <button class="btn btn-ghost btn-xs" onclick="resetEventSelection()">✕ Changer</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetEventSelection()">✕ Changer</button>
       </div>
-      <!-- Live EVENT_CONFIG fields -->
-      <div style="background:rgba(168,85,247,0.05);border:1px solid rgba(168,85,247,0.12);border-radius:8px;padding:12px 14px;margin-bottom:14px;">
-        <div style="font-size:0.68em;text-transform:uppercase;letter-spacing:1px;color:var(--day-0);font-weight:700;margin-bottom:10px;">Template & header config — used in emails, WhatsApp, and header</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-          <div>
-            <label class="field-label">Event name</label>
-            <input type="text" id="ev-config-name" placeholder="ex: ML Sonora Bordeaux 2026" oninput="EVENT_CONFIG.name=this.value;EVENT_CONFIG.edition=this.value;document.getElementById('ev-name').value=this.value;resetSlotCache();updateStructurePreview();updateHeader('setup');const _ec2=document.getElementById('evCtx');if(_ec2)_ec2.textContent=this.value||'—';">
-          </div>
-          <div>
-            <label class="field-label">City</label>
-            <input type="text" id="ev-config-city" placeholder="ex: Bordeaux" oninput="EVENT_CONFIG.city=this.value;">
-          </div>
-          <div>
-            <label class="field-label">Date</label>
-            <input type="text" id="ev-config-date" placeholder="ex: 20–21 juin 2026" oninput="EVENT_CONFIG.date=this.value;EVENT_CONFIG.subtitle=this.value;">
-          </div>
-        </div>
+
+      <!-- Event name — the ONE thing that drives all folder names -->
+      <div class="field-group">
+        <label class="field-label">Nom de l'événement <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">— ex: PARIS XXL 2026 (sera préfixé par « ML »)</span></label>
+        <input type="text" id="smart-event-name" placeholder="PARIS XXL 2026" oninput="onSmartEventName(this.value)" style="font-size:15px;">
+        <div class="hint" id="smart-suffix-hint">Suffixe des dossiers : <code>ML …</code></div>
       </div>
-      <div class="ev-grid">
-        <div><label class="field-label">Nom affiché dans les titres des liens</label><input type="text" id="ev-name" placeholder="ex: ML Sonora Bordeaux 2026"></div>
-        <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;">
-          <div><label class="field-label">Dossier base Photographes <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">(sera créé dans le dossier événement)</span></label><input type="text" id="ev-photo-base" placeholder="ex: Photographes Pro - ML Bordeaux 2026" oninput="updateStructurePreview()"></div>
-          <div><label class="field-label">Nb</label><input type="text" id="ev-photo-count" value="10" style="max-width:70px;min-width:0;" oninput="updateStructurePreview()"></div>
+
+      <!-- Days with date pickers -->
+      <div class="field-group">
+        <label class="field-label">Jours de l'événement <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">— crée JOUR 1, JOUR 2… avec la date</span></label>
+        <div id="smart-days"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:4px;" onclick="addSmartDay()">+ Ajouter un jour</button>
+      </div>
+
+      <!-- Names -->
+      <div class="ev-grid" style="margin-top:6px;">
+        <div class="field-group">
+          <label class="field-label">📷 Photographes <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">— un nom par ligne</span></label>
+          <textarea id="smart-photo-names" placeholder="Timo-Leo&#10;Etienne&#10;Mickael&#10;Brice…" oninput="onSmartNames('photo', this.value)" style="min-height:120px;font-size:14px;line-height:1.7;"></textarea>
         </div>
-        <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;">
-          <div><label class="field-label">Dossier base Vidéastes <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">(sera créé dans le dossier événement)</span></label><input type="text" id="ev-video-base" placeholder="ex: Videastes Pro - ML Bordeaux 2026" oninput="updateStructurePreview()"></div>
-          <div><label class="field-label">Nb</label><input type="text" id="ev-video-count" value="6" style="max-width:70px;min-width:0;" oninput="updateStructurePreview()"></div>
+        <div class="field-group">
+          <label class="field-label">🎬 Vidéastes <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">— un nom par ligne</span></label>
+          <textarea id="smart-video-names" placeholder="Louis&#10;Killian&#10;Loic…" oninput="onSmartNames('video', this.value)" style="min-height:120px;font-size:14px;line-height:1.7;"></textarea>
         </div>
       </div>
     </div>
 
-    <div class="setup-grid">
-      <div class="setup-card">
-        <div class="setup-card-title">📷 Sous-dossiers Photo <span style="font-size:0.75em;color:var(--text-dim);font-weight:400;">— répétés pour chaque photographe</span></div>
-        <div id="photo-slots-config"></div>
-        <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="addSlot('photo')">+ Ajouter sous-dossier</button>
+    <!-- Structure preview -->
+    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-dim);font-weight:700;font-family:'JetBrains Mono',monospace;">Aperçu de la structure</div>
+        <div id="smart-summary" style="font-size:12px;color:var(--text-muted);font-weight:600;"></div>
       </div>
-      <div class="setup-card">
-        <div class="setup-card-title">🎬 Sous-dossiers Vidéo <span style="font-size:0.75em;color:var(--text-dim);font-weight:400;">— répétés pour chaque vidéaste</span></div>
-        <div id="video-slots-config"></div>
-        <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="addSlot('video')">+ Ajouter sous-dossier</button>
-      </div>
-    </div>
-
-    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:14px;">
-      <div style="font-size:0.68em;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);font-weight:600;margin-bottom:8px;">Aperçu de la structure</div>
-      <div id="structure-preview" style="font-family:monospace;font-size:0.72em;color:var(--text-dim);line-height:1.9;white-space:pre;overflow-x:auto;"></div>
+      <div id="smart-preview" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim);line-height:1.8;white-space:pre;overflow-x:auto;"></div>
     </div>
 
     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
-      <button class="btn btn-bordeaux" id="btn-run-setup" onclick="runSetup()">🚀 Tout créer (dossiers + upload links)</button>
+      <button class="btn btn-primary" id="btn-run-setup" onclick="runSmartSetup()">🚀 Tout créer (dossiers + upload links)</button>
       <button class="btn btn-ghost btn-sm" onclick="clearLog()">Vider le log</button>
-      <span id="setup-progress" style="font-size:0.75em;color:var(--text-muted);"></span>
+      <span id="setup-progress" style="font-size:13px;color:var(--text-muted);"></span>
     </div>
     <div class="log-box" id="setup-log">En attente…</div>
 
@@ -757,8 +806,8 @@ function loadEventState(newPhotoState, newVideoState) {
   renderTable('photo');
   renderTable('video');
   renderVerifyTables(true); // force re-render
-  document.getElementById('tab-photo-count').textContent = photoState.length;
-  document.getElementById('tab-video-count').textContent = videoState.length;
+  const _dp=document.getElementById('dt-photo-count'); if(_dp) _dp.textContent='('+photoState.length+')';
+  const _dv=document.getElementById('dt-video-count'); if(_dv) _dv.textContent='('+videoState.length+')';
   updateHeader('photo');
   switchTab('photo');
   toast(`✓ Événement chargé — ${photoState.length} photographes · ${videoState.length} vidéastes`, 'success');
@@ -782,10 +831,223 @@ function getSetupSlots(type) {
     {folder:`BAB & Montages - ${ev}`, title:`Vidéos BAB & Montages - "{nom}" - ${ev}`, desc:"Tous tes montages finaux en 4k. N'oublie pas de mettre ton @ sur le nom des fichiers."},
   ];
 }
-// Kept for backward compat — now dynamic
-let setupPhotoSlots = [];
-let setupVideoSlots = [];
+// Live editable slot arrays — initialised from getSetupSlots, refreshed when event name changes
+let setupPhotoSlots = getSetupSlots('photo');
+let setupVideoSlots = getSetupSlots('video');
+function resyncSetupSlots() {
+  setupPhotoSlots = getSetupSlots('photo');
+  setupVideoSlots = getSetupSlots('video');
+}
 let setupResults = [];
+
+// ══════════════════════════════════════════════════
+// SMART SETUP — auto-fill from event name + days + names
+// Naming convention (from real Dropbox structure):
+//   suffix          = "ML " + eventName            e.g. "ML PARIS XXL 2026"
+//   photo base      = "Photographes Pro - " + suffix
+//   video base      = "Videastes Pro - " + suffix
+//   person folder   = "NN_Name - " + suffix         e.g. "01_Timo-Leo - ML PARIS XXL 2026"
+//   day subfolder   = "JOUR N (DD.MM.YY) - " + suffix
+//   photo extra     = "PARTENAIRES - " + suffix
+//   video extra     = "BAB & Montages - " + suffix
+// ══════════════════════════════════════════════════
+const smartSetup = {
+  eventName: '',          // e.g. "PARIS XXL 2026"
+  days: [],               // [{date:'2026-03-13'}, ...]
+  photoNames: [],         // ['Timo-Leo','Etienne',...]
+  videoNames: [],
+};
+
+function smartSuffix() {
+  const n = (smartSetup.eventName||'').trim();
+  return n ? `ML ${n}` : 'ML EVENT 2026';
+}
+function smartPhotoBase(){ return `Photographes Pro - ${smartSuffix()}`; }
+function smartVideoBase(){ return `Videastes Pro - ${smartSuffix()}`; }
+
+// Format an ISO date (yyyy-mm-dd) → "DD.MM.YY"
+function fmtDayDate(iso) {
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}.${m}.${y.slice(2)}`;
+}
+
+// Build the subfolder list for a person of a given type
+function smartSubfolders(type) {
+  const suffix = smartSuffix();
+  const subs = [];
+  smartSetup.days.forEach((day, i) => {
+    const dateStr = day.date ? ` (${fmtDayDate(day.date)})` : '';
+    const folder = `JOUR ${i+1}${dateStr} - ${suffix}`;
+    if(type==='photo') {
+      subs.push({folder, title:`Photos Jour ${i+1} - "{nom}" - ${suffix}`, desc:`Ici, tu peux mettre toutes les photos du Jour ${i+1}. N'oublie pas de mettre ton @ sur le nom des photos.`});
+    } else {
+      subs.push({folder, title:`Vidéos Jour ${i+1} - "{nom}" - ${suffix}`, desc:`Tous tes exports Jour ${i+1} en 4k.`});
+    }
+  });
+  if(type==='photo') {
+    subs.push({folder:`PARTENAIRES - ${suffix}`, title:`Photos Partenaires - "{nom}" - ${suffix}`, desc:"Ici, tu peux mettre toutes les photos partenaires. N'oublie pas de mettre ton @ sur le nom des photos."});
+  } else {
+    subs.push({folder:`BAB & Montages - ${suffix}`, title:`Vidéos BAB & Montages - "{nom}" - ${suffix}`, desc:"Tous tes montages finaux en 4k. N'oublie pas de mettre ton @ sur le nom des fichiers."});
+  }
+  return subs;
+}
+
+function parseNamesInput(raw) {
+  return (raw||'').split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
+}
+
+// ── CSV IMPORT / EXPORT ──
+function downloadCsvTemplate() {
+  const lines = [
+    'field,value',
+    'event_name,PARIS XXL 2026',
+    'day,2026-03-13',
+    'day,2026-03-14',
+    'role,name',
+    'photo,Timo-Leo',
+    'photo,Etienne',
+    'photo,Mickael',
+    'video,Louis',
+    'video,Killian',
+  ];
+  const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'modele-evenement-ML.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('✓ Modèle CSV téléchargé','success');
+}
+
+function onCsvUpload(ev) {
+  const file = ev.target.files && ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try { applyCsv(e.target.result); }
+    catch(err){ toast('✗ CSV illisible : '+err.message,'error'); }
+    ev.target.value = ''; // allow re-upload of same file
+  };
+  reader.readAsText(file);
+}
+
+function applyCsv(text) {
+  const rows = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean)
+    .map(l=>l.split(',').map(c=>c.trim().replace(/^"|"$/g,'')));
+  let eventName = '';
+  const days = [];
+  const photoNames = [];
+  const videoNames = [];
+  let headerSeen = false;
+  for(const cols of rows){
+    const a = (cols[0]||'').toLowerCase();
+    const b = cols[1]||'';
+    if(a==='field' && b.toLowerCase()==='value') continue;       // template header
+    if(a==='role' && b.toLowerCase()==='name'){ headerSeen=true; continue; } // section divider
+    if(a==='event_name'){ eventName = b; continue; }
+    if(a==='day'){ if(b) days.push({date:b}); continue; }
+    if(a==='photo'){ if(b) photoNames.push(b); continue; }
+    if(a==='video'){ if(b) videoNames.push(b); continue; }
+  }
+  // Apply to smartSetup + UI
+  if(eventName){
+    smartSetup.eventName = eventName;
+    const sn = document.getElementById('smart-event-name'); if(sn) sn.value = eventName;
+    onSmartEventName(eventName);
+  }
+  if(days.length){ smartSetup.days = days; renderSmartDays(); }
+  if(photoNames.length){
+    smartSetup.photoNames = photoNames;
+    const pt = document.getElementById('smart-photo-names'); if(pt) pt.value = photoNames.join('\n');
+  }
+  if(videoNames.length){
+    smartSetup.videoNames = videoNames;
+    const vt = document.getElementById('smart-video-names'); if(vt) vt.value = videoNames.join('\n');
+  }
+  renderSmartPreview();
+  const status = document.getElementById('csv-import-status');
+  if(status) status.textContent = `✓ ${photoNames.length} photo · ${videoNames.length} vidéo · ${days.length} jours`;
+  toast(`✓ CSV importé — ${photoNames.length+videoNames.length} personnes`,'success');
+}
+
+function onSmartEventName(val) {
+  smartSetup.eventName = val;
+  EVENT_CONFIG.name = val; EVENT_CONFIG.edition = val;
+  localStorage.setItem('dbx_ev_city', val);
+  const hint = document.getElementById('smart-suffix-hint');
+  if(hint) hint.innerHTML = `Suffixe des dossiers : <code>${smartSuffix()}</code>`;
+  renderSmartPreview();
+  updateHeader('setup');
+}
+function onSmartNames(type, val) {
+  if(type==='photo') smartSetup.photoNames = parseNamesInput(val);
+  else smartSetup.videoNames = parseNamesInput(val);
+  renderSmartPreview();
+}
+function addSmartDay() {
+  smartSetup.days.push({date:''});
+  renderSmartDays();
+  renderSmartPreview();
+}
+function removeSmartDay(i) {
+  smartSetup.days.splice(i,1);
+  renderSmartDays();
+  renderSmartPreview();
+}
+function setSmartDayDate(i, val) {
+  if(smartSetup.days[i]) smartSetup.days[i].date = val;
+  renderSmartPreview();
+}
+
+function renderSmartDays() {
+  const wrap = document.getElementById('smart-days');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  smartSetup.days.forEach((day, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px;';
+    row.innerHTML = `
+      <span style="font-size:12px;font-weight:700;color:var(--text-muted);font-family:'JetBrains Mono',monospace;min-width:54px;">JOUR ${i+1}</span>
+      <input type="date" value="${day.date}" oninput="setSmartDayDate(${i}, this.value)" style="flex:1;font-size:14px;">
+      <button class="btn btn-ghost btn-sm" onclick="removeSmartDay(${i})" title="Retirer ce jour">✕</button>`;
+    wrap.appendChild(row);
+  });
+}
+
+function renderSmartPreview() {
+  const el = document.getElementById('smart-preview');
+  if(!el) return;
+  const suffix = smartSuffix();
+  const photoNames = smartSetup.photoNames;
+  const videoNames = smartSetup.videoNames;
+  const lines = [];
+  lines.push(`📁 ${smartPhotoBase()}/`);
+  const pSubs = smartSubfolders('photo');
+  (photoNames.length?photoNames:['(noms…)']).slice(0,3).forEach((nm,i)=>{
+    const num = String(i+1).padStart(2,'0');
+    lines.push(`   ${num}_${nm} - ${suffix}/`);
+    pSubs.forEach(s=>lines.push(`      ${s.folder}/`));
+  });
+  if(photoNames.length>3) lines.push(`   … +${photoNames.length-3} autres photographes`);
+  lines.push('');
+  lines.push(`📁 ${smartVideoBase()}/`);
+  const vSubs = smartSubfolders('video');
+  (videoNames.length?videoNames:['(noms…)']).slice(0,2).forEach((nm,i)=>{
+    const num = String(i+1).padStart(2,'0');
+    lines.push(`   ${num}_${nm} - ${suffix}/`);
+    vSubs.forEach(s=>lines.push(`      ${s.folder}/`));
+  });
+  if(videoNames.length>2) lines.push(`   … +${videoNames.length-2} autres vidéastes`);
+  el.textContent = lines.join('\n');
+  // Summary counts
+  const sum = document.getElementById('smart-summary');
+  if(sum) {
+    const totalFolders = photoNames.length*pSubs.length + videoNames.length*vSubs.length;
+    sum.textContent = `${photoNames.length} photographes · ${videoNames.length} vidéastes · ${smartSetup.days.length} jours → ${totalFolders} dossiers + liens`;
+  }
+}
+
 
 // ══════════════════════════════════════════════════
 // TOKEN DROPDOWN
@@ -1049,30 +1311,137 @@ function keyLabel(type, key) {
   return type==='photo'?{j1:'Jour 1',j2:'Jour 2',j3:'Jour 3',p3:'Partenaires'}[key]:{j1:'Jour 1',j2:'Jour 2',j3:'Jour 3',p3:'BAB'}[key];
 }
 
+const viewMode = { photo:'list', video:'list' };
+
+function setView(type, mode) {
+  viewMode[type] = mode;
+  document.querySelectorAll(`#view-toggle-${type} button`).forEach(b=>{
+    b.classList.toggle('on', b.dataset.view===mode);
+  });
+  document.getElementById(`list-${type}`).style.display = mode==='list' ? '' : 'none';
+  document.getElementById(`grid-${type}`).style.display = mode==='grid' ? '' : 'none';
+  renderTable(type);
+}
+
+// Toggle a name cell between read-only and editable
+function toggleNameEdit(type, idx) {
+  const state = type==='photo'?photoState:videoState;
+  const row = state[idx];
+  row._editing = !row._editing;
+  renderTable(type);
+  if(row._editing) {
+    const inp = document.getElementById(`name-${type}-${row.n}`);
+    if(inp){ inp.focus(); inp.select(); }
+  }
+}
+
+function commitNameEdit(type, idx) {
+  const state = type==='photo'?photoState:videoState;
+  const row = state[idx];
+  if(row._editing){ row._editing = false; doRename(type, idx); }
+}
+
+function lnkCellOrPlus(type, idx, key) {
+  const state = type==='photo'?photoState:videoState;
+  const row = state[idx];
+  const url = key==='j3' ? (row.links.j3?.url||'') : row.links[key].url;
+  const lbl = keyLabel(type, key);
+  if(url) {
+    return `<td class="lnk lnk-has-link">
+      <a href="${url}" target="_blank" class="lnk-request" title="${url}">Lien</a>
+      <button onclick="deleteSlot('${type}',${idx},'${key}')" class="btn-del-slot" title="Supprimer ce lien et dossier">🗑</button>
+    </td>`;
+  }
+  return `<td class="lnk"><button class="btn btn-ghost btn-xs" id="btn-${type}-${row.n}-${key}" onclick="generateOne('${type}',${idx},'${key}')" title="Créer ${lbl}">+ créer</button></td>`;
+}
+
 function renderTable(type) {
   const state = type==='photo'?photoState:videoState;
   const keys  = ['j1','j2','j3','p3'];
-  const tbody = document.getElementById('tbody-'+type);
-  tbody.innerHTML='';
   const kind = type==='photo'?'Photographe':'Vidéaste';
-  state.forEach((row,idx)=>{
-    const tr = document.createElement('tr'); tr.id='tr-'+type+'-'+row.n;
-    const anyDest = row.links.j1.dest||row.links.j2.dest||row.links.j3?.dest||row.links.p3.dest||'';
-    const folderUrl = getFolderUrl(type, row, anyDest);
-    const folderBtn = folderUrl ? `<a href="${folderUrl}" target="_blank" class="btn btn-ghost btn-xs" title="Ouvrir dossier Dropbox">📁</a>` : '';
-    const editorBtn = row.editorUrl
-      ? `<a href="${row.editorUrl}" target="_blank" class="btn btn-ghost btn-xs" title="Lien éditeur Dropbox" style="color:var(--green);">🔗</a>`
-      : `<button class="btn btn-ghost btn-xs" title="Créer lien éditeur" onclick="createEditorLink('${type}',${idx})" style="color:var(--text-dim);">🔗</button>`;
-    const nameCell=`<td class="name-cell"><div class="slot-label">${kind} ${row.n}</div><div class="name-edit-wrap"><input type="text" id="name-${type}-${row.n}" value="${row.realName}" placeholder="Nom réel…" oninput="setName('${type}',${idx},this.value)"><button class="btn btn-rename btn-xs" onclick="doRename('${type}',${idx})">✏️</button>${folderBtn}${editorBtn}</div></td>`;
-    const actionsCell=`<td class="actions"><div class="action-btns">${keys.map(k=>{const url=row.links[k].url;const lbl=keyLabel(type,k);if(url) return `<button class="btn btn-done btn-xs">✓ ${lbl}</button>`;return `<button class="btn btn-ghost btn-xs" id="btn-${type}-${row.n}-${k}" onclick="generateOne('${type}',${idx},'${k}')">+ ${lbl}</button>`;}).join('')}</div></td>`;
-    const delPersonBtn = `<button class="btn btn-ghost btn-xs" onclick="deletePerson('${type}',${idx})" title="Supprimer cette personne et tous ses dossiers" style="color:var(--text-dim);margin-left:2px;" onmouseenter="this.style.color='var(--red)'" onmouseleave="this.style.color='var(--text-dim)'">🗑</button>`;
-    const cell1 = lnkCell(row.links.j1.url, type, idx, 'j1');
-    const cell2 = lnkCell(row.links.j2.url, type, idx, 'j2');
-    const cell3 = lnkCell(row.links.j3?.url||'', type, idx, 'j3');
-    const cell4 = lnkCell(row.links.p3.url, type, idx, 'p3');
-    tr.innerHTML=`<td class="num">${String(row.n).padStart(2,'0')}</td>${nameCell.replace('</td>', delPersonBtn+'</td>')}${cell1}${cell2}${cell3}${actionsCell}`;
-    tbody.appendChild(tr);
-  });
+
+  // ── LIST (table) ──
+  const tbody = document.getElementById('tbody-'+type);
+  if(tbody){
+    tbody.innerHTML='';
+    if(state.length===0){
+      tbody.innerHTML=`<tr class="liste-empty"><td colspan="7">Aucun ${kind.toLowerCase()} chargé — choisis un événement dans le menu en haut à gauche, ou scanne dans 🔧 Réglages.</td></tr>`;
+    }
+    state.forEach((row,idx)=>{
+      const tr = document.createElement('tr'); tr.id='tr-'+type+'-'+row.n;
+      const anyDest = row.links.j1.dest||row.links.j2.dest||row.links.j3?.dest||row.links.p3.dest||'';
+      const folderUrl = getFolderUrl(type, row, anyDest);
+      const hasName = !!row.realName.trim();
+      // name cell: read-only display + edit pencil, OR input when editing
+      let nameInner;
+      if(row._editing){
+        nameInner = `<div class="name-edit-wrap">
+          <input type="text" id="name-${type}-${row.n}" value="${row.realName}" placeholder="Nom réel…" oninput="setName('${type}',${idx},this.value)" onkeydown="if(event.key==='Enter')commitNameEdit('${type}',${idx})">
+          <button class="icon-btn edit" title="Valider + renommer Dropbox" onclick="commitNameEdit('${type}',${idx})">✓</button>
+        </div>`;
+      } else {
+        nameInner = `<div class="name-display">
+          <span class="name-text ${hasName?'':'unset'}">${hasName?row.realName:kind+' '+row.n}</span>
+          <button class="icon-btn edit" title="Modifier le nom" onclick="toggleNameEdit('${type}',${idx})">✏️</button>
+        </div>`;
+      }
+      const nameCell = `<td class="name-cell">${nameInner}</td>`;
+      // actions (last column): folder, editor link, delete person
+      const folderBtn = folderUrl ? `<a href="${folderUrl}" target="_blank" class="icon-btn go" title="Ouvrir dossier Dropbox">📁</a>` : '';
+      const editorBtn = row.editorUrl
+        ? `<a href="${row.editorUrl}" target="_blank" class="icon-btn go" title="Lien éditeur" style="color:var(--green);">🔗</a>`
+        : `<button class="icon-btn" title="Créer lien éditeur" onclick="createEditorLink('${type}',${idx})">🔗</button>`;
+      const delBtn = `<button class="icon-btn del" title="Supprimer cette personne" onclick="deletePerson('${type}',${idx})">🗑</button>`;
+      const actionsCell = `<td class="actions"><div style="display:flex;gap:4px;justify-content:flex-end;">${folderBtn}${editorBtn}${delBtn}</div></td>`;
+      tr.innerHTML = `<td class="num">${String(row.n).padStart(2,'0')}</td>${nameCell}${lnkCellOrPlus(type,idx,'j1')}${lnkCellOrPlus(type,idx,'j2')}${lnkCellOrPlus(type,idx,'j3')}${lnkCellOrPlus(type,idx,'p3')}${actionsCell}`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ── GRID (cards) ──
+  const grid = document.getElementById('grid-'+type);
+  if(grid){
+    grid.innerHTML='';
+    if(state.length===0){
+      grid.innerHTML=`<div style="grid-column:1/-1;color:var(--text-dim);font-size:13px;padding:30px 0;text-align:center;">Aucun ${kind.toLowerCase()} chargé.</div>`;
+    }
+    state.forEach((row,idx)=>{
+      const anyDest = row.links.j1.dest||row.links.j2.dest||row.links.j3?.dest||row.links.p3.dest||'';
+      const folderUrl = getFolderUrl(type, row, anyDest);
+      const hasName = !!row.realName.trim();
+      const card = document.createElement('div'); card.className='pcard';
+      const nameBlock = row._editing
+        ? `<div class="name-edit-wrap" style="flex:1;">
+             <input type="text" id="name-${type}-${row.n}" value="${row.realName}" placeholder="Nom réel…" oninput="setName('${type}',${idx},this.value)" onkeydown="if(event.key==='Enter')commitNameEdit('${type}',${idx})">
+             <button class="icon-btn edit" title="Valider" onclick="commitNameEdit('${type}',${idx})">✓</button>
+           </div>`
+        : `<div class="pcard-name-row">
+             <span class="pcard-name ${hasName?'':'unset'}">${hasName?row.realName:kind+' '+row.n}</span>
+             <button class="icon-btn edit" title="Modifier le nom" onclick="toggleNameEdit('${type}',${idx})">✏️</button>
+           </div>`;
+      const slotsHtml = keys.map(k=>{
+        const url = k==='j3'?(row.links.j3?.url||''):row.links[k].url;
+        const lbl = keyLabel(type,k);
+        const right = url
+          ? `<a href="${url}" target="_blank" class="lnk-request" style="font-size:12px;font-weight:600;">Lien</a><button onclick="deleteSlot('${type}',${idx},'${k}')" class="icon-btn del" title="Supprimer">🗑</button>`
+          : `<button class="btn btn-ghost btn-xs" id="btn-${type}-${row.n}-${k}" onclick="generateOne('${type}',${idx},'${k}')">+ créer</button>`;
+        return `<div class="pslot"><span class="pslot-label">${lbl}</span><div class="pslot-actions">${right}</div></div>`;
+      }).join('');
+      const folderBtn = folderUrl ? `<a href="${folderUrl}" target="_blank" class="icon-btn go" title="Ouvrir dossier Dropbox">📁 Dossier</a>` : '';
+      const editorBtn = row.editorUrl
+        ? `<a href="${row.editorUrl}" target="_blank" class="icon-btn go" title="Lien éditeur" style="color:var(--green);">🔗 Éditeur</a>`
+        : `<button class="icon-btn" title="Créer lien éditeur" onclick="createEditorLink('${type}',${idx})">🔗 Éditeur</button>`;
+      const delBtn = `<button class="icon-btn del" title="Supprimer cette personne" onclick="deletePerson('${type}',${idx})">🗑</button>`;
+      card.innerHTML = `
+        <div class="pcard-head">
+          <span class="pcard-num">#${String(row.n).padStart(2,'0')}</span>
+          ${nameBlock}
+        </div>
+        <div class="pcard-slots">${slotsHtml}</div>
+        <div class="pcard-foot">${folderBtn}${editorBtn}<span style="margin-left:auto;"></span>${delBtn}</div>`;
+      grid.appendChild(card);
+    });
+  }
   updateStats();
 }
 
@@ -1093,8 +1462,8 @@ function updateStats() {
   const sc1=document.getElementById('section-photo-count'); if(sc1) sc1.textContent='('+photoState.length+')';
   const sc2=document.getElementById('section-video-count'); if(sc2) sc2.textContent='('+videoState.length+')';
   const sc3=document.getElementById('verify-photo-section-count'); if(sc3) sc3.textContent='('+photoState.length+')';
-  const tc1=document.getElementById('tab-photo-count'); if(tc1) tc1.textContent=photoState.length;
-  const tc2=document.getElementById('tab-video-count'); if(tc2) tc2.textContent=videoState.length;
+  const tc1=document.getElementById('dt-photo-count'); if(tc1) tc1.textContent='('+photoState.length+')';
+  const tc2=document.getElementById('dt-video-count'); if(tc2) tc2.textContent='('+videoState.length+')';
 }
 
 function setName(type,idx,val){
@@ -1115,11 +1484,17 @@ function setName(type,idx,val){
 // TABS
 // ══════════════════════════════════════════════════
 function switchTab(tab) {
-  ['photo','video','verify','setup'].forEach(t=>{
-    document.getElementById('tab-'+t).style.display=t===tab?'':'none';
-    document.getElementById('tab-btn-'+t).classList.toggle('active',t===tab);
+  ['photo','video','verify','setup','settings'].forEach(t=>{
+    const el = document.getElementById('tab-'+t);
+    if(el) el.style.display = t===tab?'':'none';
   });
-  document.getElementById('paths-card').style.display=tab==='setup'?'none':'';
+  // Dept-tab highlight (second-row nav)
+  document.querySelectorAll('#dept-tabs .dt').forEach(b=>{
+    b.classList.toggle('on', b.dataset.tab===tab);
+  });
+  // KPI cards only on the two media list tabs
+  const kpi = document.getElementById('kpi-row');
+  if(kpi) kpi.style.display = (tab==='photo'||tab==='video') ? '' : 'none';
   if(tab==='verify') renderVerifyTables();
   updateHeader(tab);
 }
@@ -1127,39 +1502,30 @@ function switchTab(tab) {
 function updateHeader(tab) {
   const l1 = document.getElementById('stat-label-1');
   const l2 = document.getElementById('stat-label-2');
-  // Update nav session subtitle with event context
   const navSub = document.getElementById('nav-session-sub');
   const evLabel = EVENT_CONFIG.edition || EVENT_CONFIG.city || EVENT_CONFIG.name || '';
-  const subBase = evLabel ? evLabel : 'Générale 2026 · Madame Loyal';
-  if(tab==='photo'||tab==='video') {
-    if(navSub) navSub.textContent = `Médias · ${subBase}`;
-    document.getElementById('tab-photo-count').textContent = photoState.length;
-    document.getElementById('tab-video-count').textContent = videoState.length;
-    const sc1 = document.getElementById('section-photo-count');
-    const sc2 = document.getElementById('section-video-count');
-    const sc3 = document.getElementById('verify-photo-section-count');
-    if(sc1) sc1.textContent = '('+photoState.length+')';
-    if(sc2) sc2.textContent = '('+videoState.length+')';
-    if(sc3) sc3.textContent = '('+photoState.length+')';
-    if(l1) l1.textContent='Liens photo';
-    if(l2) l2.textContent='Liens vidéo';
-    updateStats();
-  } else if(tab==='verify') {
-    if(navSub) navSub.textContent = `Médias · Vérification · ${subBase}`;
-    document.getElementById('stat-photo-done').innerHTML='—';
-    document.getElementById('stat-video-done').innerHTML='—';
-    if(l1) l1.textContent='Liens photo';
-    if(l2) l2.textContent='Liens vidéo';
-  } else {
-    // Setup tab
-    if(navSub) navSub.textContent = 'Setup nouvel événement';
-    document.getElementById('stat-photo-done').innerHTML='—';
-    document.getElementById('stat-video-done').innerHTML='—';
-    const sf1=document.getElementById('stat-files-photo'); if(sf1){sf1.innerHTML='—';sf1.style.color='var(--text-dim)';}
-    const sf2=document.getElementById('stat-files-video'); if(sf2){sf2.innerHTML='—';sf2.style.color='var(--text-dim)';}
+  const subBase = evLabel ? `Médias · ${evLabel}` : 'Aucun événement chargé';
+  // dept-tab counts + section counts always reflect loaded state
+  const _dp=document.getElementById('dt-photo-count'); if(_dp) _dp.textContent='('+photoState.length+')';
+  const _dv=document.getElementById('dt-video-count'); if(_dv) _dv.textContent='('+videoState.length+')';
+  const sc1 = document.getElementById('section-photo-count'); if(sc1) sc1.textContent='('+photoState.length+')';
+  const sc2 = document.getElementById('section-video-count'); if(sc2) sc2.textContent='('+videoState.length+')';
+  const sc3 = document.getElementById('verify-photo-section-count'); if(sc3) sc3.textContent='('+photoState.length+')';
+  // KPI labels
+  if(tab==='setup'){
     if(l1) l1.textContent='Liens créés';
     if(l2) l2.textContent='Liens vidéo';
+  } else {
+    if(l1) l1.textContent='Liens photo';
+    if(l2) l2.textContent='Liens vidéo';
   }
+  // Nav subtitle by context
+  if(tab==='verify') navSub && (navSub.textContent = evLabel ? `Médias · Vérification · ${evLabel}` : 'Vérification');
+  else if(tab==='setup') navSub && (navSub.textContent = 'Nouvel événement');
+  else if(tab==='settings') navSub && (navSub.textContent = 'Réglages');
+  else navSub && (navSub.textContent = subBase);
+  // KPI link counts always reflect the loaded event (persist across tabs)
+  updateStats();
 }
 
 // ══════════════════════════════════════════════════
@@ -1549,6 +1915,32 @@ document.addEventListener('click', e => {
 // ══════════════════════════════════════════════════
 // PATHS CARD SCANNER
 // ══════════════════════════════════════════════════
+// Scanned events available in the session switcher: [{name, path}]
+let scannedEvents = [];
+
+function renderSwitcher() {
+  const sw = document.getElementById('session-sw');
+  if(!sw) return;
+  const opts = ['<option value="" disabled>Changer d\'événement</option>'];
+  if(scannedEvents.length===0){
+    opts.push('<option value="" disabled>— scanne d\'abord dans Réglages —</option>');
+  }
+  scannedEvents.forEach((e,i)=>{
+    const sel = (e.path===selectedEventPath) ? ' selected' : '';
+    opts.push(`<option value="${i}"${sel}>${e.name}</option>`);
+  });
+  sw.innerHTML = opts.join('');
+}
+
+function onSessionSwitch(idx) {
+  const ev = scannedEvents[parseInt(idx)];
+  if(!ev) return;
+  const nm = document.getElementById('nav-session-name');
+  if(nm) nm.innerHTML = `${ev.name}<span class="dot"></span>`;
+  selectEventFromPaths(ev.path, ev.name);
+  switchTab('photo');
+}
+
 async function scanEventsFromPaths() {
   if(!getToken()){toast('⚠️ Connect Dropbox first','warn');toggleTokenDropdown();return;}
   const root = document.getElementById('paths-scan-root').value.trim().replace(/\/$/,'');
@@ -1559,44 +1951,49 @@ async function scanEventsFromPaths() {
   try {
     const data = await apiPost('files/list_folder',{path:root,include_non_downloadable_files:false});
     const folders = (data.entries||[]).filter(e=>e['.tag']==='folder').sort((a,b)=>a.name.localeCompare(b.name));
+    // Populate session switcher
+    scannedEvents = folders.map(f=>({name:f.name, path:f.path_display}));
+    renderSwitcher();
     const list = document.getElementById('paths-event-list');
     list.innerHTML = '';
     if(!folders.length){
-      list.innerHTML='<div style="font-size:0.75em;color:var(--text-dim);padding:4px 0;">No subfolders found.</div>';
+      list.innerHTML='<div style="font-size:13px;color:var(--text-dim);padding:4px 0;">Aucun sous-dossier trouvé.</div>';
     } else {
       folders.forEach(f=>{
         const row = document.createElement('div');
         row.style.cssText='display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 12px;cursor:pointer;transition:border-color .15s;';
         row.onmouseenter=()=>row.style.borderColor='rgba(52,211,153,0.3)';
         row.onmouseleave=()=>row.style.borderColor='rgba(255,255,255,0.05)';
-        row.innerHTML=`<div><div style="font-size:0.82em;font-weight:600;color:#fff;">${f.name}</div><div style="font-size:0.68em;color:var(--text-dim);font-family:monospace;margin-top:2px;">${f.path_display}</div></div><span style="font-size:0.7em;color:var(--green);font-weight:600;">Select →</span>`;
-        row.onclick=()=>selectEventFromPaths(f.path_display, f.name);
+        row.innerHTML=`<div style="min-width:0;"><div style="font-size:13px;font-weight:600;color:#fff;">${f.name}</div><div style="font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-top:2px;word-break:break-all;">${f.path_display}</div></div><span style="font-size:12px;color:var(--green);font-weight:600;flex-shrink:0;margin-left:8px;">Charger →</span>`;
+        row.onclick=()=>{ selectEventFromPaths(f.path_display, f.name); switchTab('photo'); };
         list.appendChild(row);
       });
     }
     document.getElementById('paths-scan-results').style.display='block';
-    toast(`✓ ${folders.length} event(s) found`,'success');
+    toast(`✓ ${folders.length} événement(s) trouvé(s)`,'success');
   } catch(e){ toast('✗ '+e.message,'error'); }
   btn.disabled=false; btn.textContent='🔍 Scanner';
 }
 
 function selectEventFromPaths(path, name) {
   const cleanName = name.replace(/^\d+_/,'').trim();
-  // Only set internal name — edition/city are controlled by the Ville/Édition input field
+  selectedEventPath = path;
   EVENT_CONFIG.name = cleanName;
-  // Update topbar context badge
+  // Update nav session name + subtitle
+  const nm = document.getElementById('nav-session-name');
+  if(nm) nm.innerHTML = `${name}<span class="dot"></span>`;
   const _ctx = document.getElementById('evCtx');
   if(_ctx) _ctx.textContent = EVENT_CONFIG.edition || EVENT_CONFIG.city || cleanName;
-  // Show badge
   const badge = document.getElementById('active-event-badge');
-  badge.textContent = '✓ ' + name;
-  badge.style.display = 'block';
-  const _lbl = document.getElementById('paths-card-label'); if(_lbl) _lbl.textContent='';
+  if(badge){ badge.textContent = '✓ ' + name; badge.style.display = 'block'; }
+  // Keep switcher option in sync (in case selection came from the list, not the dropdown)
+  const sw = document.getElementById('session-sw');
+  if(sw){ const i = scannedEvents.findIndex(e=>e.path===path); if(i>=0) sw.value = String(i); }
   // Hide scan results
-  document.getElementById('paths-scan-results').style.display='none';
-  // Auto-guess photo/video base paths by scanning the event folder
+  const sr = document.getElementById('paths-scan-results'); if(sr) sr.style.display='none';
+  // Auto-load existing folders + links (creates nothing)
   autoFillBasePaths(path, name);
-  toast(`✓ Selected: ${name}`,'success');
+  toast(`✓ ${name}`,'success');
 }
 
 async function autoFillBasePaths(eventPath, eventName) {
@@ -1622,8 +2019,10 @@ async function autoFillBasePaths(eventPath, eventName) {
 
     if(photoF) document.getElementById('path-photo').value = photoF.path_display;
     if(videoF) document.getElementById('path-video').value = videoF.path_display;
-    if(!photoF && !videoF) toast('⚠️ Paths not found — fill manually','warn');
+    if(!photoF && !videoF){ toast('⚠️ Chemins introuvables — remplis manuellement','warn'); return; }
     updateHeader('photo');
+    // Auto-load existing folders + links immediately (no creation)
+    await loadEventFromPaths();
   } catch(e){ toast('⚠️ Could not scan paths: '+e.message,'warn'); }
 }
 
@@ -1798,19 +2197,19 @@ function selectEvent(path, name) {
   selectedEventPath = path;
   document.getElementById('selected-event-name').textContent = name;
   document.getElementById('selected-event-path').textContent = path;
-  // Auto-fill event name (strip leading number prefix like "02_")
-  const cleanName = name.replace(/^\d+_/,'').trim();
-  document.getElementById('ev-name').value = cleanName;
-  // Pre-fill EVENT_CONFIG fields from scanned event name
-  EVENT_CONFIG.name    = cleanName;
-  EVENT_CONFIG.edition = cleanName;
-  document.getElementById('ev-config-name').value    = cleanName;
-  document.getElementById('ev-config-city').value    = EVENT_CONFIG.city || '';
-  document.getElementById('ev-config-date').value    = EVENT_CONFIG.date || '';
+  // Auto-derive event name: strip leading "NN_" and a leading "ML " if present
+  let cleanName = name.replace(/^\d+_/,'').trim();
+  cleanName = cleanName.replace(/^ML\s+/i,'').trim();
+  smartSetup.eventName = cleanName;
+  EVENT_CONFIG.name = cleanName; EVENT_CONFIG.edition = cleanName;
+  const sn = document.getElementById('smart-event-name'); if(sn) sn.value = cleanName;
+  // Seed two days by default if none yet
+  if(smartSetup.days.length===0){ smartSetup.days=[{date:''},{date:''}]; }
+  renderSmartDays();
   // Show config section
   document.getElementById('setup-config').style.display='block';
   document.getElementById('setup-config').scrollIntoView({behavior:'smooth',block:'start'});
-  updateStructurePreview();
+  renderSmartPreview();
   updateHeader('setup');
 }
 
@@ -1822,33 +2221,8 @@ function resetEventSelection() {
   updateHeader('setup');
 }
 
-function updateStructurePreview() {
-  const evPath = selectedEventPath || '/EVENT_PATH';
-  const photoBase = document.getElementById('ev-photo-base').value.trim() || 'Photographes Pro - ML EVENT 2026';
-  const videoBase = document.getElementById('ev-video-base').value.trim() || 'Videastes Pro - ML EVENT 2026';
-  const photoCount = parseInt(document.getElementById('ev-photo-count').value)||2;
-  const videoCount = parseInt(document.getElementById('ev-video-count').value)||2;
-  const showMax = 2;
-  let lines = [];
-  lines.push(evPath+'/');
-  lines.push('  '+photoBase+'/');
-  for(let n=1;n<=Math.min(photoCount,showMax);n++){
-    const num=String(n).padStart(2,'0');
-    lines.push('    '+num+'_Photographe '+n+' - …/');
-    setupPhotoSlots.slice(0,2).forEach(s=>{ if(s.folder) lines.push('      '+s.folder+'/  ← upload link'); });
-    if(getSetupSlots('photo').length>2) lines.push('      …');
-  }
-  if(photoCount>showMax) lines.push('    … ('+photoCount+' photographes au total)');
-  lines.push('  '+videoBase+'/');
-  for(let n=1;n<=Math.min(videoCount,showMax);n++){
-    const num=String(n).padStart(2,'0');
-    lines.push('    '+num+'_Videaste '+n+' - …/');
-    setupVideoSlots.slice(0,2).forEach(s=>{ if(s.folder) lines.push('      '+s.folder+'/  ← upload link'); });
-    if(getSetupSlots('video').length>2) lines.push('      …');
-  }
-  if(videoCount>showMax) lines.push('    … ('+videoCount+' vidéastes au total)');
-  document.getElementById('structure-preview').textContent = lines.join('\n');
-}
+// Legacy preview — superseded by renderSmartPreview (kept as safe no-op)
+function updateStructurePreview() { if(typeof renderSmartPreview==='function') renderSmartPreview(); }
 
 // ══════════════════════════════════════════════════
 // SETUP — SLOT MANAGEMENT
@@ -1856,6 +2230,7 @@ function updateStructurePreview() {
 function renderSlotConfig(type){
   const slots=type==='photo'?setupPhotoSlots:setupVideoSlots;
   const container=document.getElementById(type+'-slots-config');
+  if(!container) return; // smart-setup UI replaced manual slot config
   container.innerHTML='';
   slots.forEach((s,i)=>{
     const div=document.createElement('div');
@@ -1895,6 +2270,93 @@ function log(msg,cls=''){
   box.appendChild(span);box.scrollTop=box.scrollHeight;
 }
 function clearLog(){document.getElementById('setup-log').innerHTML='En attente…';document.getElementById('setup-results').innerHTML='';document.getElementById('setup-progress').textContent='';setupResults=[];}
+
+async function runSmartSetup(){
+  if(!getToken()){toast('⚠️ Connecte Dropbox d\'abord','warn');toggleTokenDropdown();return;}
+  const evRoot = (selectedEventPath||'').replace(/\/$/,'');
+  if(!evRoot){toast('⚠️ Sélectionne un événement (Étape 1)','warn');return;}
+  if(!smartSetup.eventName.trim()){toast('⚠️ Entre le nom de l\'événement','warn');return;}
+  if(smartSetup.photoNames.length===0 && smartSetup.videoNames.length===0){toast('⚠️ Ajoute au moins un nom','warn');return;}
+  if(smartSetup.days.length===0){toast('⚠️ Ajoute au moins un jour','warn');return;}
+
+  const suffix = smartSuffix();
+  const btn=document.getElementById('btn-run-setup'); if(btn) btn.disabled=true;
+  clearLog();
+  log('🚀 Début setup — '+suffix,'log-info');
+  log('📁 Racine : '+evRoot,'log-info');
+
+  const types=[
+    {key:'photo',label:'Photographe',base:`${evRoot}/${smartPhotoBase()}`,names:smartSetup.photoNames,subs:smartSubfolders('photo')},
+    {key:'video',label:'Vidéaste',base:`${evRoot}/${smartVideoBase()}`,names:smartSetup.videoNames,subs:smartSubfolders('video')},
+  ];
+  let totalCreated=0,totalErrors=0;
+  setupResults=[];
+
+  for(const t of types){
+    if(t.names.length===0) continue;
+    log('','');
+    log('── '+(t.key==='photo'?'📷':'🎬')+' '+t.label+'s ('+t.names.length+') ──','log-info');
+    try{ await apiPost('files/create_folder_v2',{path:t.base,autorename:false}); }catch(e){}
+    for(let idx=0; idx<t.names.length; idx++){
+      const n = idx+1;
+      const num = String(n).padStart(2,'0');
+      const personName = t.names[idx];
+      const personFolder = `${t.base}/${num}_${personName} - ${suffix}`;
+      const personResult={type:t.key,n,name:personName,slots:[]};
+      try{ await apiPost('files/create_folder_v2',{path:personFolder,autorename:false}); }catch(e){}
+      for(const slot of t.subs){
+        const dest=`${personFolder}/${slot.folder}`;
+        const title=slot.title.replace(/\{nom\}/g, personName);
+        const prog=document.getElementById('setup-progress'); if(prog) prog.textContent=`⏳ ${personName} / ${slot.folder}`;
+        try{
+          await apiPost('files/create_folder_v2',{path:dest,autorename:false});
+          log('  ✓ Dossier : '+dest,'log-ok');
+        }catch(e){
+          const msg=(e.message||'').toLowerCase();
+          if(msg.includes('conflict')||msg.includes('already')) log('  ~ Dossier existant : '+dest,'log-warn');
+          else{log('  ✗ Dossier ERREUR ('+e.message+') : '+dest,'log-err');totalErrors++;personResult.slots.push({folder:slot.folder,title,url:null});continue;}
+        }
+        try{
+          const body={destination:dest,title};
+          if(slot.desc) body.description=slot.desc;
+          const data=await fileRequestsPost('file_requests/create',body);
+          log('  ✓ Lien : '+title,'log-ok');
+          personResult.slots.push({folder:slot.folder,title,url:data.url,id:data.id,dest});
+          totalCreated++;
+        }catch(e){
+          log('  ✗ Lien ERREUR ('+e.message+') : '+title,'log-err');
+          personResult.slots.push({folder:slot.folder,title,url:null});
+          totalErrors++;
+        }
+        await new Promise(r=>setTimeout(r,350));
+      }
+      setupResults.push(personResult);
+      renderSetupResults();
+    }
+  }
+  const prog=document.getElementById('setup-progress'); if(prog) prog.textContent='';
+  log('','');
+  log('✅ Terminé — '+totalCreated+' liens créés · '+totalErrors+' erreurs',totalErrors===0?'log-ok':'log-warn');
+  toast(totalErrors===0?`✅ ${totalCreated} liens créés !`:`${totalCreated} créés · ${totalErrors} erreurs`,totalErrors===0?'success':'warn');
+  if(btn) btn.disabled=false;
+
+  if(setupResults.length>0){
+    const buildState = (kind)=> setupResults.filter(r=>r.type===kind).map((r)=>{
+      const linkMap={};
+      r.slots.forEach((s,si)=>{const k=['j1','j2','j3','p3'][si]||'s'+si; linkMap[k]={url:s.url||'',id:s.id||'',dest:s.dest||''};});
+      ['j1','j2','j3','p3'].forEach(k=>{ if(!linkMap[k]) linkMap[k]={url:'',id:'',dest:''}; });
+      return {n:r.n, realName:r.name, editorUrl:'', links:linkMap};
+    });
+    const newPhoto=buildState('photo'), newVideo=buildState('video');
+    setTimeout(()=>{
+      if(confirm(`✅ ${totalCreated} liens créés !\n\nCharger ce nouvel événement dans les onglets Photographes & Vidéastes ?`)){
+        document.getElementById('path-photo').value = `${evRoot}/${smartPhotoBase()}`;
+        document.getElementById('path-video').value = `${evRoot}/${smartVideoBase()}`;
+        loadEventState(newPhoto, newVideo);
+      }
+    },400);
+  }
+}
 
 async function runSetup(){
   if(!getToken()){toast('⚠️ Entre le token d\'abord','warn');return;}
@@ -2026,12 +2488,19 @@ async function countAllFilesForHeader() {
     let total = 0;
     for(const row of state) {
       for(const key of ['j1','j2','j3','p3']) {
-        const path = getFolderPath(type, row.n, key);
+        const link = row.links[key];
+        // Use the real destination folder stored on the link (folders have dates in names)
+        const path = link && link.dest ? link.dest : null;
+        if(!path) continue;
         try {
-          const data = await apiPost('files/list_folder',{path, recursive:false, include_non_downloadable_files:false});
+          let data = await apiPost('files/list_folder',{path, recursive:true, include_non_downloadable_files:false});
           total += (data.entries||[]).filter(e=>e['.tag']==='file').length;
+          while(data.has_more){
+            data = await apiPost('files/list_folder/continue',{cursor:data.cursor});
+            total += (data.entries||[]).filter(e=>e['.tag']==='file').length;
+          }
         } catch(e) { /* empty or missing */ }
-        await new Promise(r=>setTimeout(r,80)); // gentle rate-limit
+        await new Promise(r=>setTimeout(r,60));
       }
     }
     return total;
@@ -2643,8 +3112,11 @@ renderTable('photo');
 renderTable('video');
 renderSlotConfig('photo');
 renderSlotConfig('video');
-// Start with neutral header
-updateHeader('photo');
+renderSmartDays();
+renderSmartPreview();
+// Start on the Photographes tab (sets KPI visibility + dept-tab highlight)
+switchTab('photo');
+renderSwitcher();
 // Restore scan roots from localStorage
 const savedRoot = localStorage.getItem('dbx_scan_root_ml2026');
 if(savedRoot) {
@@ -2693,10 +3165,6 @@ function toggleVerifDest(type) {
 
 function renderTableWithDest(type) {
   const state = type==='photo'?photoState:videoState;
-  const keys = ['j1','j2','j3'];
-  const labels = type==='photo'
-    ? {j1:'Jour 1', j2:'Jour 2', p3:'Partenaires'}
-    : {j1:'Jour 1', j2:'Jour 2', p3:'BAB & Montages'};
   // Insert dest rows after each tr
   const tbody = document.getElementById('tbody-'+type);
   const rows = Array.from(tbody.querySelectorAll('tr:not(.dest-row)'));
@@ -2711,8 +3179,8 @@ function renderTableWithDest(type) {
     destTr.className = 'dest-row';
     destTr.id = 'dest-row-'+type+'-'+row.n;
     const keyLabels = type==='photo'
-      ? {j1:'J1', j2:'J2', p3:'Part.'}
-      : {j1:'J1', j2:'J2', p3:'BAB'};
+      ? {j1:'J1', j2:'J2', j3:'J3', p3:'Part.'}
+      : {j1:'J1', j2:'J2', j3:'J3', p3:'BAB'};
     const destItems = ['j1','j2','j3','p3'].map(k => {
       const dest = row.links[k].dest;
       if(!dest) return `<span class="dest-warn">⚠ ${keyLabels[k]}: manquant</span>`;
@@ -2726,7 +3194,7 @@ function renderTableWithDest(type) {
       const icon = folderOk ? '✓' : '⚠';
       return `<span class="${cls}" title="${dest}">${icon} ${keyLabels[k]}: <em>${personFolder}</em> / ${subfolder}</span>`;
     }).join('');
-    destTr.innerHTML = `<td class="dest-cell" colspan="6">
+    destTr.innerHTML = `<td class="dest-cell" colspan="7">
       <strong style="color:var(--text-muted);margin-right:6px;">Destinations :</strong>${destItems}
     </td>`;
     tr.after(destTr);
