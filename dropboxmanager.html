@@ -50,7 +50,8 @@ body{
 .dept-tabs-bg{background:rgba(0,0,0,.15);border-top:1px solid rgba(255,255,255,.03)}
 .dept-tabs{max-width:1020px;margin:0 auto;padding:2px 20px;display:flex;overflow-x:auto;scrollbar-width:none}
 .dept-tabs::-webkit-scrollbar{display:none}
-.dt{padding:8px 12px;font-size:12px;font-weight:500;color:var(--text-dim);white-space:nowrap;border:none;border-bottom:2px solid transparent;background:none;font-family:inherit;cursor:pointer;transition:color .15s}
+.dt{padding:8px 12px;font-size:12px;font-weight:500;color:var(--text-dim);white-space:nowrap;border:none;border-bottom:2px solid transparent;background:none;font-family:inherit;cursor:pointer;transition:color .15s;display:inline-flex;align-items:center;gap:6px;}
+.dt-ic{width:14px;height:14px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;opacity:.85;}
 .dt:hover{color:var(--text-muted)}
 .dt.on{color:#fff;font-weight:600;border-bottom:2px solid #fff;background:rgba(255,255,255,.06)}
 .dt-count{color:var(--text-dim);font-weight:400;font-size:11px;margin-left:2px;}
@@ -58,16 +59,21 @@ body{
 .export-item{display:block;width:100%;text-align:left;background:none;border:none;border-radius:8px;padding:10px 12px;cursor:pointer;transition:background .12s;}
 .export-item:hover{background:var(--surface-2);}
 /* ── LIST FILTER BAR ── */
-.filterbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
-.filter-search{display:flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:7px 11px;flex:1;min-width:140px;}
-.filter-search input{background:none;border:none;outline:none;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;width:100%;padding:0;}
-.fchip{padding:6px 12px;border-radius:7px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;}
-.fchip:hover{color:var(--text);border-color:var(--border-h);}
-.fchip.on{background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.35);color:#a5b4fc;}
+.filterbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+.filter-search{flex:1 1 100%;min-width:200px;display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;}
+.filter-search:focus-within{border-color:var(--border-h);}
+.filter-search input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:inherit;font-size:13px;padding:0;}
+.filter-search input::placeholder{color:var(--text-dim);}
+.fchip{flex:0 0 auto;padding:6px 13px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;}
+.fchip:hover{border-color:var(--border-h);color:var(--text);}
+.fchip.on{background:var(--surface-2);border-color:var(--border-h);color:var(--text);}
+@media(min-width:560px){.filter-search{flex:1 1 200px;}}
 .row-status{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:middle;flex-shrink:0;}
 .rs-complete{background:var(--green);}
 .rs-partial{background:var(--amber);}
 .rs-empty{background:var(--text-dim);}
+.msg-nav-btn{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text-muted);width:34px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;line-height:1;flex-shrink:0;transition:all .15s;}
+.msg-nav-btn:hover{color:var(--text);border-color:var(--border-h);}
 
 /* ── LAYOUT ── */
 .wrap{max-width:1020px;margin:0 auto;padding:18px 20px 80px;}
@@ -314,11 +320,11 @@ td.actions{white-space:nowrap;width:1px;}
   </div>
   <div class="dept-tabs-bg">
     <div class="dept-tabs" id="dept-tabs">
-      <button class="dt on" data-tab="photo" onclick="switchTab('photo')">📷 Photographes <span id="dt-photo-count" class="dt-count"></span></button>
-      <button class="dt" data-tab="video" onclick="switchTab('video')">🎬 Vidéastes <span id="dt-video-count" class="dt-count"></span></button>
-      <button class="dt" data-tab="verify" onclick="switchTab('verify')">◇ Vérification</button>
-      <button class="dt" data-tab="setup" onclick="switchTab('setup')">⚙️ Nouvel événement</button>
-      <button class="dt" data-tab="settings" onclick="switchTab('settings')">🔧 Réglages</button>
+      <button class="dt on" data-tab="photo" onclick="switchTab('photo')"><svg class="dt-ic" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Photographes <span id="dt-photo-count" class="dt-count"></span></button>
+      <button class="dt" data-tab="video" onclick="switchTab('video')"><svg class="dt-ic" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Vidéastes <span id="dt-video-count" class="dt-count"></span></button>
+      <button class="dt" data-tab="verify" onclick="switchTab('verify')"><svg class="dt-ic" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Vérification</button>
+      <button class="dt" data-tab="setup" onclick="switchTab('setup')"><svg class="dt-ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouvel événement</button>
+      <button class="dt" data-tab="settings" onclick="switchTab('settings')"><svg class="dt-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Réglages</button>
     </div>
   </div>
 </nav>
@@ -444,8 +450,8 @@ td.actions{white-space:nowrap;width:1px;}
   <div class="section-header">
     <span class="section-title-text">Photographes <span id="section-photo-count" style="color:var(--text-dim);font-weight:400;"></span></span>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-      <button class="btn btn-ghost btn-sm" onclick="openMessagesOverlay('photo')">📨 Messages</button>
-      <button class="btn btn-ghost btn-sm" onclick="openExportMenu(this)">⬇️ Export</button>
+      <button class="fchip" onclick="openMessagesOverlay('photo')">📨 Messages</button>
+      <button class="fchip" onclick="openExportMenu(this)">⬇️ Export</button>
       <div class="view-toggle" id="view-toggle-photo">
         <button class="on" data-view="list" onclick="setView('photo','list')" title="Vue liste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <button data-view="grid" onclick="setView('photo','grid')" title="Vue grille"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
@@ -459,7 +465,7 @@ td.actions{white-space:nowrap;width:1px;}
     </label>
     <button class="fchip on" data-f="all" onclick="setFilterStatus('photo','all',this)">Tous</button>
     <button class="fchip" data-f="unnamed" onclick="setFilterStatus('photo','unnamed',this)">Sans nom</button>
-    <button class="fchip" data-f="incomplete" onclick="setFilterStatus('photo','incomplete',this)">Liens manquants</button>
+    <button class="fchip" data-f="incomplete" onclick="setFilterStatus('photo','incomplete',this)">Incomplets</button>
   </div>
   <div class="tbl-wrap" id="list-photo">
     <table>
@@ -476,8 +482,8 @@ td.actions{white-space:nowrap;width:1px;}
   <div class="section-header">
     <span class="section-title-text">Vidéastes <span id="section-video-count" style="color:var(--text-dim);font-weight:400;"></span></span>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-      <button class="btn btn-ghost btn-sm" onclick="openMessagesOverlay('video')">📨 Messages</button>
-      <button class="btn btn-ghost btn-sm" onclick="openExportMenu(this)">⬇️ Export</button>
+      <button class="fchip" onclick="openMessagesOverlay('video')">📨 Messages</button>
+      <button class="fchip" onclick="openExportMenu(this)">⬇️ Export</button>
       <div class="view-toggle" id="view-toggle-video">
         <button class="on" data-view="list" onclick="setView('video','list')" title="Vue liste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <button data-view="grid" onclick="setView('video','grid')" title="Vue grille"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
@@ -491,7 +497,7 @@ td.actions{white-space:nowrap;width:1px;}
     </label>
     <button class="fchip on" data-f="all" onclick="setFilterStatus('video','all',this)">Tous</button>
     <button class="fchip" data-f="unnamed" onclick="setFilterStatus('video','unnamed',this)">Sans nom</button>
-    <button class="fchip" data-f="incomplete" onclick="setFilterStatus('video','incomplete',this)">Liens manquants</button>
+    <button class="fchip" data-f="incomplete" onclick="setFilterStatus('video','incomplete',this)">Incomplets</button>
   </div>
   <div class="tbl-wrap" id="list-video">
     <table>
@@ -512,9 +518,9 @@ td.actions{white-space:nowrap;width:1px;}
   <div class="section-header">
     <span class="section-title-text">Vérification</span>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      <button class="btn btn-ghost btn-sm" onclick="runVerify('photo')">◇ Photographes</button>
-      <button class="btn btn-ghost btn-sm" onclick="runVerify('video')">◇ Vidéastes</button>
-      <button class="btn btn-primary btn-sm" onclick="runVerify('all')">◇ Tout vérifier</button>
+      <button class="btn btn-ghost btn-sm" onclick="runVerify('photo')">📷 Photographes</button>
+      <button class="btn btn-ghost btn-sm" onclick="runVerify('video')">🎬 Vidéastes</button>
+      <button class="btn btn-primary btn-sm" onclick="runVerify('all')">✓ Tout vérifier</button>
     </div>
   </div>
 
@@ -664,14 +670,12 @@ td.actions{white-space:nowrap;width:1px;}
     </div>
 
     <!-- PERSON SELECTOR -->
-    <div style="padding:12px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
-      <span style="font-size:0.7em;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;white-space:nowrap;">Personne :</span>
-      <div id="msg-person-chips" style="display:flex;gap:5px;flex:1;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;"></div>
-      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-        <button onclick="navMsgPerson(-1)" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text-muted);width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.9em;">←</button>
-        <span id="msg-nav-counter" style="font-size:0.72em;color:var(--text-muted);font-weight:600;white-space:nowrap;"></span>
-        <button onclick="navMsgPerson(1)" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text-muted);width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.9em;">→</button>
-      </div>
+    <div style="padding:12px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <span style="font-size:0.7em;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;white-space:nowrap;">Personne</span>
+      <button onclick="navMsgPerson(-1)" class="msg-nav-btn" title="Précédent">‹</button>
+      <select id="msg-person-select" onchange="selectMsgPerson(parseInt(this.value))" style="flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;color:var(--text);font-size:14px;font-weight:600;padding:9px 12px;font-family:'DM Sans',sans-serif;cursor:pointer;"></select>
+      <button onclick="navMsgPerson(1)" class="msg-nav-btn" title="Suivant">›</button>
+      <span id="msg-nav-counter" style="font-size:0.72em;color:var(--text-muted);font-weight:600;white-space:nowrap;"></span>
     </div>
 
     <!-- MESSAGES BODY -->
@@ -1160,9 +1164,8 @@ function setChip(msg, cls) {
   else setTokenStatus('warn', msg);
 }
 
-async function refreshAccessToken() {
-  setChip('⏳ Rafraîchissement…','chip-warn');
-  toast('🔄 Génération nouveau token…','info');
+async function refreshAccessToken(silent) {
+  if(!silent){ setChip('⏳ Rafraîchissement…','chip-warn'); toast('🔄 Génération nouveau token…','info'); }
   try {
     const resp = await fetch('https://api.dropbox.com/oauth2/token',{
       method:'POST',
@@ -1175,10 +1178,10 @@ async function refreshAccessToken() {
     if (localStorage.getItem(LS_REMEMBER)==='1') localStorage.setItem(LS_TOKEN, data.access_token);
     setChip('✓ Token rafraîchi','chip-ok');
     setTokenStatus('ok','✓ Dropbox connecté');
-    toast('✓ Nouveau token actif','success');
+    if(!silent) toast('✓ Nouveau token actif','success');
   } catch(e) {
     setChip('✗ Refresh échoué','chip-err');
-    toast('✗ Refresh échoué: '+e.message,'error');
+    if(!silent) toast('✗ Refresh échoué: '+e.message,'error');
   }
 }
 
@@ -2123,7 +2126,11 @@ async function autoFillBasePaths(eventPath, eventName) {
 
     if(photoF) document.getElementById('path-photo').value = photoF.path_display;
     if(videoF) document.getElementById('path-video').value = videoF.path_display;
-    if(!photoF && !videoF){ toast('⚠️ Chemins introuvables — remplis manuellement','warn'); return; }
+    if(!photoF && !videoF){
+      // Not an error — this event just hasn't been set up yet
+      toast('ℹ️ Événement pas encore configuré — va dans « Nouvel événement »','info');
+      return;
+    }
     updateHeader('photo');
     // Auto-load existing folders + links immediately (no creation)
     await loadEventFromPaths();
@@ -3149,10 +3156,14 @@ function exportPdf(stats) {
   .c-size, .c-date { color:#6b6b7b; font-variant-numeric:tabular-nums; }
   .foot { margin-top:18px; padding-top:10px; border-top:1px solid #e8e8f0; font-size:9px; color:#a0a0ac; display:flex; justify-content:space-between; }
   @media print { .noprint { display:none; } }
-  .noprint { position:fixed; top:10px; right:10px; }
-  .noprint button { background:#6366f1; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
+  .noprint { position:sticky; top:0; background:#6366f1; color:#fff; padding:12px 16px; border-radius:0 0 10px 10px; margin:-14mm -14mm 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .noprint .hint { font-size:11px; opacity:.9; }
+  .noprint button { background:#fff; color:#6366f1; border:none; padding:9px 16px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
 </style></head><body>
-  <div class="noprint"><button onclick="window.print()">🖨️ Enregistrer en PDF</button></div>
+  <div class="noprint">
+    <span class="hint">📄 Pour enregistrer en PDF : bouton → ou Partager ⬆️ → « Imprimer » → pince pour zoomer → Partager → Enregistrer dans Fichiers.</span>
+    <button onclick="window.print()">🖨️ Imprimer / PDF</button>
+  </div>
   <div class="hdr">
     <div>
       <h1>Snapshot Médias</h1>
@@ -3188,11 +3199,23 @@ function exportPdf(stats) {
   </div>
 </body></html>`;
 
-  const w = window.open('', '_blank');
-  if(!w){ toast('⚠️ Autorise les pop-ups pour générer le PDF','warn'); return; }
-  w.document.write(html);
-  w.document.close();
-  toast('✓ Rapport prêt — utilise « Enregistrer en PDF »','success');
+  // iOS Safari blocks window.open after an await (the async scan), so download the
+  // report as a self-contained HTML file. The user opens it and taps "Enregistrer en PDF".
+  try {
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rapport-${eventLabel().replace(/[^\w]+/g,'-')}.html`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    toast('✓ Rapport téléchargé — ouvre-le puis « Enregistrer en PDF »','success');
+  } catch(e){
+    // Fallback: try opening in a new tab
+    const w = window.open('', '_blank');
+    if(w){ w.document.write(html); w.document.close(); toast('✓ Rapport prêt','success'); }
+    else toast('⚠️ Export PDF échoué : '+e.message,'warn');
+  }
 }
 
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -3405,12 +3428,12 @@ function renderMsgOverlay() {
   const kind = type==='photo' ? 'photographe' : 'vidéaste';
   document.getElementById('modal-subtitle').textContent = `${named.length} ${kind}${named.length>1?'s':''} avec nom assigné · ${EVENT_CONFIG.name||'Événement'}`;
 
-  // Person chips
-  const chips = document.getElementById('msg-person-chips');
-  chips.innerHTML = named.map((r,i) => {
-    const active = i===personIdx;
-    return `<button onclick="selectMsgPerson(${i})" style="padding:4px 12px;border-radius:20px;font-size:0.75em;font-weight:600;cursor:pointer;border:1px solid ${active?'rgba(168,85,247,0.4)':'var(--border)'};background:${active?'rgba(168,85,247,0.15)':'var(--surface-2)'};color:${active?'var(--day-0)':'var(--text-muted)'};transition:all .15s;white-space:nowrap;flex-shrink:0;">${String(r.n).padStart(2,'0')} · ${r.realName}</button>`;
-  }).join('');
+  // Person dropdown
+  const sel = document.getElementById('msg-person-select');
+  if(sel){
+    sel.innerHTML = named.map((r,i)=>`<option value="${i}" ${i===personIdx?'selected':''}>${String(r.n).padStart(2,'0')} · ${r.realName}</option>`).join('');
+    sel.value = String(personIdx);
+  }
 
   // Nav counter
   document.getElementById('msg-nav-counter').textContent = `${personIdx+1} / ${named.length}`;
@@ -3552,8 +3575,8 @@ async function autoRestoreLastEvent(){
   if(nm) nm.innerHTML = `${saved.name}<span class="dot"></span>`;
   const navSub = document.getElementById('nav-session-sub');
   if(navSub) navSub.textContent = '⏳ Reconnexion + restauration…';
-  // Always refresh the access token first (stored tokens expire ~4h)
-  try { await refreshAccessToken(); } catch(e){}
+  // Always refresh the access token first (stored tokens expire ~4h) — silent
+  try { await refreshAccessToken(true); } catch(e){}
   if(!getToken()){ if(navSub) navSub.textContent='Aucun événement chargé'; return; }
   try {
     const root = (saved.root || '/01_ALL MEDIAS ML 2026').replace(/\/$/,'');
