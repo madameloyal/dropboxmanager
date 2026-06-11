@@ -21,7 +21,7 @@
   --purple:#a855f7; --indigo:#6366f1;
   /* aliases used through the module */
   --border-hover:var(--border-h);
-  --day-0:#a855f7; --day-1:#6366f1; --day-2:#f472b6;
+  --day-0:#6366f1; --day-1:#6366f1; --day-2:#34d399;
 }
 
 html,body{height:100%;}
@@ -73,8 +73,8 @@ body{
 .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;margin-top:18px;}
 .kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;position:relative;overflow:hidden;}
 .kpi-edge{position:absolute;left:0;top:0;bottom:0;width:3px;}
-.kpi-edge.photo{background:var(--purple);}
-.kpi-edge.video{background:var(--indigo);}
+.kpi-edge.photo{background:var(--indigo);}
+.kpi-edge.video{background:var(--green);}
 .kpi-label{font-size:11px;font-weight:600;letter-spacing:.3px;color:var(--text-dim);margin-bottom:7px;}
 .kpi-val{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:var(--text);line-height:1;}
 .kpi-val .dim{font-size:13px;color:var(--text-muted);font-weight:500;margin-left:2px;}
@@ -122,22 +122,22 @@ code{font-size:12px;background:rgba(255,255,255,0.06);padding:1px 6px;border-rad
 .btn-done{background:rgba(52,211,153,0.12);color:var(--green);border:1px solid rgba(52,211,153,0.25);cursor:default;}
 .btn-error{background:rgba(248,113,113,0.12);color:var(--red);border:1px solid rgba(248,113,113,0.25);}
 .btn-loading{background:rgba(251,191,36,0.1);color:var(--amber);border:1px solid rgba(251,191,36,0.2);cursor:wait;}
-.btn-rename{background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.25);}
-.btn-rename:hover:not(:disabled){background:rgba(168,85,247,0.2);}
+.btn-rename{background:rgba(99,102,241,0.12);color:#a5b4fc;border:1px solid rgba(99,102,241,0.25);}
+.btn-rename:hover:not(:disabled){background:rgba(99,102,241,0.2);}
 
 /* ── PROGRESS ── */
 .prog-wrap{height:3px;background:var(--surface-2);border-radius:2px;margin-bottom:16px;overflow:hidden;}
 .prog-fill{height:100%;border-radius:2px;transition:width .4s ease;width:0%;}
-.prog-photo{background:linear-gradient(90deg,var(--purple),var(--day-2));}
-.prog-video{background:linear-gradient(90deg,var(--indigo),var(--purple));}
+.prog-photo{background:var(--indigo);}
+.prog-video{background:var(--green);}
 
 /* ── IN-MODULE TAB ROW ── */
 .tab-row{display:flex;gap:6px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
 .tab-btn{padding:7px 15px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-dim);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
 .tab-btn:hover{border-color:var(--border-h);color:var(--text);}
-.tab-btn.active{background:rgba(168,85,247,0.12);border-color:rgba(168,85,247,0.35);color:#c084fc;}
+.tab-btn.active{background:var(--surface-2);border-color:var(--border-h);color:var(--text);}
 .tab-btn.active.video{background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.35);color:#818cf8;}
-.tab-btn.active.setup{background:rgba(244,114,182,0.12);border-color:rgba(244,114,182,0.35);color:var(--day-2);}
+.tab-btn.active.setup{background:var(--surface-2);border-color:var(--border-h);color:var(--text);}
 .tab-btn.active.verify{background:rgba(52,211,153,0.12);border-color:rgba(52,211,153,0.35);color:var(--green);}
 
 /* ── SECTION HEADER ── */
@@ -148,7 +148,7 @@ code{font-size:12px;background:rgba(255,255,255,0.06);padding:1px 6px;border-rad
 /* ── CALLOUT ── */
 .callout{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:13px;line-height:1.7;color:var(--text-muted);}
 .callout strong{color:var(--text);}
-.callout-pink{border-color:rgba(244,114,182,0.2);}
+.callout-pink{border-color:var(--border-h);}
 
 /* ── TABLES — canonical liste-table (byte-identical to Festiflow components.css) ── */
 .tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px;}
@@ -172,7 +172,7 @@ td.lnk{max-width:150px;font-size:12px;text-align:center;vertical-align:middle;}
 .lnk-request:hover{color:#a5b4fc;text-decoration:underline;}
 .lnk-folder{color:var(--text-muted);font-family:'DM Sans',sans-serif;margin-top:3px;}
 .lnk-folder:hover{color:var(--text);}
-td.lnk a:hover{color:#c084fc;text-decoration:underline;}
+td.lnk a:hover{color:#a5b4fc;text-decoration:underline;}
 td.lnk .empty{color:var(--text-dim);opacity:.5;}
 td.actions{white-space:nowrap;width:1px;}
 .action-btns{display:flex;flex-direction:column;gap:3px;align-items:flex-end;}
@@ -230,7 +230,7 @@ td.actions{white-space:nowrap;width:1px;}
 .name-text.unset{color:var(--text-dim);font-style:italic;font-weight:500;}
 .icon-btn{background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text-dim);font-size:13px;padding:4px 7px;line-height:1;transition:all .15s;flex-shrink:0;}
 .icon-btn:hover{border-color:var(--border-h);color:var(--text);}
-.icon-btn.edit:hover{border-color:var(--purple);color:#c084fc;}
+.icon-btn.edit:hover{border-color:var(--indigo);color:#a5b4fc;}
 .icon-btn.del:hover{border-color:var(--red);color:var(--red);}
 .icon-btn.go{text-decoration:none;display:inline-flex;align-items:center;}
 
@@ -266,7 +266,7 @@ td.actions{white-space:nowrap;width:1px;}
 .scan-input-wrap{position:relative;flex:1;}
 
 /* ── TOAST ── */
-#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border-h);border-radius:10px;padding:11px 18px;font-size:13px;font-weight:600;display:none;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,.6);white-space:nowrap;color:var(--text);font-family:'DM Sans',sans-serif;}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border-h);border-radius:10px;padding:11px 18px;font-size:13px;font-weight:600;display:none;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,.6);color:var(--text);font-family:'DM Sans',sans-serif;max-width:min(440px,calc(100vw - 32px));width:max-content;line-height:1.45;text-align:center;word-break:break-word;}
 #toast.show{display:block;animation:fadeUp .2s ease;}
 @keyframes fadeUp{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 
@@ -339,10 +339,10 @@ td.actions{white-space:nowrap;width:1px;}
   <div class="kpi"><div class="kpi-edge photo"></div><div class="kpi-label" id="stat-label-1">Liens photo</div><div class="kpi-val" id="stat-photo-done">—</div></div>
   <div class="kpi"><div class="kpi-edge video"></div><div class="kpi-label" id="stat-label-2">Liens vidéo</div><div class="kpi-val" id="stat-video-done">—</div></div>
   <div class="kpi" style="cursor:pointer;" onclick="countFilesForType('photo')" title="Cliquer pour recompter les fichiers photo">
-    <div class="kpi-edge photo"></div><div class="kpi-label">📷 Fichiers <span style="color:var(--text-dim);font-weight:400;">· maj</span></div><div class="kpi-val" id="stat-files-photo">—</div>
+    <div class="kpi-edge photo"></div><div class="kpi-label">📷 Fichiers photo <span style="color:var(--text-dim);font-weight:400;">· maj</span></div><div class="kpi-val" id="stat-files-photo">—</div>
   </div>
   <div class="kpi" style="cursor:pointer;" onclick="countFilesForType('video')" title="Cliquer pour recompter les fichiers vidéo">
-    <div class="kpi-edge video"></div><div class="kpi-label">🎬 Fichiers <span style="color:var(--text-dim);font-weight:400;">· maj</span></div><div class="kpi-val" id="stat-files-video">—</div>
+    <div class="kpi-edge video"></div><div class="kpi-label">🎬 Fichiers vidéo <span style="color:var(--text-dim);font-weight:400;">· maj</span></div><div class="kpi-val" id="stat-files-video">—</div>
   </div>
 </div>
 
@@ -366,13 +366,13 @@ td.actions{white-space:nowrap;width:1px;}
       <button class="btn btn-primary btn-sm" onclick="refreshAccessToken()">🔄 Refresh</button>
     </div>
     <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-muted);cursor:pointer;margin-bottom:8px;">
-      <input type="checkbox" id="remember-token" onchange="toggleRemember(this.checked)" style="accent-color:var(--purple);">
+      <input type="checkbox" id="remember-token" onchange="toggleRemember(this.checked)" style="accent-color:var(--indigo);">
       Remember token
       <span id="remember-status" style="color:var(--text-dim);margin-left:4px;"></span>
     </label>
     <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:700;margin-bottom:8px;font-family:'JetBrains Mono',monospace;">Scopes manquants / nouvelle autorisation</div>
-      <button class="btn btn-ghost btn-sm" onclick="startOAuthFlow()" style="width:100%;justify-content:center;border-color:rgba(168,85,247,0.3);color:#c084fc;">🔐 Ré-autoriser l'application Dropbox</button>
+      <button class="btn btn-ghost btn-sm" onclick="startOAuthFlow()" style="width:100%;justify-content:center;">🔐 Ré-autoriser l'application Dropbox</button>
       <div style="font-size:12px;color:var(--text-dim);line-height:1.6;margin-top:8px;">Ouvre une fenêtre Dropbox → autorise → le nouveau token est enregistré automatiquement.</div>
       <div id="oauth-code-wrap" style="display:none;margin-top:10px;">
         <div style="font-size:12px;color:var(--amber);margin-bottom:6px;">📋 Colle le code affiché par Dropbox ici :</div>
@@ -414,10 +414,10 @@ td.actions{white-space:nowrap;width:1px;}
     <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">
       L'outil lit cette arborescence dans Dropbox :
       <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin:8px 0;line-height:1.8;white-space:pre;overflow-x:auto;">/01_ALL MEDIAS ML 2026/
-  01_MARS ML XXL PARIS/        ← <span style="color:var(--day-0);">événement</span>
-    Photographes Pro - …/      ← <span style="color:var(--day-0);">base photo</span>
-      01_Timo-Leo - …/         ← <span style="color:var(--day-0);">personne</span>
-        JOUR 1 (13.03.26) - …/ ← <span style="color:var(--day-0);">slot + lien upload</span>
+  01_MARS ML XXL PARIS/        ← <span style="color:var(--green);">événement</span>
+    Photographes Pro - …/      ← <span style="color:var(--green);">base photo</span>
+      01_Timo-Leo - …/         ← <span style="color:var(--green);">personne</span>
+        JOUR 1 (13.03.26) - …/ ← <span style="color:var(--green);">slot + lien upload</span>
     Videastes Pro - …/         ← base vidéo</div>
       Seuls le <strong>nom de l'événement</strong>, les <strong>dates des jours</strong> et les <strong>noms</strong> changent. Les libellés (Photographes Pro, JOUR N, PARTENAIRES, BAB & Montages) restent identiques.
       <br><br>
@@ -582,7 +582,7 @@ td.actions{white-space:nowrap;width:1px;}
 <!-- TEMPLATE EDITOR MODAL -->
 <div id="tpl-editor-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;overflow-y:auto;padding:16px 20px;">
   <div style="max-width:1100px;margin:0 auto;background:#101017;border:1px solid var(--border);border-radius:16px;overflow:hidden;">
-    <div style="height:3px;background:linear-gradient(90deg,var(--day-0),var(--day-1),var(--day-2));"></div>
+    <div style="height:2px;background:var(--border-h);"></div>
     <div style="padding:20px 24px 24px;">
 
       <!-- Header row -->
@@ -623,9 +623,9 @@ td.actions{white-space:nowrap;width:1px;}
 
         <!-- RIGHT: live preview -->
         <div style="position:sticky;top:0;">
-          <div style="background:rgba(168,85,247,0.05);border:1px solid rgba(168,85,247,0.15);border-radius:12px;overflow:hidden;">
-            <div style="padding:12px 16px;border-bottom:1px solid rgba(168,85,247,0.1);display:flex;justify-content:space-between;align-items:center;">
-              <div style="font-size:0.65em;text-transform:uppercase;letter-spacing:1.5px;color:var(--day-0);font-weight:700;">Live Preview</div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+              <div style="font-size:0.65em;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);font-weight:700;">Live Preview</div>
               <div style="font-size:0.65em;color:var(--text-dim);">Photographe 1 / Vidéaste 1</div>
             </div>
             <div id="tpl-preview" style="padding:14px 16px;font-size:0.76em;color:var(--text-muted);line-height:1.85;white-space:pre-wrap;height:480px;overflow-y:auto;font-family:'DM Sans',sans-serif;"></div>
@@ -650,7 +650,7 @@ td.actions{white-space:nowrap;width:1px;}
   <div style="background:#101017;border:1px solid rgba(255,255,255,0.08);border-radius:20px;width:100%;max-width:860px;margin:auto;">
 
     <!-- accent bar -->
-    <div style="height:3px;background:linear-gradient(90deg,var(--day-0),var(--day-1),var(--day-2));flex-shrink:0;"></div>
+    <div style="height:2px;background:var(--border-h);flex-shrink:0;"></div>
 
     <!-- HEADER -->
     <div style="padding:20px 28px 0;border-bottom:1px solid var(--border);flex-shrink:0;">
@@ -663,7 +663,7 @@ td.actions{white-space:nowrap;width:1px;}
       </div>
       <!-- Type tabs -->
       <div style="display:flex;gap:0;" id="msg-type-tabs">
-        <button id="mtab-photo" onclick="switchMsgType('photo')" style="padding:8px 18px;font-size:0.78em;font-weight:600;background:transparent;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;border-bottom:2px solid var(--day-0);color:#fff;">📷 Photographes <span id="mtab-photo-count" style="background:rgba(168,85,247,0.15);color:var(--day-0);padding:1px 7px;border-radius:10px;font-size:0.85em;"></span></button>
+        <button id="mtab-photo" onclick="switchMsgType('photo')" style="padding:8px 18px;font-size:0.78em;font-weight:600;background:transparent;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;border-bottom:2px solid var(--indigo);color:#fff;">📷 Photographes <span id="mtab-photo-count" style="background:rgba(99,102,241,0.15);color:#a5b4fc;padding:1px 7px;border-radius:10px;font-size:0.85em;"></span></button>
         <button id="mtab-video" onclick="switchMsgType('video')" style="padding:8px 18px;font-size:0.78em;font-weight:600;background:transparent;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;border-bottom:2px solid transparent;color:var(--text-muted);">🎬 Vidéastes <span id="mtab-video-count" style="background:rgba(99,102,241,0.1);color:#818cf8;padding:1px 7px;border-radius:10px;font-size:0.85em;"></span></button>
       </div>
     </div>
@@ -728,11 +728,11 @@ td.actions{white-space:nowrap;width:1px;}
       <p class="hint" style="margin-top:8px;">Le modèle est un tableau simple : en haut le <b>nom de l'événement</b> + les <b>dates</b> ; en dessous une ligne par personne. Tape le <b>nom</b>, et mets <b>« oui »</b> dans les colonnes Jour 1/2/3 ou Partenaires/BAB que la personne couvre (laisse vide = tout). Ré-importe : chaque personne arrive avec ses jours pré-cochés.</p>
     </div>
 
-    <div class="card" style="margin-bottom:14px;border-color:rgba(244,114,182,0.25);">
+    <div class="card" style="margin-bottom:14px;border-color:rgba(52,211,153,0.25);">
       <div class="card-label">📌 Étape 2 — Configuration</div>
-      <div id="selected-event-banner" style="background:rgba(244,114,182,0.07);border:1px solid rgba(244,114,182,0.15);border-radius:8px;padding:10px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div id="selected-event-banner" style="background:rgba(52,211,153,0.07);border:1px solid rgba(52,211,153,0.15);border-radius:8px;padding:10px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
         <div style="min-width:0;flex:1;">
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--day-2);font-weight:700;margin-bottom:3px;">Événement sélectionné</div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--green);font-weight:700;margin-bottom:3px;">Événement sélectionné</div>
           <div id="selected-event-name" style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#fff;"></div>
           <div id="selected-event-path" style="font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-top:2px;word-break:break-all;"></div>
         </div>
@@ -868,28 +868,6 @@ function loadEventState(newPhotoState, newVideoState) {
 // ══════════════════════════════════════════════════
 // SETUP STATE
 // ══════════════════════════════════════════════════
-function getSetupSlots(type) {
-  const ev = EVENT_CONFIG.edition || EVENT_CONFIG.name || 'ML Event 2026';
-  if(type==='photo') return [
-    {folder:`JOUR 1 - ${ev}`, title:`Photos Jour 1 - "{nom}" - ${ev}`, desc:"Ici, tu peux mettre toutes les photos du Jour 1. N'oublie pas de mettre ton @ sur le nom des photos."},
-    {folder:`JOUR 2 - ${ev}`, title:`Photos Jour 2 - "{nom}" - ${ev}`, desc:"Ici, tu peux mettre toutes les photos du Jour 2. N'oublie pas de mettre ton @ sur le nom des photos."},
-    {folder:`JOUR 3 - ${ev}`, title:`Photos Jour 3 - "{nom}" - ${ev}`, desc:"Ici, tu peux mettre toutes les photos du Jour 3. N'oublie pas de mettre ton @ sur le nom des photos."},
-    {folder:`PARTENAIRES - ${ev}`, title:`Photos Partenaires - "{nom}" - ${ev}`, desc:"Ici, tu peux mettre toutes les photos partenaires. N'oublie pas de mettre ton @ sur le nom des photos."},
-  ];
-  return [
-    {folder:`JOUR 1 - ${ev}`, title:`Vidéos Jour 1 - "{nom}" - ${ev}`, desc:'Tous tes exports Jour 1 en 4k.'},
-    {folder:`JOUR 2 - ${ev}`, title:`Vidéos Jour 2 - "{nom}" - ${ev}`, desc:'Tous tes exports Jour 2 en 4k.'},
-    {folder:`JOUR 3 - ${ev}`, title:`Vidéos Jour 3 - "{nom}" - ${ev}`, desc:'Tous tes exports Jour 3 en 4k.'},
-    {folder:`BAB & Montages - ${ev}`, title:`Vidéos BAB & Montages - "{nom}" - ${ev}`, desc:"Tous tes montages finaux en 4k. N'oublie pas de mettre ton @ sur le nom des fichiers."},
-  ];
-}
-// Live editable slot arrays — initialised from getSetupSlots, refreshed when event name changes
-let setupPhotoSlots = getSetupSlots('photo');
-let setupVideoSlots = getSetupSlots('video');
-function resyncSetupSlots() {
-  setupPhotoSlots = getSetupSlots('photo');
-  setupVideoSlots = getSetupSlots('video');
-}
 let setupResults = [];
 
 // ══════════════════════════════════════════════════
@@ -986,10 +964,6 @@ function smartSubfoldersFor(type, personDays) {
     const key = isExtra ? 'p3' : ('j'+(idx+1));
     return personDays ? !!personDays[key] : true;
   });
-}
-
-function parseNamesInput(raw) {
-  return (raw||'').split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
 }
 
 // ── CSV IMPORT / EXPORT ──
@@ -1383,13 +1357,56 @@ async function testToken() {
 // ══════════════════════════════════════════════════
 // API
 // ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+// API — shared retry/backoff + fetch helper
+// Dropbox throttles with HTTP 429 (+ Retry-After) and can return transient
+// 5xx. We retry those a few times with backoff so bulk setup is robust and
+// we don't need huge fixed sleeps between calls.
+// ══════════════════════════════════════════════════
+async function fetchWithRetry(url, opts, tries){
+  tries = tries==null ? 4 : tries;
+  let lastErr;
+  for(let attempt=0; attempt<tries; attempt++){
+    try {
+      const r = await fetch(url, opts);
+      if(r.status===429 || r.status===503 || r.status===500){
+        // Honour Retry-After when present, else exponential backoff (capped)
+        const ra = parseFloat(r.headers.get('Retry-After'));
+        const wait = !isNaN(ra) ? ra*1000 : Math.min(8000, 400*Math.pow(2,attempt));
+        if(attempt < tries-1){ await sleep(wait); continue; }
+      }
+      return r;
+    } catch(e){
+      // Network hiccup — retry with backoff
+      lastErr = e;
+      if(attempt < tries-1){ await sleep(Math.min(8000, 400*Math.pow(2,attempt))); continue; }
+      throw e;
+    }
+  }
+  if(lastErr) throw lastErr;
+}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// Short-lived cache for files/list_folder reads (keyed by path). Switching
+// events back and forth, or re-scanning, reuses recent results instead of
+// re-hitting the API. Mutations (create/move/delete) clear it.
+const _lfCache = new Map();
+const LF_TTL = 30000; // 30s
+function lfCacheGet(path){
+  const e = _lfCache.get(path);
+  if(e && Date.now()-e.t < LF_TTL) return e.v;
+  return null;
+}
+function lfCacheSet(path, v){ _lfCache.set(path, {t:Date.now(), v}); }
+function lfCacheClear(){ _lfCache.clear(); }
+
 async function apiProxy(endpoint, body) {
   const token = getToken(); if(!token) throw new Error('Token manquant');
   // file_requests/list takes no body; /continue takes {cursor}
   const sendBody = (endpoint === 'file_requests/list/continue' && body?.cursor)
     ? JSON.stringify({cursor: body.cursor})
     : '{}';
-  const r = await fetch(PROXY, {
+  const r = await fetchWithRetry(PROXY, {
     method: 'POST',
     headers: {
       'Authorization': 'Bearer ' + token,
@@ -1412,9 +1429,16 @@ async function apiProxy(endpoint, body) {
 }
 
 async function apiPost(endpoint, body) {
-  const r = await fetch('https://api.dropboxapi.com/2/'+endpoint,{method:'POST',headers:{'Authorization':'Bearer '+getToken(),'Content-Type':'application/json'},body:body===null?'null':JSON.stringify(body)});
+  // Serve list_folder reads from cache when fresh (not /continue — that's paginated)
+  const cacheable = endpoint==='files/list_folder' && body && body.path!=null;
+  if(cacheable){ const hit = lfCacheGet(body.path); if(hit) return hit; }
+  const r = await fetchWithRetry('https://api.dropboxapi.com/2/'+endpoint,{method:'POST',headers:{'Authorization':'Bearer '+getToken(),'Content-Type':'application/json'},body:body===null?'null':JSON.stringify(body)});
   if (!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error_summary||`HTTP ${r.status}`);}
-  return r.json();
+  const j = await r.json();
+  if(cacheable) lfCacheSet(body.path, j);
+  // Any write invalidates the cache so we never read stale folder listings
+  if(/create_folder|move|delete|copy/.test(endpoint)) lfCacheClear();
+  return j;
 }
 
 // ══════════════════════════════════════════════════
@@ -1472,13 +1496,6 @@ function getFolderUrl(type, row, dest) {
   return 'https://www.dropbox.com/home' + encodeURI(personFolderPath).replace(/%2F/g,'/') + '?di=left_nav_browse';
 }
 
-function lnkCell(url, type, idx, key) {
-  if(!url) return `<td class="lnk"><span style="color:var(--text-dim);font-size:0.78em;">—</span></td>`;
-  return `<td class="lnk lnk-has-link">
-    <a href="${url}" target="_blank" class="lnk-request" title="${url}">Request Link</a>
-    <button onclick="deleteSlot('${type}',${idx},'${key}')" class="btn-del-slot" title="Supprimer ce lien et dossier">🗑</button>
-  </td>`;
-}
 function keyLabel(type, key) {
   return type==='photo'?{j1:'Jour 1',j2:'Jour 2',j3:'Jour 3',p3:'Partenaires'}[key]:{j1:'Jour 1',j2:'Jour 2',j3:'Jour 3',p3:'BAB'}[key];
 }
@@ -1760,86 +1777,12 @@ async function generateOne(type,idx,key) {
   }
 }
 
-async function generateAllPending(type) {
-  if(!getToken()){toast('⚠️ Entre le token','warn');return;}
-  const state=type==='photo'?photoState:videoState;
-  let created=0,errors=0;
-  for(const row of state){
-    for(const key of ['j1','j2','j3','p3']){
-      if(row.links[key].url) continue;
-      try{
-        const data=await fileRequestsPost('file_requests/create',{destination:getFolderPath(type,row.n,key),title:makeTitle(type,key,row.n,row.realName),description:makeDesc(type,key)});
-        row.links[key]={url:data.url,id:data.id,dest:getFolderPath(type,row.n,key)};created++;renderTable(type);
-        await new Promise(r=>setTimeout(r,300));
-      }catch(e){errors++;}
-    }
-  }
-  toast(errors===0?`✓ ${created} liens créés !`:`${created} créés · ${errors} erreurs`,errors===0?'success':'warn');
-}
-
-// ══════════════════════════════════════════════════
-// AUTO-FETCH
-// ══════════════════════════════════════════════════
-async function autoFetchLinks(type) {
-  if(!getToken()){toast('⚠️ Entre le token','warn');return;}
-  toast('🔄 Chargement des liens…','info');
-  try {
-    const base = document.getElementById(type==='photo'?'path-photo':'path-video').value.trim().replace(/\/$/,'');
-    if(!base){toast('⚠️ Définis le chemin base d\'abord','warn');return;}
-    // Fetch all file requests — paginate if needed
-    let allLinks = [];
-    let cursor = null;
-    do {
-      const body = cursor ? {cursor} : {};
-      const endpoint = cursor ? 'file_requests/list/continue' : 'file_requests/list';
-      const data = await apiProxy(endpoint, body);
-      allLinks = allLinks.concat(data.file_requests || []);
-      cursor = data.has_more ? data.cursor : null;
-    } while(cursor);
-    const state = type==='photo'?photoState:videoState;
-    let filled = 0;
-
-    for(const r of allLinks){
-      if(!r.destination) continue;
-      const dest = r.destination;
-      // Must start with our base path (case-insensitive)
-      if(!dest.toLowerCase().startsWith(base.toLowerCase())) continue;
-      // Parse person number from folder name
-      const rel = dest.slice(base.length).replace(/^\//, '');
-      const parts = rel.split('/');
-      const personFolder = parts[0]||'';
-      const m = personFolder.match(/^(\d+)_/);
-      if(!m) continue;
-      const n = parseInt(m[1]);
-      const row = state.find(r=>r.n===n);
-      if(!row) continue;
-      // Infer key from subfolder name
-      const sub = (parts[1]||'').toLowerCase();
-      let key;
-      if(sub.includes('jour 1')||sub.includes('day 1')) key='j1';
-      else if(sub.includes('jour 2')||sub.includes('day 2')) key='j2';
-      else if(sub.includes('jour 3')||sub.includes('day 3')) key='j3';
-            else if(sub.includes('partenaire')||sub.includes('bab')||sub.includes('montage')) key='p3';
-      else continue; // unrecognised subfolder — skip
-      // Always overwrite (in case IDs were missing or links changed)
-      if(!row.links[key].url || row.links[key].id !== r.id){
-        row.links[key]={url:r.url,id:r.id,dest:r.destination||''};
-        filled++;
-      }
-    }
-    renderTable(type);
-    if(type==='video'){const btn=document.getElementById('btn-create-video');if(btn){btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';}}
-    toast(filled>0?`✓ ${filled} liens chargés/mis à jour`:`✓ Liens déjà à jour`,'success');
-  } catch(e){toast('✗ '+e.message,'error');}
-}
-
-
 // ══════════════════════════════════════════════════
 // EDITOR LINK (Dropbox shared folder link)
 // ══════════════════════════════════════════════════
 async function sharingPost(endpoint, body) {
   // Sharing endpoints live on api.dropbox.com, not api.dropboxapi.com
-  const r = await fetch('https://api.dropbox.com/2/' + endpoint, {
+  const r = await fetchWithRetry('https://api.dropbox.com/2/' + endpoint, {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
@@ -1885,7 +1828,7 @@ async function createEditorLink(type, idx) {
 
 async function fileRequestsPost(endpoint, body) {
   // file_requests endpoints live on api.dropbox.com, not api.dropboxapi.com
-  const r = await fetch('https://api.dropbox.com/2/' + endpoint, {
+  const r = await fetchWithRetry('https://api.dropbox.com/2/' + endpoint, {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
@@ -2037,7 +1980,7 @@ async function doRename(type,idx){
   catch(e){const msg=(e.message||'').toLowerCase();if(msg.includes('conflict')||msg.includes('not_found')||msg.includes('not found')||msg.includes('409'))folderOk=true;else errs.push('Dossier: '+e.message);}
   for(const key of ['j1','j2','j3','p3']){
     if(!row.links[key].url) continue;
-    try{const id=await resolveId(type,row.n,key);if(!id){errs.push('ID manquant ('+key+')');continue;}await fileRequestsPost('file_requests/update',{id,title:makeTitle(type,key,row.n,name)});linksDone++;await new Promise(r=>setTimeout(r,250));}
+    try{const id=await resolveId(type,row.n,key);if(!id){errs.push('ID manquant ('+key+')');continue;}await fileRequestsPost('file_requests/update',{id,title:makeTitle(type,key,row.n,name)});linksDone++;await sleep(120);}
     catch(e){errs.push(key+': '+e.message);}
   }
   // Update dest in state so folder link reflects new name immediately
@@ -2057,15 +2000,6 @@ async function doRename(type,idx){
 // ══════════════════════════════════════════════════
 // COPY TABLE
 // ══════════════════════════════════════════════════
-function copySection(type){
-  const state=type==='photo'?photoState:videoState;
-  const col3=type==='photo'?'Lien Partenaires':'Lien BAB / Montages';
-  const kind=type==='photo'?'Photographe':'Vidéaste';
-  const rows=state.map(r=>{const n=r.realName||`${kind} ${r.n}`;return[n,r.links.j1.url,r.links.j2.url,r.links.p3.url].join('\t');});
-  const tsv=[['Nom','Lien Jour 1','Lien Jour 2',col3].join('\t'),...rows].join('\n');
-  navigator.clipboard.writeText(tsv).then(()=>toast('✓ Tableau copié — Ctrl+V dans Google Docs','success'));
-}
-
 // ══════════════════════════════════════════════════
 // SCAN ROOT HISTORY
 // ══════════════════════════════════════════════════
@@ -2467,14 +2401,14 @@ async function scanEvents() {
           card.title = 'Événement passé — protégé. Tu peux quand même le consulter via le switcher en haut.';
           card.onclick=()=>{ toast('🔒 Événement passé — protégé contre la re-création. Consulte-le via le switcher en haut.','warn'); };
         } else {
-          card.onmouseenter=()=>{card.style.borderColor='rgba(244,114,182,0.3)';card.style.background='rgba(244,114,182,0.05)';};
+          card.onmouseenter=()=>{card.style.borderColor='rgba(52,211,153,0.3)';card.style.background='rgba(52,211,153,0.05)';};
           card.onmouseleave=()=>{card.style.borderColor='rgba(255,255,255,0.05)';card.style.background='var(--surface-2)';};
           card.innerHTML=`
             <div style="min-width:0;">
               <div style="font-size:0.85em;font-weight:600;color:#fff;">${f.name}</div>
               <div style="font-size:0.68em;color:var(--text-dim);font-family:monospace;margin-top:2px;word-break:break-all;">${f.path_display}</div>
             </div>
-            <span style="font-size:0.72em;color:var(--day-2);font-weight:600;flex-shrink:0;">Sélectionner →</span>`;
+            <span style="font-size:0.72em;color:var(--green);font-weight:600;flex-shrink:0;">Sélectionner →</span>`;
           card.onclick=()=>selectEvent(f.path_display, f.name);
         }
         list.appendChild(card);
@@ -2561,45 +2495,6 @@ function resetEventSelection() {
   document.getElementById('scan-root').value='';
   updateHeader('setup');
 }
-
-// Legacy preview — superseded by renderSmartPreview (kept as safe no-op)
-function updateStructurePreview() { if(typeof renderSmartPreview==='function') renderSmartPreview(); }
-
-// ══════════════════════════════════════════════════
-// SETUP — SLOT MANAGEMENT
-// ══════════════════════════════════════════════════
-function renderSlotConfig(type){
-  const slots=type==='photo'?setupPhotoSlots:setupVideoSlots;
-  const container=document.getElementById(type+'-slots-config');
-  if(!container) return; // smart-setup UI replaced manual slot config
-  container.innerHTML='';
-  slots.forEach((s,i)=>{
-    const div=document.createElement('div');
-    div.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;';
-    div.innerHTML=`
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <span style="font-size:0.7em;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;">Sous-dossier ${i+1}</span>
-        <button class="btn btn-ghost btn-xs" onclick="removeSlot('${type}',${i})">✕</button>
-      </div>
-      <div style="margin-bottom:6px;"><label class="field-label">Nom du dossier</label><input type="text" value="${s.folder}" oninput="updateSlot('${type}',${i},'folder',this.value)" placeholder="ex: JOUR 1 - ML Ville 2026"></div>
-      <div style="margin-bottom:6px;"><label class="field-label">Titre du lien — <code>{nom}</code> sera remplacé</label><input type="text" value="${s.title}" oninput="updateSlot('${type}',${i},'title',this.value)" placeholder='ex: Photos Jour 1 - "{nom}" - Madame Loyal'></div>
-      <div><label class="field-label">Description (optionnel)</label><textarea oninput="updateSlot('${type}',${i},'desc',this.value)" placeholder="Instructions pour le média…">${s.desc}</textarea></div>`;
-    container.appendChild(div);
-  });
-}
-
-// Session cache for slot edits
-let _slotCache = {};
-function getEditableSlots(type) {
-  const key = 'slots_'+type;
-  if(!_slotCache[key]) _slotCache[key] = JSON.parse(JSON.stringify(getSetupSlots(type)));
-  // Refresh base names if EVENT_CONFIG changed
-  return _slotCache[key];
-}
-function resetSlotCache() { _slotCache = {}; }
-function updateSlot(type,i,field,val){(type==='photo'?setupPhotoSlots:setupVideoSlots)[i][field]=val;updateStructurePreview();}
-function addSlot(type){(type==='photo'?setupPhotoSlots:setupVideoSlots).push({folder:'',title:'',desc:''});renderSlotConfig(type);}
-function removeSlot(type,i){(type==='photo'?setupPhotoSlots:setupVideoSlots).splice(i,1);renderSlotConfig(type);}
 
 // ══════════════════════════════════════════════════
 // SETUP — RUN
@@ -2698,7 +2593,9 @@ async function runSmartSetup(){
           personResult.slots.push({key:slotKeyFor(slot.folder),folder:slot.folder,title,url:null});
           totalErrors++;
         }
-        await new Promise(r=>setTimeout(r,350));
+        // Small pacing delay; fetchWithRetry() absorbs any 429 throttling so we
+        // no longer need a large fixed sleep between calls.
+        await sleep(120);
       }
       setupResults.push(personResult);
       renderSetupResults();
@@ -2725,103 +2622,6 @@ async function runSmartSetup(){
         loadEventState(newPhoto, newVideo);
       }
     },400);
-  }
-}
-
-async function runSetup(){
-  if(!getToken()){toast('⚠️ Entre le token d\'abord','warn');return;}
-  const evName   = document.getElementById('ev-name').value.trim();
-  const evRoot   = (selectedEventPath||'').replace(/\/$/,'');
-  const photoBase = document.getElementById('ev-photo-base').value.trim();
-  const videoBase = document.getElementById('ev-video-base').value.trim();
-  const photoCount = parseInt(document.getElementById('ev-photo-count').value)||0;
-  const videoCount = parseInt(document.getElementById('ev-video-count').value)||0;
-  if(!evRoot){toast('⚠️ Sélectionne un événement d\'abord','warn');return;}
-  if(!evName||!photoBase||!videoBase){toast('⚠️ Remplis tous les champs de configuration','warn');return;}
-  const btn=document.getElementById('btn-run-setup');btn.disabled=true;
-  clearLog();
-  log('🚀 Début setup — '+evName,'log-info');
-  log('📁 Racine : '+evRoot,'log-info');
-  const types=[
-    {key:'photo',label:'Photographe',base:evRoot+'/'+photoBase,slots:setupPhotoSlots,count:photoCount},
-    {key:'video',label:'Vidéaste',base:evRoot+'/'+videoBase,slots:setupVideoSlots,count:videoCount},
-  ];
-  let totalCreated=0,totalErrors=0;
-  setupResults=[];
-  for(const t of types){
-    log('','');
-    log('── '+(t.key==='photo'?'📷':'🎬')+' '+t.label+'s ('+t.count+') ──','log-info');
-    for(let n=1;n<=t.count;n++){
-      const num=String(n).padStart(2,'0');
-      const personFolder=`${t.base}/${num}_${t.label} ${n} - ${evName}`;
-      const personResult={type:t.key,n,name:`${t.label} ${n}`,slots:[]};
-      for(const slot of t.slots){
-        if(!slot.folder) continue;
-        const dest=`${personFolder}/${slot.folder}`;
-        const title=slot.title.replace(/\{nom\}/g,`${t.label} ${n}`);
-        document.getElementById('setup-progress').textContent=`⏳ ${t.label} ${n} / ${slot.folder}`;
-        // Create folder
-        try{
-          await apiPost('files/create_folder_v2',{path:dest,autorename:false});
-          log('  ✓ Dossier : '+dest,'log-ok');
-        }catch(e){
-          const msg=(e.message||'').toLowerCase();
-          if(msg.includes('conflict')||msg.includes('already')) log('  ~ Dossier existant : '+dest,'log-warn');
-          else{log('  ✗ Dossier ERREUR ('+e.message+') : '+dest,'log-err');totalErrors++;personResult.slots.push({folder:slot.folder,title,url:null});continue;}
-        }
-        // Create upload link
-        try{
-          const body={destination:dest,title};
-          if(slot.desc) body.description=slot.desc;
-          const data=await fileRequestsPost('file_requests/create',body);
-          log('  ✓ Lien : '+title,'log-ok');
-          personResult.slots.push({folder:slot.folder,title,url:data.url,id:data.id});
-          totalCreated++;
-        }catch(e){
-          log('  ✗ Lien ERREUR ('+e.message+') : '+title,'log-err');
-          personResult.slots.push({folder:slot.folder,title,url:null});
-          totalErrors++;
-        }
-        await new Promise(r=>setTimeout(r,350));
-      }
-      setupResults.push(personResult);
-      renderSetupResults();
-    }
-  }
-  document.getElementById('setup-progress').textContent='';
-  log('','');
-  log('✅ Terminé — '+totalCreated+' liens créés · '+totalErrors+' erreurs',totalErrors===0?'log-ok':'log-warn');
-  toast(totalErrors===0?`✅ ${totalCreated} liens créés !`:`${totalCreated} créés · ${totalErrors} erreurs`,totalErrors===0?'success':'warn');
-  btn.disabled=false;
-
-  // Load newly created links into photo/video tabs
-  if(setupResults.length > 0) {
-    const newPhoto = setupResults.filter(r=>r.type==='photo').map((r,i)=>{
-      const linkMap = {};
-      r.slots.forEach((s,si)=>{const k=['j1','j2','j3','p3'][si]||'s'+si; linkMap[k]={url:s.url||'',id:s.id||''};});
-      // Ensure all 3 keys exist
-      ['j1','j2','j3','p3'].forEach(k=>{ if(!linkMap[k]) linkMap[k]={url:'',id:''}; });
-      return {n:i+1, realName:'', links:linkMap};
-    });
-    const newVideo = setupResults.filter(r=>r.type==='video').map((r,i)=>{
-      const linkMap = {};
-      r.slots.forEach((s,si)=>{const k=['j1','j2','j3','p3'][si]||'s'+si; linkMap[k]={url:s.url||'',id:s.id||''};});
-      ['j1','j2','j3','p3'].forEach(k=>{ if(!linkMap[k]) linkMap[k]={url:'',id:''}; });
-      return {n:i+1, realName:'', links:linkMap};
-    });
-    if(newPhoto.length>0 || newVideo.length>0) {
-      setTimeout(()=>{
-        if(confirm(`✅ ${totalCreated} liens créés !\n\nCharger ce nouvel événement dans les onglets Photographes & Vidéastes ?`)) {
-          // Update paths fields to match new event
-          const evRoot = (selectedEventPath||'').replace(/\/$/,'');
-          const photoBase = document.getElementById('ev-photo-base').value.trim();
-          const videoBase = document.getElementById('ev-video-base').value.trim();
-          if(evRoot && photoBase) document.getElementById('path-photo').value = evRoot+'/'+photoBase;
-          if(evRoot && videoBase) document.getElementById('path-video').value = evRoot+'/'+videoBase;
-          loadEventState(newPhoto, newVideo);
-        }
-      }, 400);
-    }
   }
 }
 
@@ -2874,11 +2674,6 @@ async function countFilesForType(type) {
   stat.innerHTML = total > 0 ? `${total} <span class="dim">fichiers</span>` : '0';
   stat.style.color = total > 0 ? 'var(--green)' : 'var(--text-dim)';
   return total;
-}
-
-// Counts both (used at startup); each card can also be refreshed alone.
-async function countAllFilesForHeader() {
-  await Promise.all([countFilesForType('photo'), countFilesForType('video')]);
 }
 
 // ══════════════════════════════════════════════════
@@ -3639,21 +3434,6 @@ function openMessagesOverlay(type) {
   renderMsgOverlay();
 }
 
-// Called from per-row ✉️ button — opens overlay pre-selected to that person
-function openModal(type, idx) {
-  const state = type==='photo' ? photoState : videoState;
-  const named = state.filter(r => r.realName.trim());
-  if(named.length === 0) { toast('⚠️ Aucun nom assigné','warn'); return; }
-  msgState.type = type;
-  // Find index within named array
-  const row = state[idx];
-  const namedIdx = named.findIndex(r => r.n === row.n);
-  msgState.personIdx = namedIdx >= 0 ? namedIdx : 0;
-  document.getElementById('email-modal').style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-  renderMsgOverlay();
-}
-
 function closeModal() {
   document.getElementById('email-modal').style.display = 'none';
   document.body.style.overflow = '';
@@ -3697,7 +3477,7 @@ function renderMsgOverlay() {
 
   // Update type tabs
   const isPhoto = type==='photo';
-  document.getElementById('mtab-photo').style.borderBottomColor = isPhoto ? 'var(--day-0)' : 'transparent';
+  document.getElementById('mtab-photo').style.borderBottomColor = isPhoto ? 'var(--indigo)' : 'transparent';
   document.getElementById('mtab-photo').style.color = isPhoto ? '#fff' : 'var(--text-muted)';
   document.getElementById('mtab-video').style.borderBottomColor = !isPhoto ? 'var(--day-1)' : 'transparent';
   document.getElementById('mtab-video').style.color = !isPhoto ? '#fff' : 'var(--text-muted)';
@@ -3781,11 +3561,6 @@ function copyMsgPart(id) {
   });
 }
 
-// Legacy stubs — keep for any remaining calls
-function showMTab(tab) {}
-function renderModalContent() {}
-function copyModal() { copyMsgPart('email-'+((msgState.type==='photo'?photoState:videoState).filter(r=>r.realName.trim())[msgState.personIdx]?.n||'')); }
-function copyModalSubject() { copyMsgPart('subject-'+((msgState.type==='photo'?photoState:videoState).filter(r=>r.realName.trim())[msgState.personIdx]?.n||'')); }
 
 // Close modal on backdrop click
 document.getElementById('email-modal').addEventListener('click', function(e){
@@ -3818,8 +3593,6 @@ function toast(msg,type='info'){
 loadToken();
 renderTable('photo');
 renderTable('video');
-renderSlotConfig('photo');
-renderSlotConfig('video');
 renderSmartDays();
 renderSmartPeople('photo');
 renderSmartPeople('video');
@@ -3876,69 +3649,6 @@ async function autoRestoreLastEvent(){
   }
 }
 autoRestoreLastEvent();
-
-// ══════════════════════════════════════════════════
-// DESTINATION VERIFICATION MODE
-// ══════════════════════════════════════════════════
-const verifState = {photo: false, video: false};
-
-function toggleVerifDest(type) {
-  verifState[type] = !verifState[type];
-  const tbl = document.querySelector(`#tab-${type} table`);
-  const btn = document.getElementById(`btn-verif-${type}`);
-  if(verifState[type]) {
-    tbl.classList.add('verif-mode');
-    btn.classList.remove('btn-ghost');
-    btn.style.background = 'rgba(99,102,241,0.15)';
-    btn.style.color = '#a5b4fc';
-    btn.style.border = '1px solid rgba(99,102,241,0.3)';
-    renderTableWithDest(type);
-  } else {
-    tbl.classList.remove('verif-mode');
-    btn.classList.add('btn-ghost');
-    btn.style.background = '';
-    btn.style.color = '';
-    btn.style.border = '';
-  }
-}
-
-function renderTableWithDest(type) {
-  const state = type==='photo'?photoState:videoState;
-  // Insert dest rows after each tr
-  const tbody = document.getElementById('tbody-'+type);
-  const rows = Array.from(tbody.querySelectorAll('tr:not(.dest-row)'));
-  rows.forEach((tr, idx) => {
-    const row = state[idx];
-    if(!row) return;
-    // Remove existing dest row if any
-    const existing = document.getElementById('dest-row-'+type+'-'+row.n);
-    if(existing) existing.remove();
-    // Build dest row
-    const destTr = document.createElement('tr');
-    destTr.className = 'dest-row';
-    destTr.id = 'dest-row-'+type+'-'+row.n;
-    const keyLabels = type==='photo'
-      ? {j1:'J1', j2:'J2', j3:'J3', p3:'Part.'}
-      : {j1:'J1', j2:'J2', j3:'J3', p3:'BAB'};
-    const destItems = ['j1','j2','j3','p3'].map(k => {
-      const dest = row.links[k].dest;
-      if(!dest) return `<span class="dest-warn">⚠ ${keyLabels[k]}: manquant</span>`;
-      const parts = dest.split('/');
-      const subfolder = parts.pop();
-      const personFolder = parts.pop()||'';
-      // Check if person folder matches expected slot number
-      const expectedNum = String(row.n).padStart(2,'0');
-      const folderOk = personFolder.startsWith(expectedNum+'_');
-      const cls = folderOk ? 'dest-ok' : 'dest-warn';
-      const icon = folderOk ? '✓' : '⚠';
-      return `<span class="${cls}" title="${dest}">${icon} ${keyLabels[k]}: <em>${personFolder}</em> / ${subfolder}</span>`;
-    }).join('');
-    destTr.innerHTML = `<td class="dest-cell" colspan="7">
-      <strong style="color:var(--text-muted);margin-right:6px;">Destinations :</strong>${destItems}
-    </td>`;
-    tr.after(destTr);
-  });
-}
 
 </script>
 
