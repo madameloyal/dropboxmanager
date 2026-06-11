@@ -394,16 +394,32 @@ td.actions{white-space:nowrap;width:1px;}
       <input type="text" id="path-video" placeholder="/01_ALL MEDIAS ML 2026/.../Videastes Pro" style="font-size:12px;font-family:'JetBrains Mono',monospace;">
     </div>
   </div>
-  <!-- Event meta — used in message templates -->
-  <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-    <div>
-      <label class="field-label">📍 Ville / Édition <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-dim);">— pour les messages</span></label>
-      <input type="text" id="ev-city-inline" placeholder="ex: XXL PARIS" style="font-size:13px;" oninput="EVENT_CONFIG.city=this.value;EVENT_CONFIG.edition=this.value;const _ec=document.getElementById('evCtx');if(_ec)_ec.textContent=this.value||'—';localStorage.setItem('dbx_ev_city',this.value);">
+  <!-- Base folder logic explainer -->
+  <div style="margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:700;margin-bottom:8px;font-family:'JetBrains Mono',monospace;">ℹ️ Logique des dossiers lue par l'outil</div>
+    <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">
+      L'outil lit cette arborescence dans Dropbox :
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin:8px 0;line-height:1.8;white-space:pre;overflow-x:auto;">/01_ALL MEDIAS ML 2026/
+  01_MARS ML XXL PARIS/        ← <span style="color:var(--day-0);">événement</span>
+    Photographes Pro - ML …/   ← <span style="color:var(--day-0);">base photo</span>
+      01_Timo-Leo - ML …/      ← <span style="color:var(--day-0);">personne</span>
+        JOUR 1 (13.03.26) - ML …/  ← <span style="color:var(--day-0);">slot + lien upload</span>
+    Videastes Pro - ML …/      ← base vidéo</div>
+      Seuls le <strong>nom de l'événement</strong>, les <strong>dates des jours</strong> et les <strong>noms</strong> changent. Le suffixe « ML … » et les libellés (Photographes Pro, JOUR N, PARTENAIRES, BAB & Montages) restent identiques.
+      <br><br>
+      <strong style="color:var(--text);">Pour l'an prochain :</strong> crée un nouveau dossier racine (ex: <code>/01_ALL MEDIAS ML 2027</code>) en gardant exactement la même structure et les mêmes intitulés, puis change simplement le chemin ci-dessus. L'outil le lira automatiquement.
     </div>
-    <div>
-      <label class="field-label">📅 Date <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-dim);">— pour les messages</span></label>
-      <input type="text" id="ev-date-inline" placeholder="ex: 13-14 Mars" style="font-size:13px;" oninput="EVENT_CONFIG.date=this.value;localStorage.setItem('dbx_ev_date',this.value);">
+  </div>
+</div>
+
+<!-- Templates editor -->
+<div class="card" style="padding:14px 18px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+    <div style="min-width:0;flex:1;">
+      <div class="card-label" style="margin-bottom:4px;">✉️ Modèles de messages</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.6;">Personnalise les emails et WhatsApp envoyés aux photographes/vidéastes.</div>
     </div>
+    <button class="btn btn-primary btn-sm" onclick="openTemplateEditor()">✏️ Modifier les modèles</button>
   </div>
 </div>
 </div>
@@ -415,9 +431,7 @@ td.actions{white-space:nowrap;width:1px;}
   <div class="section-header">
     <span class="section-title-text">Photographes <span id="section-photo-count" style="color:var(--text-dim);font-weight:400;"></span></span>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-      <button class="btn btn-ghost btn-sm" id="btn-verif-photo" onclick="toggleVerifDest('photo')">◇ Destinations</button>
       <button class="btn btn-ghost btn-sm" onclick="openMessagesOverlay('photo')">📨 Messages</button>
-      <button class="btn btn-ghost btn-sm" onclick="copySection('photo')">📋 Copier</button>
       <button class="btn btn-ghost btn-sm" onclick="openExportMenu()">⬇️ Export</button>
       <div class="view-toggle" id="view-toggle-photo">
         <button class="on" data-view="list" onclick="setView('photo','list')" title="Vue liste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
@@ -440,9 +454,7 @@ td.actions{white-space:nowrap;width:1px;}
   <div class="section-header">
     <span class="section-title-text">Vidéastes <span id="section-video-count" style="color:var(--text-dim);font-weight:400;"></span></span>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-      <button class="btn btn-ghost btn-sm" id="btn-verif-video" onclick="toggleVerifDest('video')">◇ Destinations</button>
       <button class="btn btn-ghost btn-sm" onclick="openMessagesOverlay('video')">📨 Messages</button>
-      <button class="btn btn-ghost btn-sm" onclick="copySection('video')">📋 Copier</button>
       <button class="btn btn-ghost btn-sm" onclick="openExportMenu()">⬇️ Export</button>
       <div class="view-toggle" id="view-toggle-video">
         <button class="on" data-view="list" onclick="setView('video','list')" title="Vue liste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
@@ -462,18 +474,16 @@ td.actions{white-space:nowrap;width:1px;}
 <!-- VERIFY TAB -->
 <div id="tab-verify" style="display:none;">
 
-  <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:0.78em;line-height:1.7;color:var(--text-muted);">
-    <strong style="color:var(--text);">Content checker:</strong> Scans each person's Dropbox folders and counts how many files have been uploaded. Requires a valid token and correct base paths above.
+  <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:0.82em;line-height:1.7;color:var(--text-muted);">
+    <strong style="color:var(--text);">Vérification du contenu :</strong> scanne les dossiers Dropbox de chaque personne et compte les fichiers déposés (avec taille et date du 1er upload). Nécessite un événement chargé.
   </div>
 
   <div class="section-header">
-    <span class="section-title-text">Vérification & Templates</span>
+    <span class="section-title-text">Vérification</span>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      <button class="btn btn-ghost btn-sm" onclick="runVerify('photo')">🔍 Check Photographes</button>
-      <button class="btn btn-ghost btn-sm" onclick="runVerify('video')">🔍 Check Vidéastes</button>
-      <button class="btn btn-ghost btn-sm" onclick="runVerify('all')">🔍 Check All</button>
-      <div style="width:1px;height:20px;background:var(--border);margin:0 2px;"></div>
-      <button class="btn btn-primary btn-sm" onclick="openTemplateEditor()">✏️ Edit templates</button>
+      <button class="btn btn-ghost btn-sm" onclick="runVerify('photo')">◇ Photographes</button>
+      <button class="btn btn-ghost btn-sm" onclick="runVerify('video')">◇ Vidéastes</button>
+      <button class="btn btn-primary btn-sm" onclick="runVerify('all')">◇ Tout vérifier</button>
     </div>
   </div>
 
@@ -625,7 +635,7 @@ td.actions{white-space:nowrap;width:1px;}
     <!-- PERSON SELECTOR -->
     <div style="padding:12px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
       <span style="font-size:0.7em;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;white-space:nowrap;">Personne :</span>
-      <div id="msg-person-chips" style="display:flex;gap:5px;flex-wrap:wrap;flex:1;"></div>
+      <div id="msg-person-chips" style="display:flex;gap:5px;flex:1;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;"></div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
         <button onclick="navMsgPerson(-1)" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text-muted);width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.9em;">←</button>
         <span id="msg-nav-counter" style="font-size:0.72em;color:var(--text-muted);font-weight:600;white-space:nowrap;"></span>
@@ -901,25 +911,32 @@ function parseNamesInput(raw) {
 
 // ── CSV IMPORT / EXPORT ──
 function downloadCsvTemplate() {
+  // Empty, ready-to-fill template with an instructions block at the top.
   const lines = [
+    '# MODELE EVENEMENT — MADAME LOYAL / FESTIFLOW',
+    '# Remplis la colonne "value". Garde la 1ere colonne ("field") telle quelle.',
+    '# event_name = nom de l\'edition (ex: PARIS XXL 2026). Sera prefixe par "ML".',
+    '# day = une ligne par jour, date au format AAAA-MM-JJ (ex: 2026-03-13).',
+    '# Sous "role,name" : une ligne par personne. role = photo OU video.',
+    '# Supprime les lignes commencant par # avant import si ton tableur rale (optionnel).',
     'field,value',
-    'event_name,PARIS XXL 2026',
-    'day,2026-03-13',
-    'day,2026-03-14',
+    'event_name,',
+    'day,',
+    'day,',
     'role,name',
-    'photo,Timo-Leo',
-    'photo,Etienne',
-    'photo,Mickael',
-    'video,Louis',
-    'video,Killian',
+    'photo,',
+    'photo,',
+    'photo,',
+    'video,',
+    'video,',
   ];
-  const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const blob = new Blob(['\ufeff'+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = 'modele-evenement-ML.csv';
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
-  toast('✓ Modèle CSV téléchargé','success');
+  toast('✓ Modèle CSV téléchargé — ouvre-le et remplis-le','success');
 }
 
 function onCsvUpload(ev) {
@@ -935,7 +952,7 @@ function onCsvUpload(ev) {
 }
 
 function applyCsv(text) {
-  const rows = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean)
+  const rows = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l && !l.startsWith('#'))
     .map(l=>l.split(',').map(c=>c.trim().replace(/^"|"$/g,'')));
   let eventName = '';
   const days = [];
@@ -3065,9 +3082,11 @@ async function verifyType(type) {
     let firstDate  = null;
 
     for(const key of keys) {
-      // Use dest path from state — fall back to getFolderPath only if missing
-      const path = row.links[key].dest || getFolderPath(type, row.n, key);
+      // Only the real stored destination is reliable (folders have dates in names)
+      const link = row.links[key] || {};
+      const path = link.dest || '';
       const cell = document.getElementById(`vc-${type}-${row.n}-${key}`);
+      if(!path){ if(cell) cell.innerHTML=`<span class="status-chip sc-none">—</span>`; continue; }
       try {
         // Use recursive:false — only count direct files in that slot folder
         let entries = [];
@@ -3236,7 +3255,7 @@ function renderMsgOverlay() {
   const chips = document.getElementById('msg-person-chips');
   chips.innerHTML = named.map((r,i) => {
     const active = i===personIdx;
-    return `<button onclick="selectMsgPerson(${i})" style="padding:4px 12px;border-radius:20px;font-size:0.75em;font-weight:600;cursor:pointer;border:1px solid ${active?'rgba(168,85,247,0.4)':'var(--border)'};background:${active?'rgba(168,85,247,0.15)':'var(--surface-2)'};color:${active?'var(--day-0)':'var(--text-muted)'};transition:all .15s;white-space:nowrap;">${String(r.n).padStart(2,'0')} · ${r.realName}</button>`;
+    return `<button onclick="selectMsgPerson(${i})" style="padding:4px 12px;border-radius:20px;font-size:0.75em;font-weight:600;cursor:pointer;border:1px solid ${active?'rgba(168,85,247,0.4)':'var(--border)'};background:${active?'rgba(168,85,247,0.15)':'var(--surface-2)'};color:${active?'var(--day-0)':'var(--text-muted)'};transition:all .15s;white-space:nowrap;flex-shrink:0;">${String(r.n).padStart(2,'0')} · ${r.realName}</button>`;
   }).join('');
 
   // Nav counter
