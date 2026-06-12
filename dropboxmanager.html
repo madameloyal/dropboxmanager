@@ -1569,26 +1569,50 @@ async function copyPersonInfo(type, idx){
   const state = type==='photo'?photoState:videoState;
   const row = state[idx];
   if(!row) return;
-  // Auto-create the editor link if missing (choice #2)
+
+  // IMPORTANT (iOS Safari): the clipboard write must happen synchronously inside
+  // the tap gesture. Any `await` before it expires the gesture and the write is
+  // blocked — which previously left the PREVIOUS person's text on the clipboard.
+  // So we copy immediately first, then (if needed) create the editor link and
+  // silently re-copy the enriched text.
+  const writeClip = (text) => {
+    try {
+      const ta=document.createElement('textarea');
+      ta.value=text; ta.style.position='fixed'; ta.style.top='-9999px'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      ta.setSelectionRange(0, text.length);
+      const ok = document.execCommand('copy');
+      ta.remove();
+      if(!ok && navigator.clipboard) navigator.clipboard.writeText(text).catch(()=>{});
+      return ok;
+    } catch(e){
+      if(navigator.clipboard) { navigator.clipboard.writeText(text).catch(()=>{}); return true; }
+      return false;
+    }
+  };
+
+  // 1) Copy what we have right now, synchronously.
+  writeClip(buildPersonCopyText(type, row));
+
+  // 2) If the editor link is missing, create it in the background, then re-copy
+  //    (this second copy happens outside the gesture, but the user already has a
+  //    valid copy from step 1; clipboard updates silently if it succeeds).
   if(!row.editorUrl){
     const anyDest = row.links.j1.dest||row.links.j2.dest||row.links.j3?.dest||row.links.p3.dest||'';
     if(anyDest && getToken()){
-      toast('🔗 Création du lien éditeur…','info');
-      try { await createEditorLink(type, idx, true); } catch(e){}
+      toast('✓ Infos copiées · création du lien éditeur…','success');
+      try {
+        await createEditorLink(type, idx, true);
+        if(row.editorUrl){
+          const enriched = buildPersonCopyText(type, row);
+          if(navigator.clipboard) { try { await navigator.clipboard.writeText(enriched); } catch(e){} }
+          toast('✓ Lien éditeur ajouté — recopié','success');
+        }
+      } catch(e){}
+      return;
     }
   }
-  const text = buildPersonCopyText(type, row);
-  try {
-    await navigator.clipboard.writeText(text);
-    toast('✓ Infos copiées — prêt à coller','success');
-  } catch(e){
-    // Fallback for browsers blocking clipboard API
-    const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
-    document.body.appendChild(ta); ta.select();
-    try{ document.execCommand('copy'); toast('✓ Infos copiées','success'); }
-    catch(e2){ toast('✗ Copie impossible','error'); }
-    ta.remove();
-  }
+  toast('✓ Infos copiées — prêt à coller','success');
 }
 
 // ── Minimalist thin-stroke icons (match the nav bar; replace emoji) ──
