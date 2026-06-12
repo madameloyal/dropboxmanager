@@ -1934,6 +1934,12 @@ async function generateOne(type,idx,key) {
     const data=await fileRequestsPost('file_requests/create',{destination:destPath,title:makeTitle(type,key,row.n,row.realName),description:makeDesc(type,key)});
     row.links[key]={url:data.url,id:data.id,dest:destPath};renderTable(type);
     toast(`✓ ${type==='photo'?'Photographe':'Vidéaste'} ${row.n} · ${keyLabel(type,key)} créé`,'success');
+    // Auto-create the editor link (one shared link per person folder) now that a
+    // folder exists — keeps "+ créer" self-sufficient so every person ends up with
+    // an editor link without an extra tap. Background + silent; idempotent.
+    if(!row.editorUrl && getToken()){
+      createEditorLink(type, idx, true).catch(()=>{});
+    }
   } catch(e) {
     if(btn){btn.className='btn btn-error btn-xs';btn.textContent='✗';btn.disabled=false;}
     toast('✗ '+e.message,'error');
@@ -3174,7 +3180,7 @@ function openExportMenu(anchorEl) {
     </button>
     <button class="export-item" onclick="runExport('carnet')">
       <div style="font-weight:700;color:var(--text);font-size:13px;">📑 Carnet de liens — PDF</div>
-      <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">Tous les liens par personne (photo + vidéo)</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">Tous les liens (upload, dossier, éditeur) · photo + vidéo</div>
     </button>`;
   document.body.appendChild(menu);
   // Position under the button that was clicked
@@ -3261,11 +3267,38 @@ async function runExport(kind) {
   // Close the dropdown immediately so it doesn't interfere
   const menu = document.getElementById('export-menu'); if(menu) menu.remove();
 
-  // ── Carnet de liens: built entirely from in-memory state (no Dropbox scan). Instant. ──
+  // ── Carnet de liens: built from in-memory state. Before building, backfill any
+  //    missing editor links for people who have folders but no editor link yet
+  //    (e.g. created via per-slot "+ créer" before auto-creation existed). ──
   if(kind==='carnet'){
     if(photoState.length===0 && videoState.length===0){ toast('⚠️ Aucun événement chargé','warn'); return; }
-    try { exportCarnet(); toast('✓ Carnet de liens prêt','success'); }
-    catch(e){ toast('✗ Export échoué : '+e.message,'error'); }
+    if(exportBusy){ toast('⏳ Un export est déjà en cours…','warn'); return; }
+    exportBusy = true;
+    try {
+      // Find people with at least one folder dest but no editor link.
+      const pending = [];
+      [['photo',photoState],['video',videoState]].forEach(([type,arr])=>{
+        arr.forEach((row,idx)=>{
+          const anyDest = row.links.j1.dest||row.links.j2.dest||(row.links.j3&&row.links.j3.dest)||row.links.p3.dest||'';
+          if(anyDest && !row.editorUrl) pending.push([type,idx]);
+        });
+      });
+      if(pending.length && getToken()){
+        showPersistentToast(`🔗 Création de ${pending.length} lien(s) éditeur manquant(s)…`);
+        let done=0;
+        for(const [type,idx] of pending){
+          try { await createEditorLink(type, idx, true); } catch(e){}
+          done++;
+          showPersistentToast(`🔗 Liens éditeur — ${done}/${pending.length}`);
+        }
+        hidePersistentToast();
+      }
+      exportCarnet();
+      toast('✓ Carnet de liens prêt','success');
+    } catch(e){
+      hidePersistentToast();
+      toast('✗ Export échoué : '+e.message,'error');
+    } finally { exportBusy = false; }
     return;
   }
 
