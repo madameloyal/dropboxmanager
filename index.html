@@ -170,7 +170,8 @@ td.name-cell{min-width:180px;}
 .name-edit-wrap input{min-width:110px;flex:1;padding:5px 9px;font-size:13px;border-radius:6px;font-family:'DM Sans',sans-serif;}
 td.lnk{max-width:150px;font-size:12px;text-align:center;vertical-align:middle;}
 .lnk a{text-decoration:none;font-size:12px;font-weight:600;}
-.lnk-request{color:#818cf8;font-family:'DM Sans',sans-serif;}
+.lnk-request{color:#818cf8;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:5px;text-decoration:none;}
+.lnk-request svg{flex-shrink:0;}
 .lnk-request:hover{color:#a5b4fc;text-decoration:underline;}
 .lnk-folder{color:var(--text-muted);font-family:'DM Sans',sans-serif;margin-top:3px;}
 .lnk-folder:hover{color:var(--text);}
@@ -1687,7 +1688,7 @@ function lnkCellOrPlus(type, idx, key) {
   if(url) {
     const folderLink = dest ? `<a href="${folderUrlFromDest(dest)}" target="_blank" class="btn-del-slot" title="Ouvrir le dossier ${lbl}" style="text-decoration:none;">${ICON.folder}</a>` : '';
     return `<td class="lnk lnk-has-link">
-      <a href="${url}" target="_blank" class="lnk-request" title="Lien d'upload ${lbl}">Upload</a>
+      <a href="${url}" target="_blank" class="lnk-request" title="Lien d'upload ${lbl}">${ICON.link}Upload</a>
       ${folderLink}
       <button onclick="deleteSlot('${type}',${idx},'${key}')" class="btn-del-slot" title="Supprimer ce lien et dossier">${ICON.trash}</button>
     </td>`;
@@ -1779,7 +1780,7 @@ function renderTable(type) {
         let right;
         if(url){
           const folderLink = dest ? `<a href="${folderUrlFromDest(dest)}" target="_blank" class="icon-btn go" title="Ouvrir le dossier ${lbl}">${ICON.folder}</a>` : '';
-          right = `<a href="${url}" target="_blank" class="lnk-request" style="font-size:12px;font-weight:600;" title="Lien d'upload ${lbl}">Upload</a>${folderLink}<button onclick="deleteSlot('${type}',${idx},'${k}')" class="icon-btn del" title="Supprimer">${ICON.trash}</button>`;
+          right = `<a href="${url}" target="_blank" class="lnk-request" style="font-size:12px;font-weight:600;" title="Lien d'upload ${lbl}">${ICON.link}Upload</a>${folderLink}<button onclick="deleteSlot('${type}',${idx},'${k}')" class="icon-btn del" title="Supprimer">${ICON.trash}</button>`;
         } else {
           right = `<button class="btn btn-ghost btn-xs" id="btn-${type}-${row.n}-${k}" onclick="generateOne('${type}',${idx},'${k}')">+ créer</button>`;
         }
