@@ -115,6 +115,8 @@ code{font-size:12px;background:rgba(255,255,255,0.06);padding:1px 6px;border-rad
 .btn-ghost:hover:not(:disabled){background:rgba(255,255,255,0.09);color:var(--text);border-color:var(--border-h);}
 .btn-primary{background:var(--indigo);color:#fff;}
 .btn-primary:hover:not(:disabled){opacity:.88;}
+.btn-create{background:var(--green);color:#06281d;}
+.btn-create:hover:not(:disabled){opacity:.9;}
 .btn-bordeaux{background:var(--indigo);color:#fff;border:none;}
 .btn-bordeaux:hover:not(:disabled){opacity:.88;}
 .btn-sm{padding:6px 11px;font-size:12px;border-radius:7px;}
@@ -228,7 +230,8 @@ td.actions{white-space:nowrap;width:1px;}
 .name-display{display:flex;align-items:center;gap:6px;min-width:0;}
 .name-text{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .name-text.unset{color:var(--text-dim);font-style:italic;font-weight:500;}
-.icon-btn{background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text-dim);font-size:13px;padding:4px 7px;line-height:1;transition:all .15s;flex-shrink:0;}
+.icon-btn{background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text-dim);font-size:13px;padding:5px 7px;line-height:1;transition:all .15s;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;}
+.icon-btn svg{display:block;}
 .icon-btn:hover{border-color:var(--border-h);color:var(--text);}
 .icon-btn.edit:hover{border-color:var(--indigo);color:#a5b4fc;}
 .icon-btn.del:hover{border-color:var(--red);color:var(--red);}
@@ -296,7 +299,8 @@ td.actions{white-space:nowrap;width:1px;}
 .dest-cell .dest-ok{color:var(--green);}
 .dest-cell .dest-warn{color:var(--amber);}
 .lnk:hover .btn-del-slot{opacity:1 !important;}
-.btn-del-slot{background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:13px;padding:0 0 0 4px;line-height:1;opacity:0;transition:opacity .15s,color .15s;vertical-align:middle;}
+.btn-del-slot{background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:13px;padding:0 0 0 4px;line-height:1;opacity:0;transition:opacity .15s,color .15s;vertical-align:middle;display:inline-flex;align-items:center;}
+.btn-del-slot svg{display:block;}
 .btn-del-slot:hover{color:var(--red) !important;}
 .lnk-has-link{white-space:nowrap;}
 </style>
@@ -780,16 +784,20 @@ td.actions{white-space:nowrap;width:1px;}
     <div id="setup-lock-banner" style="display:none;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#fca5a5;line-height:1.6;"></div>
 
     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
-      <button class="btn btn-primary" id="btn-run-setup" onclick="runSmartSetup()">🚀 Tout créer (dossiers + upload links)</button>
-      <button class="btn btn-ghost btn-sm" onclick="clearLog()">Vider le log</button>
+      <button class="btn btn-create" id="btn-run-setup" onclick="runSmartSetup()">🚀 Tout créer (dossiers + upload links)</button>
       <span id="setup-progress" style="font-size:13px;color:var(--text-muted);"></span>
     </div>
-    <div class="log-box" id="setup-log">En attente…</div>
 
-    <div style="margin-top:16px;">
+    <div style="margin-top:4px;">
       <div class="section-header"><span class="section-title-text">Résultats</span></div>
       <div id="setup-results"></div>
     </div>
+
+    <!-- Raw activity log, hidden by default — only needed to debug a failed creation -->
+    <details style="margin-top:12px;">
+      <summary style="font-size:12px;color:var(--text-dim);cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:.5px;">Détails techniques (log)</summary>
+      <div class="log-box" id="setup-log" style="margin-top:8px;">En attente…</div>
+    </details>
 
   </div>
 </div>
@@ -1128,6 +1136,13 @@ function renderSmartPeople(type){
   }).join('');
 }
 function addSmartDay() {
+  // The table/state model is built around 3 days + 1 extra (Partenaires/BAB).
+  // Adding a 4th day would create JOUR 4 folders the rest of the tool can't read
+  // back (slotKeyFor only maps j1/j2/j3), so cap at 3.
+  if(smartSetup.days.length >= 3){
+    toast('ℹ️ Maximum 3 jours par événement (structure J1/J2/J3 + Partenaires/BAB)','info');
+    return;
+  }
   smartSetup.days.push({date:''});
   // New day defaults to ON for every existing person
   smartSetup.photoPeople.forEach(p=>p.days['j'+smartSetup.days.length]=true);
@@ -1166,32 +1181,37 @@ function renderSmartPreview() {
   const el = document.getElementById('smart-preview');
   if(!el) return;
   const suffix = smartSuffix();
-  const photoNames = smartSetup.photoNames;
-  const videoNames = smartSetup.videoNames;
+  const photoPeople = smartSetup.photoPeople;
+  const videoPeople = smartSetup.videoPeople;
   const lines = [];
-  lines.push(`📁 ${smartPhotoBase()}/`);
-  const pSubs = smartSubfolders('photo');
-  (photoNames.length?photoNames:['(noms…)']).slice(0,3).forEach((nm,i)=>{
-    const num = String(i+1).padStart(2,'0');
-    lines.push(`   ${num}_${nm} - ${suffix}/`);
-    pSubs.forEach(s=>lines.push(`      ${s.folder}/`));
-  });
-  if(photoNames.length>3) lines.push(`   … +${photoNames.length-3} autres photographes`);
+  let totalFolders = 0;
+
+  const renderGroup = (people, base, limit, labelPlural) => {
+    lines.push(`📁 ${base}/`);
+    const named = people.filter(p=>p.name && p.name.trim());
+    const shown = (named.length ? named : [{name:'(noms…)', days:defaultPersonDays()}]).slice(0,limit);
+    shown.forEach((p,i)=>{
+      const num = String(i+1).padStart(2,'0');
+      lines.push(`   ${num}_${p.name} - ${suffix}/`);
+      // Respect THIS person's day toggles (same logic as creation)
+      const subs = smartSubfoldersFor(labelPlural==='photographes'?'photo':'video', p.days);
+      subs.forEach(s=>lines.push(`      ${s.folder}/`));
+    });
+    if(named.length>limit) lines.push(`   … +${named.length-limit} autres ${labelPlural}`);
+    // Tally real folder count across ALL named people (not just shown)
+    named.forEach(p=>{ totalFolders += smartSubfoldersFor(labelPlural==='photographes'?'photo':'video', p.days).length; });
+    return named.length;
+  };
+
+  const nP = renderGroup(photoPeople, smartPhotoBase(), 3, 'photographes');
   lines.push('');
-  lines.push(`📁 ${smartVideoBase()}/`);
-  const vSubs = smartSubfolders('video');
-  (videoNames.length?videoNames:['(noms…)']).slice(0,2).forEach((nm,i)=>{
-    const num = String(i+1).padStart(2,'0');
-    lines.push(`   ${num}_${nm} - ${suffix}/`);
-    vSubs.forEach(s=>lines.push(`      ${s.folder}/`));
-  });
-  if(videoNames.length>2) lines.push(`   … +${videoNames.length-2} autres vidéastes`);
+  const nV = renderGroup(videoPeople, smartVideoBase(), 2, 'vidéastes');
   el.textContent = lines.join('\n');
+
   // Summary counts
   const sum = document.getElementById('smart-summary');
   if(sum) {
-    const totalFolders = photoNames.length*pSubs.length + videoNames.length*vSubs.length;
-    sum.textContent = `${photoNames.length} photographes · ${videoNames.length} vidéastes · ${smartSetup.days.length} jours → ${totalFolders} dossiers + liens`;
+    sum.textContent = `${nP} photographes · ${nV} vidéastes · ${smartSetup.days.length} jours → ${totalFolders} dossiers + liens`;
   }
 }
 
@@ -1500,6 +1520,87 @@ function keyLabel(type, key) {
   return type==='photo'?{j1:'Jour 1',j2:'Jour 2',j3:'Jour 3',p3:'Partenaires'}[key]:{j1:'Jour 1',j2:'Jour 2',j3:'Jour 3',p3:'BAB'}[key];
 }
 
+// Build a Dropbox web URL for an exact folder dest path
+function folderUrlFromDest(dest){
+  if(!dest) return '';
+  return 'https://www.dropbox.com/home' + encodeURI(dest).replace(/%2F/g,'/') + '?di=left_nav_browse';
+}
+
+// Assemble the one-click, paste-ready info block for a person.
+function buildPersonCopyText(type, row){
+  const kind = type==='photo' ? 'Photographe' : 'Vidéaste';
+  const name = row.realName.trim() || `${kind} ${row.n}`;
+  const ev   = EVENT_CONFIG.edition || EVENT_CONFIG.name || '';
+  const extraLabel = type==='photo' ? 'Partenaires' : 'BAB & Montages';
+  const hasExtra = !!(row.links.p3 && (row.links.p3.url || row.links.p3.dest));
+  const L = [];
+  L.push(`📋 ${name} — ${kind}`);
+  if(ev) L.push(`🎪 ${ev}${EVENT_CONFIG.date?` · ${EVENT_CONFIG.date}`:''}`);
+  L.push(`${extraLabel} : ${hasExtra?'Oui ✅':'Non ❌'}`);
+  L.push('');
+  L.push("⬆️ Liens d'upload + dossiers par jour :");
+  let any=false;
+  ['j1','j2','j3','p3'].forEach(k=>{
+    const slot = row.links[k]||{};
+    const url = (k==='j3'?(row.links.j3&&row.links.j3.url):slot.url)||'';
+    const dest = slot.dest||'';
+    if(url || dest){
+      any=true;
+      L.push(`▸ ${keyLabel(type,k)}`);
+      if(url)  L.push(`   Upload : ${url}`);
+      if(dest) L.push(`   Dossier : ${folderUrlFromDest(dest)}`);
+    }
+  });
+  if(!any) L.push('• (aucun lien encore créé)');
+  // Person folder (strip subfolder from any dest)
+  let personFolderUrl='';
+  for(const k of ['j1','j2','j3','p3']){
+    const d=row.links[k]&&row.links[k].dest;
+    if(d){ const parts=d.split('/'); parts.pop(); personFolderUrl=folderUrlFromDest(parts.join('/')); break; }
+  }
+  if(personFolderUrl){ L.push(''); L.push(`📁 Dossier de la personne : ${personFolderUrl}`); }
+  if(row.editorUrl) L.push(`🔗 Lien éditeur (accès + modif) : ${row.editorUrl}`);
+  return L.join('\n');
+}
+
+// 📋 button handler: ensures an editor link exists (creates it if missing), then
+// copies the full info block to the clipboard.
+async function copyPersonInfo(type, idx){
+  const state = type==='photo'?photoState:videoState;
+  const row = state[idx];
+  if(!row) return;
+  // Auto-create the editor link if missing (choice #2)
+  if(!row.editorUrl){
+    const anyDest = row.links.j1.dest||row.links.j2.dest||row.links.j3?.dest||row.links.p3.dest||'';
+    if(anyDest && getToken()){
+      toast('🔗 Création du lien éditeur…','info');
+      try { await createEditorLink(type, idx, true); } catch(e){}
+    }
+  }
+  const text = buildPersonCopyText(type, row);
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('✓ Infos copiées — prêt à coller','success');
+  } catch(e){
+    // Fallback for browsers blocking clipboard API
+    const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); toast('✓ Infos copiées','success'); }
+    catch(e2){ toast('✗ Copie impossible','error'); }
+    ta.remove();
+  }
+}
+
+// ── Minimalist thin-stroke icons (match the nav bar; replace emoji) ──
+const ICON = {
+  trash: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
+  link:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+  folder:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
+  copy:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+  edit:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>',
+  check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+};
+
 const viewMode = { photo:'list', video:'list' };
 const filterState = { photo:{q:'',status:'all'}, video:{q:'',status:'all'} };
 
@@ -1557,11 +1658,14 @@ function lnkCellOrPlus(type, idx, key) {
   const state = type==='photo'?photoState:videoState;
   const row = state[idx];
   const url = key==='j3' ? (row.links.j3?.url||'') : row.links[key].url;
+  const dest = (key==='j3' ? (row.links.j3&&row.links.j3.dest) : row.links[key].dest)||'';
   const lbl = keyLabel(type, key);
   if(url) {
+    const folderLink = dest ? `<a href="${folderUrlFromDest(dest)}" target="_blank" class="btn-del-slot" title="Ouvrir le dossier ${lbl}" style="text-decoration:none;">${ICON.folder}</a>` : '';
     return `<td class="lnk lnk-has-link">
-      <a href="${url}" target="_blank" class="lnk-request" title="${url}">Lien</a>
-      <button onclick="deleteSlot('${type}',${idx},'${key}')" class="btn-del-slot" title="Supprimer ce lien et dossier">🗑</button>
+      <a href="${url}" target="_blank" class="lnk-request" title="Lien d'upload ${lbl}">Upload</a>
+      ${folderLink}
+      <button onclick="deleteSlot('${type}',${idx},'${key}')" class="btn-del-slot" title="Supprimer ce lien et dossier">${ICON.trash}</button>
     </td>`;
   }
   return `<td class="lnk"><button class="btn btn-ghost btn-xs" id="btn-${type}-${row.n}-${key}" onclick="generateOne('${type}',${idx},'${key}')" title="Créer ${lbl}">+ créer</button></td>`;
@@ -1593,23 +1697,24 @@ function renderTable(type) {
       if(row._editing){
         nameInner = `<div class="name-edit-wrap">
           <input type="text" id="name-${type}-${row.n}" value="${row.realName}" placeholder="Nom réel…" oninput="setName('${type}',${idx},this.value)" onkeydown="if(event.key==='Enter')commitNameEdit('${type}',${idx})">
-          <button class="icon-btn edit" title="Valider + renommer Dropbox" onclick="commitNameEdit('${type}',${idx})">✓</button>
+          <button class="icon-btn edit" title="Valider + renommer Dropbox" onclick="commitNameEdit('${type}',${idx})">${ICON.check}</button>
         </div>`;
       } else {
         nameInner = `<div class="name-display">
           <span class="row-status rs-${st}" title="${st==='complete'?'Tous les liens créés':st==='partial'?'Liens partiels':'Aucun lien'}"></span>
           <span class="name-text ${hasName?'':'unset'}">${hasName?row.realName:kind+' '+row.n}</span>
-          <button class="icon-btn edit" title="Modifier le nom" onclick="toggleNameEdit('${type}',${idx})">✏️</button>
+          <button class="icon-btn edit" title="Modifier le nom" onclick="toggleNameEdit('${type}',${idx})">${ICON.edit}</button>
         </div>`;
       }
       const nameCell = `<td class="name-cell">${nameInner}</td>`;
       // actions (last column): folder, editor link, delete person
-      const folderBtn = folderUrl ? `<a href="${folderUrl}" target="_blank" class="icon-btn go" title="Ouvrir dossier Dropbox">📁</a>` : '';
+      const folderBtn = folderUrl ? `<a href="${folderUrl}" target="_blank" class="icon-btn go" title="Ouvrir dossier Dropbox">${ICON.folder}</a>` : '';
       const editorBtn = row.editorUrl
-        ? `<a href="${row.editorUrl}" target="_blank" class="icon-btn go" title="Lien éditeur" style="color:var(--green);">🔗</a>`
-        : `<button class="icon-btn" title="Créer lien éditeur" onclick="createEditorLink('${type}',${idx})">🔗</button>`;
-      const delBtn = `<button class="icon-btn del" title="Supprimer cette personne" onclick="deletePerson('${type}',${idx})">🗑</button>`;
-      const actionsCell = `<td class="actions"><div style="display:flex;gap:4px;justify-content:flex-end;">${folderBtn}${editorBtn}${delBtn}</div></td>`;
+        ? `<a href="${row.editorUrl}" target="_blank" class="icon-btn go" title="Lien éditeur" style="color:var(--green);">${ICON.link}</a>`
+        : `<button class="icon-btn" title="Créer lien éditeur" onclick="createEditorLink('${type}',${idx})">${ICON.link}</button>`;
+      const copyBtn = `<button class="icon-btn" title="Copier toutes les infos (nom, liens, dossiers, éditeur)" onclick="copyPersonInfo('${type}',${idx})">${ICON.copy}</button>`;
+      const delBtn = `<button class="icon-btn del" title="Supprimer cette personne" onclick="deletePerson('${type}',${idx})">${ICON.trash}</button>`;
+      const actionsCell = `<td class="actions"><div style="display:flex;gap:4px;justify-content:flex-end;">${copyBtn}${folderBtn}${editorBtn}${delBtn}</div></td>`;
       tr.innerHTML = `<td class="num">${String(row.n).padStart(2,'0')}</td>${nameCell}${lnkCellOrPlus(type,idx,'j1')}${lnkCellOrPlus(type,idx,'j2')}${lnkCellOrPlus(type,idx,'j3')}${lnkCellOrPlus(type,idx,'p3')}${actionsCell}`;
       tbody.appendChild(tr);
     });
@@ -1636,33 +1741,39 @@ function renderTable(type) {
       const nameBlock = row._editing
         ? `<div class="name-edit-wrap" style="flex:1;">
              <input type="text" id="name-${type}-${row.n}" value="${row.realName}" placeholder="Nom réel…" oninput="setName('${type}',${idx},this.value)" onkeydown="if(event.key==='Enter')commitNameEdit('${type}',${idx})">
-             <button class="icon-btn edit" title="Valider" onclick="commitNameEdit('${type}',${idx})">✓</button>
+             <button class="icon-btn edit" title="Valider" onclick="commitNameEdit('${type}',${idx})">${ICON.check}</button>
            </div>`
         : `<div class="pcard-name-row">
              <span class="row-status rs-${rowStatus(row)}"></span>
              <span class="pcard-name ${hasName?'':'unset'}">${hasName?row.realName:kind+' '+row.n}</span>
-             <button class="icon-btn edit" title="Modifier le nom" onclick="toggleNameEdit('${type}',${idx})">✏️</button>
+             <button class="icon-btn edit" title="Modifier le nom" onclick="toggleNameEdit('${type}',${idx})">${ICON.edit}</button>
            </div>`;
       const slotsHtml = keys.map(k=>{
         const url = k==='j3'?(row.links.j3?.url||''):row.links[k].url;
+        const dest = (k==='j3'?(row.links.j3&&row.links.j3.dest):row.links[k].dest)||'';
         const lbl = keyLabel(type,k);
-        const right = url
-          ? `<a href="${url}" target="_blank" class="lnk-request" style="font-size:12px;font-weight:600;">Lien</a><button onclick="deleteSlot('${type}',${idx},'${k}')" class="icon-btn del" title="Supprimer">🗑</button>`
-          : `<button class="btn btn-ghost btn-xs" id="btn-${type}-${row.n}-${k}" onclick="generateOne('${type}',${idx},'${k}')">+ créer</button>`;
+        let right;
+        if(url){
+          const folderLink = dest ? `<a href="${folderUrlFromDest(dest)}" target="_blank" class="icon-btn go" title="Ouvrir le dossier ${lbl}">${ICON.folder}</a>` : '';
+          right = `<a href="${url}" target="_blank" class="lnk-request" style="font-size:12px;font-weight:600;" title="Lien d'upload ${lbl}">Upload</a>${folderLink}<button onclick="deleteSlot('${type}',${idx},'${k}')" class="icon-btn del" title="Supprimer">${ICON.trash}</button>`;
+        } else {
+          right = `<button class="btn btn-ghost btn-xs" id="btn-${type}-${row.n}-${k}" onclick="generateOne('${type}',${idx},'${k}')">+ créer</button>`;
+        }
         return `<div class="pslot"><span class="pslot-label">${lbl}</span><div class="pslot-actions">${right}</div></div>`;
       }).join('');
-      const folderBtn = folderUrl ? `<a href="${folderUrl}" target="_blank" class="icon-btn go" title="Ouvrir dossier Dropbox">📁 Dossier</a>` : '';
+      const copyBtn = `<button class="icon-btn" title="Copier toutes les infos" onclick="copyPersonInfo('${type}',${idx})">${ICON.copy}<span style="margin-left:5px;">Copier</span></button>`;
+      const folderBtn = folderUrl ? `<a href="${folderUrl}" target="_blank" class="icon-btn go" title="Ouvrir dossier Dropbox">${ICON.folder}<span style="margin-left:5px;">Dossier</span></a>` : '';
       const editorBtn = row.editorUrl
-        ? `<a href="${row.editorUrl}" target="_blank" class="icon-btn go" title="Lien éditeur" style="color:var(--green);">🔗 Éditeur</a>`
-        : `<button class="icon-btn" title="Créer lien éditeur" onclick="createEditorLink('${type}',${idx})">🔗 Éditeur</button>`;
-      const delBtn = `<button class="icon-btn del" title="Supprimer cette personne" onclick="deletePerson('${type}',${idx})">🗑</button>`;
+        ? `<a href="${row.editorUrl}" target="_blank" class="icon-btn go" title="Lien éditeur" style="color:var(--green);">${ICON.link}<span style="margin-left:5px;">Éditeur</span></a>`
+        : `<button class="icon-btn" title="Créer lien éditeur" onclick="createEditorLink('${type}',${idx})">${ICON.link}<span style="margin-left:5px;">Éditeur</span></button>`;
+      const delBtn = `<button class="icon-btn del" title="Supprimer cette personne" onclick="deletePerson('${type}',${idx})">${ICON.trash}</button>`;
       card.innerHTML = `
         <div class="pcard-head">
           <span class="pcard-num">#${String(row.n).padStart(2,'0')}</span>
           ${nameBlock}
         </div>
         <div class="pcard-slots">${slotsHtml}</div>
-        <div class="pcard-foot">${folderBtn}${editorBtn}<span style="margin-left:auto;"></span>${delBtn}</div>`;
+        <div class="pcard-foot">${copyBtn}${folderBtn}${editorBtn}<span style="margin-left:auto;"></span>${delBtn}</div>`;
       grid.appendChild(card);
     });
     if(state.length>0 && gshown===0){
@@ -1794,16 +1905,16 @@ async function sharingPost(endpoint, body) {
   return data;
 }
 
-async function createEditorLink(type, idx) {
+async function createEditorLink(type, idx, silent) {
   const state = type==='photo' ? photoState : videoState;
   const row = state[idx];
-  if(!getToken()) { toast('⚠️ Token manquant','warn'); return; }
+  if(!getToken()) { if(!silent) toast('⚠️ Token manquant','warn'); return; }
   const anyDest = row.links.j1.dest||row.links.j2.dest||row.links.j3?.dest||row.links.p3.dest||'';
-  if(!anyDest) { toast('⚠️ Charge l\'événement d\'abord','warn'); return; }
+  if(!anyDest) { if(!silent) toast('⚠️ Charge l\'événement d\'abord','warn'); return; }
   const parts = anyDest.split('/');
   parts.pop();
   const folderPath = parts.join('/');
-  toast('🔗 Génération du lien éditeur…','info');
+  if(!silent) toast('🔗 Génération du lien éditeur…','info');
   try {
     const data = await sharingPost('sharing/create_shared_link_with_settings', {
       path: folderPath,
@@ -1812,16 +1923,16 @@ async function createEditorLink(type, idx) {
     if(!data.url) throw new Error('No URL in response');
     row.editorUrl = data.url;
     renderTable(type);
-    toast('✓ Lien éditeur créé','success');
+    if(!silent) toast('✓ Lien éditeur créé','success');
   } catch(e) {
     if((e.message||'').includes('shared_link_already_exists')) {
       try {
         const data2 = await sharingPost('sharing/list_shared_links', { path: folderPath, direct_only: true });
         const url2 = data2.links?.[0]?.url;
-        if(url2) { row.editorUrl = url2; renderTable(type); toast('✓ Lien éditeur existant récupéré','success'); return; }
-      } catch(e2) { toast('✗ Récupération échouée: '+e2.message,'error'); return; }
+        if(url2) { row.editorUrl = url2; renderTable(type); if(!silent) toast('✓ Lien éditeur existant récupéré','success'); return; }
+      } catch(e2) { if(!silent) toast('✗ Récupération échouée: '+e2.message,'error'); return; }
     }
-    toast('✗ '+e.message,'error');
+    if(!silent) toast('✗ '+e.message,'error');
   }
 }
 
@@ -1852,9 +1963,13 @@ async function deleteSlot(type, idx, key) {
   toast(`🗑 Suppression ${label}…`, 'info');
   let linkDeleted = false, folderDeleted = false;
 
-  // Delete request link
+  // Delete request link. Dropbox refuses to delete an OPEN file request
+  // (error: file_request_open), and links are created open — so we must close
+  // it first via update{open:false}, then delete.
   if(link.id) {
     try {
+      try { await fileRequestsPost('file_requests/update', { id: link.id, open: false }); }
+      catch(e){ if(!/not_found|not found/i.test(e.message||'')) throw e; }
       await fileRequestsPost('file_requests/delete', { ids: [link.id] });
       linkDeleted = true;
     } catch(e) {
@@ -1912,9 +2027,15 @@ async function deletePerson(type, idx) {
   toast(`🗑 Suppression de ${name}…`, 'info');
   let errors = 0;
 
-  // Delete all request links
+  // Delete all request links. Each must be CLOSED before it can be deleted
+  // (Dropbox rejects deleting open requests with file_request_open).
   const ids = ['j1','j2','j3','p3'].map(k => row.links[k].id).filter(Boolean);
   if(ids.length) {
+    // Close each one first (best-effort; ignore not_found)
+    for(const id of ids){
+      try { await fileRequestsPost('file_requests/update', { id, open: false }); }
+      catch(e){ if(!/not_found|not found/i.test(e.message||'')) { /* keep going */ } }
+    }
     try { await fileRequestsPost('file_requests/delete', { ids }); }
     catch(e) { if(!(e.message||'').includes('not_found')) errors++; }
   }
@@ -1967,8 +2088,11 @@ async function doRename(type,idx){
     const parts = anyDest.split('/');
     parts.pop(); // remove subfolder
     oldF = parts.join('/');
-    const personFolder = parts[parts.length-1]; 
-    const suffix = personFolder.replace(/^\d+_[^-]+-\s*/, ''); 
+    const personFolder = parts[parts.length-1];
+    // Suffix = everything after the FIRST " - " (robust to hyphens in the name,
+    // e.g. "01_Timo-Leo - ML PARIS" → suffix "ML PARIS", not "Leo - ML PARIS").
+    const _si = personFolder.indexOf(' - ');
+    const suffix = _si>=0 ? personFolder.slice(_si+3) : (EVENT_CONFIG.name||'');
     newF = `${base}/${num}_${name} - ${suffix}`;
   } else {
     oldF = `${base}/${num}_${kind} ${row.n} - ${EVENT_CONFIG.name||'ML Event 2026'}`;
@@ -2235,6 +2359,30 @@ function hideEmptyEventBanner(){
   });
 }
 
+// ── Shared folder-name parsers (single source of truth for read-back) ──
+// Person name = everything between "NN_" and the FIRST " - " (space-hyphen-space).
+// Splitting on the first " - " is robust to hyphens in BOTH the name (Timo-Leo)
+// and the suffix/event name (PARIS-XXL), which a naive [^-]+$ regex got wrong.
+function personNameFromFolder(folderName){
+  const m = (folderName||'').match(/^(\d+)_(.+)$/);
+  if(!m) return null;
+  const rest = m[2];
+  const idx = rest.indexOf(' - ');
+  const nm = (idx>=0 ? rest.slice(0,idx) : rest).trim();
+  // Ignore placeholder names like "Photographe 3"
+  if(/^(photographe|vid[eé]aste)\s*\d+$/i.test(nm)) return '';
+  return nm;
+}
+// Map a subfolder name to its slot key. Returns null if unrecognised.
+function slotKeyFromSub(subName){
+  const s = (subName||'').toLowerCase();
+  if(s.includes('jour 1')||s.includes('day 1')) return 'j1';
+  if(s.includes('jour 2')||s.includes('day 2')) return 'j2';
+  if(s.includes('jour 3')||s.includes('day 3')) return 'j3';
+  if(s.includes('partenaire')||s.includes('bab')||s.includes('montage')) return 'p3';
+  return null;
+}
+
 async function loadEventFromPaths() {
   if(!getToken()){toast('⚠️ Connect Dropbox first','warn');toggleTokenDropdown();return;}
   const photoBase = document.getElementById('path-photo').value.trim();
@@ -2272,18 +2420,12 @@ async function loadEventFromPaths() {
       const n = parseInt(m[1]);
       if(n < 1) return;
       if(!map[n]) map[n]={n,realName:'',editorUrl:'',links:{j1:{url:'',id:'',dest:''},j2:{url:'',id:'',dest:''},j3:{url:'',id:'',dest:''},p3:{url:'',id:'',dest:''}}};
-      const sub = (parts[1]||'').toLowerCase();
-      let key;
-      if(sub.includes('jour 1')||sub.includes('day 1'))           key='j1';
-      else if(sub.includes('jour 2')||sub.includes('day 2'))      key='j2';
-      else if(sub.includes('jour 3')||sub.includes('day 3')) key='j3';
-            else if(sub.includes('partenaire')||sub.includes('bab')||sub.includes('montage')) key='p3';
-      else { return; }
+      const key = slotKeyFromSub(parts[1]||'');
+      if(!key) { return; }
       map[n].links[key]={url, id, dest};
-      const nameMatch = personFolder.match(/^\d+_(.+?)\s*-\s*[^-]+$/);
-      if(nameMatch && !map[n].realName){
-        const nm = nameMatch[1].trim();
-        if(!nm.match(/^(photographe|vid[eé]aste)\s*\d+$/i)) map[n].realName=nm;
+      if(!map[n].realName){
+        const nm = personNameFromFolder(personFolder);
+        if(nm) map[n].realName=nm;
       }
     }
 
@@ -2316,7 +2458,7 @@ async function loadEventFromPaths() {
           const parts = rel.split('/');
           if(parts.length < 1) continue;
           const personFolder = parts[0];
-          const m = personFolder.match(/^(\d+)_(.+?)\s*-\s*[^-]+$/);
+          const m = personFolder.match(/^(\d+)_/);
           if(!m) continue;
           const n = parseInt(m[1]);
           if(n < 1) continue;
@@ -2325,17 +2467,12 @@ async function loadEventFromPaths() {
           }
           // Extract name from person folder
           if(!map[n].realName) {
-            const nm = m[2].trim();
-            if(!nm.match(/^(photographe|vid[eé]aste)\s*\d+$/i)) map[n].realName = nm;
+            const nm = personNameFromFolder(personFolder);
+            if(nm) map[n].realName = nm;
           }
           // If this is a subfolder (depth 2), populate dest
           if(parts.length === 2) {
-            const sn = parts[1].toLowerCase();
-            let key;
-            if(sn.includes('jour 1')||sn.includes('day 1'))      key='j1';
-            else if(sn.includes('jour 2')||sn.includes('day 2')) key='j2';
-            else if(sn.includes('jour 3')||sn.includes('day 3')) key='j3';
-            else if(sn.includes('partenaire')||sn.includes('bab')||sn.includes('montage')) key='p3';
+            const key = slotKeyFromSub(parts[1]);
             if(key && !map[n].links[key].dest) map[n].links[key].dest = fullPath;
           }
         }
@@ -2546,14 +2683,9 @@ async function runSmartSetup(){
   let totalCreated=0,totalErrors=0;
   setupResults=[];
 
-  // Map a subfolder name to its slot key (j1/j2/j3/p3) for state building
-  const slotKeyFor = (folderName)=>{
-    const s = folderName.toLowerCase();
-    if(s.includes('jour 1')) return 'j1';
-    if(s.includes('jour 2')) return 'j2';
-    if(s.includes('jour 3')) return 'j3';
-    return 'p3';
-  };
+  // Map a subfolder name to its slot key for state building (shared helper;
+  // falls back to p3 for the extra Partenaires/BAB slot).
+  const slotKeyFor = (folderName)=> slotKeyFromSub(folderName) || 'p3';
 
   for(const t of types){
     const people = (t.people||[]).filter(p=>p.name && p.name.trim());
@@ -2567,8 +2699,22 @@ async function runSmartSetup(){
       const personName = people[idx].name.trim();
       const subs = smartSubfoldersFor(t.key, people[idx].days); // only toggled-on subfolders
       const personFolder = `${t.base}/${num}_${personName} - ${suffix}`;
-      const personResult={type:t.key,n,name:personName,slots:[]};
+      const personResult={type:t.key,n,name:personName,slots:[],editorUrl:''};
       try{ await apiPost('files/create_folder_v2',{path:personFolder,autorename:false}); }catch(e){}
+      // Auto-create the editor (shared folder) link for this person's folder.
+      try{
+        const sl = await sharingPost('sharing/create_shared_link_with_settings', {
+          path: personFolder,
+          settings: { requested_visibility: { '.tag': 'public' }, access: { '.tag': 'editor' } }
+        });
+        if(sl && sl.url){ personResult.editorUrl = sl.url; log('  ✓ Lien éditeur : '+personName,'log-ok'); }
+      }catch(e){
+        // If it already exists, fetch it back
+        if((e.message||'').includes('shared_link_already_exists')){
+          try{ const ex=await sharingPost('sharing/list_shared_links',{path:personFolder,direct_only:true}); const u=ex.links&&ex.links[0]&&ex.links[0].url; if(u) personResult.editorUrl=u; }catch(e2){}
+        }
+      }
+      await sleep(120);
       for(const slot of subs){
         const dest=`${personFolder}/${slot.folder}`;
         const title=slot.title.replace(/\{nom\}/g, personName);
@@ -2612,7 +2758,7 @@ async function runSmartSetup(){
       const linkMap={};
       r.slots.forEach((s)=>{const k=s.key||'p3'; linkMap[k]={url:s.url||'',id:s.id||'',dest:s.dest||''};});
       ['j1','j2','j3','p3'].forEach(k=>{ if(!linkMap[k]) linkMap[k]={url:'',id:'',dest:''}; });
-      return {n:r.n, realName:r.name, editorUrl:'', links:linkMap};
+      return {n:r.n, realName:r.name, editorUrl:r.editorUrl||'', links:linkMap};
     });
     const newPhoto=buildState('photo'), newVideo=buildState('video');
     setTimeout(()=>{
@@ -2793,21 +2939,31 @@ let TEMPLATES = JSON.parse(JSON.stringify(DEFAULT_TEMPLATES));
 function applyTemplate(tplKey, nom, j1, j2, j3, p3, editLink) {
   const tpl = TEMPLATES[tplKey];
   if(!tpl) return {subject:'',body:''};
+  // Sentinel for an absent slot link — any line that still contains it after
+  // substitution is dropped, so people only see the days/slots they actually have.
+  const MISSING = '\u0000MISSING\u0000';
   const vars = {
     nom:     nom     || (tplKey.startsWith('photo') ? 'Nom du Photographe' : 'Nom du Vidéaste'),
-    j1:      j1      || '[Lien Dropbox – Jour 1]',
-    j2:      j2      || '[Lien Dropbox – Jour 2]',
-    j3:      j3      || '[Lien Dropbox – Jour 3]',
-    p3:      p3      || (tplKey.startsWith('photo') ? '[Lien Dropbox – Partenaires]' : '[Lien Dropbox – BAB & Montages]'),
+    j1:      j1      || MISSING,
+    j2:      j2      || MISSING,
+    j3:      j3      || MISSING,
+    p3:      p3      || MISSING,
     edit:    editLink|| '[Lien Dropbox d\'accès et édition]',
     city:    EVENT_CONFIG.city    || '"Ville/Édition"',
     date:    EVENT_CONFIG.date    || '"Date"',
     edition: EVENT_CONFIG.edition || '"Ville/Édition"',
   };
   const replace = str => str.replace(/\{(\w+)\}/g, (_, k) => vars[k] !== undefined ? vars[k] : `{${k}}`);
+  // Drop any line that references a slot the person doesn't have, then clean up
+  // extra blank lines left behind.
+  const stripMissing = str => str
+    .split('\n')
+    .filter(line => !line.includes(MISSING))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n');
   return {
-    subject: replace(tpl.subject),
-    body:    replace(tpl.body),
+    subject: stripMissing(replace(tpl.subject)),
+    body:    stripMissing(replace(tpl.body)),
   };
 }
 
@@ -2865,7 +3021,6 @@ function updateEditorPreview() {
   const body = document.getElementById('tpl-body-input').value;
   const vars = {
     nom, j1: links.j1?.url||'[Lien Jour 1]', j2: links.j2?.url||'[Lien Jour 2]', j3: links.j3?.url||'[Lien Jour 3]',
-    j3: links.j3?.url||'[Lien Jour 3]',
     p3: links.p3?.url||(isPhoto?'[Partenaires]':'[BAB & Montages]'),
     edit: '[Lien édition]',
     city: EVENT_CONFIG.city||'"Ville/Édition"', date: EVENT_CONFIG.date||'"Date"',
