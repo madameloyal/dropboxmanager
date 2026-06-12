@@ -561,14 +561,17 @@ td.actions{white-space:nowrap;width:1px;}
 <!-- VERIFY TAB -->
 <div id="tab-verify" style="display:none;">
 
-  <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:0.82em;line-height:1.7;color:var(--text-muted);">
-    <strong style="color:var(--text);">Vérification du contenu :</strong> scanne les dossiers Dropbox de chaque personne et compte les fichiers déposés (avec taille et date du 1er upload). Nécessite un événement chargé.
+  <div class="kpi-row" id="verify-kpi-row" style="margin-top:0;">
+    <div class="kpi"><div class="kpi-edge photo"></div><div class="kpi-label">📷 Fichiers photo</div><div class="kpi-val" id="vk-files-photo">—</div></div>
+    <div class="kpi"><div class="kpi-edge video"></div><div class="kpi-label">🎬 Fichiers vidéo</div><div class="kpi-val" id="vk-files-video">—</div></div>
+    <div class="kpi"><div class="kpi-edge" style="background:var(--amber);"></div><div class="kpi-label">Volume total</div><div class="kpi-val" id="vk-volume">—</div></div>
+    <div class="kpi"><div class="kpi-edge" style="background:var(--green);"></div><div class="kpi-label">Ont déposé</div><div class="kpi-val" id="vk-uploaders">—</div></div>
   </div>
 
   <div class="section-header">
     <span class="section-title-text">Vérification</span>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      <button class="btn btn-ghost btn-sm" id="btn-verify-rescan" onclick="runVerify('all')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:-2px;margin-right:5px;"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Rescanner</button>
+      <button class="btn btn-ghost btn-sm" id="btn-verify-rescan" onclick="rescanVerification()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:-2px;margin-right:5px;"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Rescanner</button>
       <button class="btn btn-sm" id="btn-perf-toggle" onclick="togglePerformance()" style="background:var(--green);color:#06281d;display:inline-flex;align-items:center;gap:6px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>Performance</button>
     </div>
   </div>
@@ -3313,6 +3316,13 @@ function delayBucket(firstUpload, lastDay){
   return {chip:`J+${days}`, label:`${days} jours après`, cls:'far'};
 }
 
+// Rescanner dispatches to whichever view is showing: Performance scan or verify tables.
+function rescanVerification(){
+  const v = document.getElementById('perf-view');
+  if(v && v.style.display !== 'none') runPerformanceScan();
+  else runVerify('all');
+}
+
 function togglePerformance(){
   const tables = document.getElementById('verify-tables');
   const view   = document.getElementById('perf-view');
@@ -3444,7 +3454,7 @@ function renderPerformance(){
       <div class="perf-block"><div class="perf-bh">⏱ Délai de dépôt <span class="meta">1er upload vs événement</span></div>${rows}</div>`;
   }
 
-  view.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><button class="btn btn-ghost btn-sm" onclick="runPerformanceScan()" style="font-size:12px;">🔄 Rescanner</button></div>${kpis}${lensBar}${body}`;
+  view.innerHTML = `${kpis}${lensBar}${body}`;
 }
 
 // Scan every person's slot folders and return structured stats
@@ -3937,12 +3947,23 @@ function exportCarnet(){
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
 let verifyBusy = false;
+let verifyTotals = {photo:{files:0,bytes:0,up:0,tot:0}, video:{files:0,bytes:0,up:0,tot:0}};
+function updateVerifyKpis(){
+  const p=verifyTotals.photo, v=verifyTotals.video;
+  const set=(id,html)=>{ const el=document.getElementById(id); if(el) el.innerHTML=html; };
+  set('vk-files-photo', p.files>0?`${p.files}`:'0');
+  set('vk-files-video', v.files>0?`${v.files}`:'0');
+  set('vk-volume', fmtSize(p.bytes+v.bytes));
+  const up=p.up+v.up, tot=p.tot+v.tot;
+  set('vk-uploaders', `${up}<span style="font-size:13px;color:var(--text-muted);font-weight:500;margin-left:2px;">/ ${tot}</span>`);
+}
 async function runVerify(scope) {
   if(!getToken()){toast('⚠️ Entre le token d\'abord','warn');return;}
   if(verifyBusy) return;
   verifyBusy = true;
   const rb = document.getElementById('btn-verify-rescan');
   if(rb){ rb.disabled=true; rb.style.opacity='0.6'; }
+  if(scope==='all'){ verifyTotals = {photo:{files:0,bytes:0,up:0,tot:0}, video:{files:0,bytes:0,up:0,tot:0}}; }
   try {
     if(scope==='all'||scope==='photo') await verifyType('photo');
     if(scope==='all'||scope==='video') await verifyType('video');
@@ -4068,6 +4089,12 @@ async function verifyType(type) {
       else if(hasAll) { statusCell.innerHTML=`<span class="status-chip sc-complete">✓ Complet</span>`; uploaded++; }
       else            { statusCell.innerHTML=`<span class="status-chip sc-partial">⚠ Partiel</span>`; uploaded++; }
     }
+    // Feed the verify KPI row live as each person resolves.
+    verifyTotals[type].files += totalFiles;
+    verifyTotals[type].bytes += totalBytes;
+    if(Object.values(counts).some(v=>v>0)) verifyTotals[type].up += 1;
+    verifyTotals[type].tot += 1;
+    updateVerifyKpis();
     if(activeTr) activeTr.style.opacity = '';
   }
 
