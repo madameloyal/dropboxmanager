@@ -568,9 +568,7 @@ td.actions{white-space:nowrap;width:1px;}
   <div class="section-header">
     <span class="section-title-text">Vérification</span>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      <button class="btn btn-ghost btn-sm" onclick="runVerify('photo')">📷 Photographes</button>
-      <button class="btn btn-ghost btn-sm" onclick="runVerify('video')">🎬 Vidéastes</button>
-      <button class="btn btn-primary btn-sm" onclick="runVerify('all')">✓ Tout vérifier</button>
+      <button class="btn btn-ghost btn-sm" id="btn-verify-rescan" onclick="runVerify('all')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:-2px;margin-right:5px;"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Rescanner</button>
       <button class="btn btn-sm" id="btn-perf-toggle" onclick="togglePerformance()" style="background:var(--green);color:#06281d;display:inline-flex;align-items:center;gap:6px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>Performance</button>
     </div>
   </div>
@@ -920,7 +918,12 @@ function loadEventState(newPhotoState, newVideoState) {
   const _dp=document.getElementById('dt-photo-count'); if(_dp) _dp.textContent='('+photoState.length+')';
   const _dv=document.getElementById('dt-video-count'); if(_dv) _dv.textContent='('+videoState.length+')';
   updateHeader('photo');
-  switchTab('photo');
+  // Only land on Photographes if the user hasn't deliberately switched tabs while the
+  // (possibly slow) scan was running — don't yank them back.
+  const _wantPhoto = !userTabbedDuringLoad;
+  loadInProgress = false;
+  userTabbedDuringLoad = false;
+  if(_wantPhoto) switchTab('photo');
   if(photoState.length || videoState.length){
     toast(`✓ Événement chargé — ${photoState.length} photographes · ${videoState.length} vidéastes`, 'success');
   }
@@ -1912,7 +1915,14 @@ function setName(type,idx,val){
 // ══════════════════════════════════════════════════
 // TABS
 // ══════════════════════════════════════════════════
+let CURRENT_TAB = 'photo';
+let userTabbedDuringLoad = false;
+let loadInProgress = false;
 function switchTab(tab) {
+  // If the user manually changes tab while an event scan is still running, remember
+  // it so the load doesn't yank them back when it finishes.
+  if(loadInProgress && tab !== CURRENT_TAB) userTabbedDuringLoad = true;
+  CURRENT_TAB = tab;
   ['photo','video','verify','setup','settings'].forEach(t=>{
     const el = document.getElementById('tab-'+t);
     if(el) el.style.display = t===tab?'':'none';
@@ -1931,6 +1941,10 @@ function switchTab(tab) {
     if(_pv) _pv.style.display='none';
     if(_vt) _vt.style.display='';
     if(_pb){ _pb.style.background='var(--green)'; _pb.style.color='#06281d'; }
+    // Auto-verify on open (non-destructive — stale values stay until fresh ones arrive).
+    if(getToken() && (photoState.length || videoState.length)){
+      runVerify('all');
+    }
   }
   updateHeader(tab);
 }
@@ -2505,6 +2519,7 @@ async function loadEventFromPaths() {
   const photoBase = document.getElementById('path-photo').value.trim();
   const videoBase = document.getElementById('path-video').value.trim();
   if(!photoBase && !videoBase){toast('⚠️ Enter at least one base path','warn');return;}
+  loadInProgress = true; userTabbedDuringLoad = false; // track if user navigates away mid-scan
   const btn = document.querySelector('[onclick="loadEventFromPaths()"]');
   if(btn){ btn.disabled=true; btn.textContent='⏳ Chargement…'; }
   toast('⏳ Chargement des liens…','info');
@@ -2609,7 +2624,7 @@ async function loadEventFromPaths() {
       updateStats();
     },100);
   } catch(e){ toast('✗ '+e.message,'error'); }
-  finally { if(btn){ btn.disabled=false; btn.textContent="⚡ Charger l'événement"; } }
+  finally { loadInProgress=false; if(btn){ btn.disabled=false; btn.textContent="⚡ Charger l'événement"; } }
 }
 
 // ══════════════════════════════════════════════════
@@ -3921,10 +3936,20 @@ function exportCarnet(){
 
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+let verifyBusy = false;
 async function runVerify(scope) {
   if(!getToken()){toast('⚠️ Entre le token d\'abord','warn');return;}
-  if(scope==='all'||scope==='photo') await verifyType('photo');
-  if(scope==='all'||scope==='video') await verifyType('video');
+  if(verifyBusy) return;
+  verifyBusy = true;
+  const rb = document.getElementById('btn-verify-rescan');
+  if(rb){ rb.disabled=true; rb.style.opacity='0.6'; }
+  try {
+    if(scope==='all'||scope==='photo') await verifyType('photo');
+    if(scope==='all'||scope==='video') await verifyType('video');
+  } finally {
+    verifyBusy = false;
+    if(rb){ rb.disabled=false; rb.style.opacity=''; }
+  }
 }
 
 async function verifyType(type) {
@@ -3932,25 +3957,33 @@ async function verifyType(type) {
   const tbody = document.getElementById('tbody-verify-'+type);
   const keys  = ['j1','j2','j3','p3'];
 
-  // Init rows as loading
-  tbody.innerHTML = '';
-  state.forEach((row) => {
-    const tr = document.createElement('tr');
-    tr.id = 'vtr-'+type+'-'+row.n;
-    const name = row.realName || (type==='photo'?'Photographe':'Vidéaste')+' '+row.n;
-    tr.innerHTML = `
-      <td class="num">${String(row.n).padStart(2,'0')}</td>
-      <td style="font-size:0.82em;font-weight:600;color:#fff;">${name}</td>
-      <td id="vc-${type}-${row.n}-j1"><span class="status-chip sc-loading">…</span></td>
-      <td id="vc-${type}-${row.n}-j2"><span class="status-chip sc-loading">…</span></td>
-      <td id="vc-${type}-${row.n}-j3"><span class="status-chip sc-loading">…</span></td>
-      <td id="vc-${type}-${row.n}-p3"><span class="status-chip sc-loading">…</span></td>
-      <td id="vc-${type}-${row.n}-total"><span class="status-chip sc-loading">…</span></td>
-      <td id="vc-${type}-${row.n}-size"><span class="status-chip sc-loading">…</span></td>
-      <td id="vc-${type}-${row.n}-date"><span class="status-chip sc-loading">…</span></td>
-      <td id="vs-${type}-${row.n}"><span class="status-chip sc-loading">Checking…</span></td>`;
-    tbody.appendChild(tr);
-  });
+  // Non-destructive: only (re)build the skeleton if the table is empty or the roster
+  // changed (different row count). Otherwise leave existing cells showing their stale
+  // values — they get updated in place as fresh results arrive, so nothing flickers.
+  const existingRows = tbody.querySelectorAll('tr').length;
+  const needsSkeleton = existingRows !== state.length;
+  if(needsSkeleton){
+    tbody.innerHTML = '';
+    state.forEach((row) => {
+      const tr = document.createElement('tr');
+      tr.id = 'vtr-'+type+'-'+row.n;
+      const name = row.realName || (type==='photo'?'Photographe':'Vidéaste')+' '+row.n;
+      tr.innerHTML = `
+        <td class="num">${String(row.n).padStart(2,'0')}</td>
+        <td style="font-size:0.82em;font-weight:600;color:#fff;">${name}</td>
+        <td id="vc-${type}-${row.n}-j1"><span class="status-chip sc-loading">…</span></td>
+        <td id="vc-${type}-${row.n}-j2"><span class="status-chip sc-loading">…</span></td>
+        <td id="vc-${type}-${row.n}-j3"><span class="status-chip sc-loading">…</span></td>
+        <td id="vc-${type}-${row.n}-p3"><span class="status-chip sc-loading">…</span></td>
+        <td id="vc-${type}-${row.n}-total"><span class="status-chip sc-loading">…</span></td>
+        <td id="vc-${type}-${row.n}-size"><span class="status-chip sc-loading">…</span></td>
+        <td id="vc-${type}-${row.n}-date"><span class="status-chip sc-loading">…</span></td>
+        <td id="vs-${type}-${row.n}"><span class="status-chip sc-loading">Checking…</span></td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  // setCell: only repaint when the value actually changed (avoids needless flicker).
+  const setCell = (id, html)=>{ const el=document.getElementById(id); if(el && el.innerHTML!==html) el.innerHTML=html; };
 
   let uploaded=0, none=0;
   for(const row of state) {
@@ -3958,6 +3991,9 @@ async function verifyType(type) {
     const found  = {j1:false, j2:false, p3:false};
     let totalBytes = 0;
     let firstDate  = null;
+    // Subtle "scanning" cue on the active row, without blanking its values.
+    const activeTr = document.getElementById('vtr-'+type+'-'+row.n);
+    if(activeTr) activeTr.style.opacity = '0.55';
 
     for(const key of keys) {
       // Only the real stored destination is reliable (folders have dates in names)
@@ -4032,6 +4068,7 @@ async function verifyType(type) {
       else if(hasAll) { statusCell.innerHTML=`<span class="status-chip sc-complete">✓ Complet</span>`; uploaded++; }
       else            { statusCell.innerHTML=`<span class="status-chip sc-partial">⚠ Partiel</span>`; uploaded++; }
     }
+    if(activeTr) activeTr.style.opacity = '';
   }
 
   const summary = document.getElementById('verify-'+type+'-summary');
