@@ -129,6 +129,8 @@ code{font-size:12px;background:rgba(255,255,255,0.06);padding:1px 6px;border-rad
 .btn-primary{background:var(--indigo);color:#fff;}
 .btn-primary:hover:not(:disabled){opacity:.88;}
 .btn-create{background:var(--green);color:#06281d;}
+.msg-act-btn{padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--text-muted);font-size:0.7em;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.msg-act-btn:hover{color:var(--text);border-color:var(--border-h);}
 .btn-create:hover:not(:disabled){opacity:.9;}
 .btn-bordeaux{background:var(--indigo);color:#fff;border:none;}
 .btn-bordeaux:hover:not(:disabled){opacity:.88;}
@@ -599,8 +601,8 @@ td.actions{white-space:nowrap;width:1px;}
         </div>
       </div>
     </div>
-    <div class="liste-table-wrap">
-      <table class="liste-table">
+    <div class="tbl-wrap" id="list-festiv">
+      <table>
         <thead><tr><th class="th-c">#</th><th>Nom</th><th class="th-c">Jour 1</th><th class="th-c">Jour 2</th><th class="th-c">Jour 3</th><th class="th-c">Tous les jours</th><th class="th-r">Actions</th></tr></thead>
         <tbody id="tbody-festiv"></tbody>
       </table>
@@ -1819,7 +1821,7 @@ function setView(type, mode) {
   if(type==='festiv'){
     // User manually chose a view — stop the auto-default from overriding it.
     if(festivState[0]) festivState[0]._viewTouched = true;
-    const tbl=document.querySelector('#festiv-table-wrap .liste-table-wrap');
+    const tbl=document.getElementById('list-festiv');
     const grid=document.getElementById('grid-festiv');
     if(tbl) tbl.style.display = mode==='list' ? '' : 'none';
     if(grid) grid.style.display = mode==='grid' ? '' : 'none';
@@ -2042,7 +2044,7 @@ function renderFestiv(){
     viewMode.festiv='grid';
     document.querySelectorAll('#view-toggle-festiv button').forEach(b=>b.classList.toggle('on', b.dataset.view==='grid'));
   }
-  const tbl = tableWrap.querySelector('.liste-table-wrap');
+  const tbl = document.getElementById('list-festiv');
   const grid = document.getElementById('grid-festiv');
   if(viewMode.festiv==='grid'){ if(tbl) tbl.style.display='none'; if(grid) grid.style.display=''; }
   else { if(tbl) tbl.style.display=''; if(grid) grid.style.display='none'; }
@@ -2052,19 +2054,23 @@ function renderFestiv(){
   const row = festivState[0];
   const idx = 0;
   const areaName = row.realName || 'Rushs festivaliers';
+  // Shared by both views — must be in scope for the card branch too (was the folderUrl crash).
+  const anyDest = row.links.j1.dest||row.links.j2.dest||(row.links.j3&&row.links.j3.dest)||row.links.p3.dest||'';
+  const folderUrl = anyDest ? getFolderUrl('festiv', row, anyDest) : '';
   // TABLE (one row)
   const tbody = document.getElementById('tbody-festiv');
   if(tbody){
     const cell = (k)=> festivConfig.days[k] ? lnkCellOrPlus('festiv', idx, k)
       : `<td class="lnk"><span class="empty" style="color:var(--text-dim);opacity:.4;">—</span></td>`;
-    const anyDest = row.links.j1.dest||row.links.j2.dest||(row.links.j3&&row.links.j3.dest)||row.links.p3.dest||'';
-    const folderUrl = anyDest ? getFolderUrl('festiv', row, anyDest) : '';
     const folderBtn = folderUrl ? `<a href="${folderUrl}" target="_blank" class="icon-btn" title="Ouvrir le dossier Festivaliers" style="text-decoration:none;">${ICON.folder}</a>` : '';
     const copyBtn = `<button class="icon-btn" title="Copier tous les liens" onclick="copyPersonInfo('festiv',${idx})">${ICON.copy}</button>`;
     const actions = `<td class="actions" style="text-align:right;white-space:nowrap;">${copyBtn}${folderBtn}<button class="icon-btn del" title="Tout supprimer / reconfigurer" onclick="resetFestivArea()">${ICON.trash}</button></td>`;
+    const actK = festivActiveKeys();
+    const haveK = actK.filter(k=>row.links[k] && row.links[k].url).length;
+    const tStatus = haveK===0 ? 'empty' : (haveK<actK.length ? 'partial' : 'complete');
     tbody.innerHTML = `<tr>
       <td class="num">01</td>
-      <td class="name-cell"><span style="display:inline-flex;align-items:center;gap:8px;font-weight:600;color:#fff;"><span style="width:8px;height:8px;border-radius:50%;background:var(--green);"></span>${escapeHtml(areaName)}</span></td>
+      <td class="name-cell"><div class="pcard-name-row"><span class="row-status rs-${tStatus}"></span><span class="pcard-name">${escapeHtml(areaName)}</span></div></td>
       ${cell('j1')}${cell('j2')}${cell('j3')}${cell('p3')}
       ${actions}
     </tr>`;
@@ -4621,15 +4627,19 @@ function renderMsgOverlay() {
           </div>
         </div>
         <div style="display:flex;gap:6px;">
-          <button onclick="copyMsgPart('subject-${row.n}')" style="padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--text-muted);font-size:0.7em;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;" id="copy-subj-btn-${row.n}">📋 Sujet</button>
-          <button onclick="copyMsgPart('email-${row.n}')" style="padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--text-muted);font-size:0.7em;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;" id="copy-email-btn-${row.n}">📋 Message</button>
+          <button onclick="toggleMsgEdit('email')" id="edit-email-btn" class="msg-act-btn">✎ Éditer</button>
+          <button onclick="copyMsgPart('subject-${row.n}')" class="msg-act-btn" id="copy-subj-btn-${row.n}">📋 Sujet</button>
+          <button onclick="copyMsgPart('email-${row.n}')" class="msg-act-btn" id="copy-email-btn-${row.n}">📋 Message</button>
         </div>
       </div>
       <div style="padding:10px 16px 6px;background:rgba(99,102,241,0.04);border-bottom:1px solid var(--border);">
         <span style="font-size:0.65em;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);font-weight:600;">Sujet : </span>
         <span id="subject-${row.n}" style="font-size:0.78em;color:var(--text);">${email.subject}</span>
+        <input id="edit-subject-input" type="text" value="${escapeHtml(email.subject)}" style="display:none;width:100%;margin-top:6px;font-size:0.78em;">
       </div>
       <div id="email-${row.n}" style="padding:16px;font-size:0.82em;line-height:1.75;color:var(--text);white-space:pre-wrap;font-family:'DM Sans',sans-serif;">${email.body}</div>
+      <textarea id="edit-email-input" style="display:none;width:100%;padding:16px;font-size:0.82em;line-height:1.75;min-height:280px;font-family:'DM Sans',sans-serif;resize:vertical;">${escapeHtml(email.body)}</textarea>
+      <div id="save-email-bar" style="display:none;padding:10px 16px;border-top:1px solid var(--border);text-align:right;"><button class="btn btn-create btn-sm" onclick="saveMsgEdit('email')">💾 Enregistrer</button></div>
     </div>
 
     <!-- WHATSAPP CARD -->
@@ -4642,9 +4652,42 @@ function renderMsgOverlay() {
             <div style="font-size:0.68em;color:var(--text-muted);">${row.realName} · ${type==='photo'?'Photographe':'Vidéaste'} ${String(row.n).padStart(2,'0')}</div>
           </div>
         </div>
-        <button onclick="copyMsgPart('wa-${row.n}')" style="padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--text-muted);font-size:0.7em;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;" id="copy-wa-btn-${row.n}">📋 Copier</button>
+        <div style="display:flex;gap:6px;">
+          <button onclick="toggleMsgEdit('wa')" id="edit-wa-btn" class="msg-act-btn">✎ Éditer</button>
+          <button onclick="copyMsgPart('wa-${row.n}')" class="msg-act-btn" id="copy-wa-btn-${row.n}">📋 Copier</button>
+        </div>
       </div>
       <div id="wa-${row.n}" style="padding:16px;font-size:0.82em;line-height:1.75;color:var(--text);white-space:pre-wrap;font-family:'DM Sans',sans-serif;">${wa.body}</div>
+      <textarea id="edit-wa-input" style="display:none;width:100%;padding:16px;font-size:0.82em;line-height:1.75;min-height:220px;font-family:'DM Sans',sans-serif;resize:vertical;">${escapeHtml(wa.body)}</textarea>
+      <div id="save-wa-bar" style="display:none;padding:10px 16px;border-top:1px solid var(--border);text-align:right;"><button class="btn btn-create btn-sm" onclick="saveMsgEdit('wa')">💾 Enregistrer</button></div>
+    </div>
+
+    <!-- LIENS UPLOAD CARD (edits the actual Dropbox upload-page title + description) -->
+    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:14px;overflow:hidden;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:30px;height:30px;border-radius:8px;background:rgba(52,211,153,0.12);display:flex;align-items:center;justify-content:center;font-size:0.9em;">🔗</div>
+          <div>
+            <div style="font-size:0.78em;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:1px;">Liens Upload</div>
+            <div style="font-size:0.68em;color:var(--text-muted);">Titre + description des pages Dropbox · ${row.realName}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="toggleMsgEdit('upl')" id="edit-upl-btn" class="msg-act-btn">✎ Éditer</button>
+        </div>
+      </div>
+      <div style="padding:12px 16px;">
+        <div style="font-size:0.65em;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);font-weight:600;margin-bottom:4px;">Titre de la page</div>
+        <div id="upl-title-${row.n}" style="font-size:0.82em;color:var(--text);margin-bottom:12px;">${escapeHtml(makeTitle(type,'j1',row.n,row.realName))}</div>
+        <input id="edit-upl-title-input" type="text" value="${escapeHtml(makeTitle(type,'j1',row.n,row.realName))}" style="display:none;width:100%;margin-bottom:12px;font-size:0.82em;">
+        <div style="font-size:0.65em;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);font-weight:600;margin-bottom:4px;">Description</div>
+        <div id="upl-desc-${row.n}" style="font-size:0.82em;color:var(--text);white-space:pre-wrap;line-height:1.6;">${escapeHtml(makeDesc(type,'j1'))}</div>
+        <textarea id="edit-upl-desc-input" style="display:none;width:100%;font-size:0.82em;line-height:1.6;min-height:120px;resize:vertical;">${escapeHtml(makeDesc(type,'j1'))}</textarea>
+      </div>
+      <div id="save-upl-bar" style="display:none;padding:10px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;">
+        <span style="font-size:0.68em;color:var(--text-dim);">Sera appliqué à tous les liens de ${type==='photo'?'photographes':type==='video'?'vidéastes':'festivaliers'}.</span>
+        <button class="btn btn-create btn-sm" onclick="saveUploadText()">💾 Enregistrer & pousser</button>
+      </div>
     </div>
   `;
 }
@@ -4656,6 +4699,111 @@ function copyMsgPart(id) {
     const status = document.getElementById('modal-copy-status');
     if(status){ status.textContent='✓ Copié !'; setTimeout(()=>status.textContent='',2000); }
   });
+}
+
+// ── Éditer / Save for the message cards (email / wa / upl) ──
+function toggleMsgEdit(which){
+  const row = currentMsgRow(); if(!row) return;
+  const n = row.n;
+  const btn = document.getElementById('edit-'+which+'-btn');
+  if(which==='email'){
+    const view=document.getElementById('email-'+n), inp=document.getElementById('edit-email-input');
+    const subView=document.getElementById('subject-'+n), subInp=document.getElementById('edit-subject-input');
+    const editing = inp.style.display!=='none';
+    if(editing){ return; } // already editing
+    view.style.display='none'; inp.style.display='';
+    subView.style.display='none'; subInp.style.display='';
+    document.getElementById('save-email-bar').style.display='';
+    btn.textContent='✎ Édition…';
+  } else if(which==='wa'){
+    const view=document.getElementById('wa-'+n), inp=document.getElementById('edit-wa-input');
+    view.style.display='none'; inp.style.display='';
+    document.getElementById('save-wa-bar').style.display='';
+    btn.textContent='✎ Édition…';
+  } else if(which==='upl'){
+    const tView=document.getElementById('upl-title-'+n), tInp=document.getElementById('edit-upl-title-input');
+    const dView=document.getElementById('upl-desc-'+n), dInp=document.getElementById('edit-upl-desc-input');
+    tView.style.display='none'; tInp.style.display='';
+    dView.style.display='none'; dInp.style.display='';
+    document.getElementById('save-upl-bar').style.display='flex';
+    btn.textContent='✎ Édition…';
+  }
+}
+
+function saveMsgEdit(which){
+  const row = currentMsgRow(); if(!row) return;
+  const n = row.n;
+  if(which==='email'){
+    const subVal=document.getElementById('edit-subject-input').value;
+    const bodyVal=document.getElementById('edit-email-input').value;
+    document.getElementById('subject-'+n).textContent=subVal;
+    document.getElementById('email-'+n).textContent=bodyVal;
+    document.getElementById('subject-'+n).style.display='';
+    document.getElementById('edit-subject-input').style.display='none';
+    document.getElementById('email-'+n).style.display='';
+    document.getElementById('edit-email-input').style.display='none';
+    document.getElementById('save-email-bar').style.display='none';
+    document.getElementById('edit-email-btn').textContent='✎ Éditer';
+    toast('✓ Email mis à jour (copie reflète le texte édité)','success');
+  } else if(which==='wa'){
+    const bodyVal=document.getElementById('edit-wa-input').value;
+    document.getElementById('wa-'+n).textContent=bodyVal;
+    document.getElementById('wa-'+n).style.display='';
+    document.getElementById('edit-wa-input').style.display='none';
+    document.getElementById('save-wa-bar').style.display='none';
+    document.getElementById('edit-wa-btn').textContent='✎ Éditer';
+    toast('✓ WhatsApp mis à jour','success');
+  }
+}
+
+// Save the Liens Upload text and PUSH to all links of the current type via Dropbox.
+async function saveUploadText(){
+  const row = currentMsgRow(); if(!row) return;
+  const type = msgState.type;
+  const n = row.n;
+  const newTitle = document.getElementById('edit-upl-title-input').value.trim();
+  const newDesc  = document.getElementById('edit-upl-desc-input').value;
+  const stateArr = type==='photo'?photoState : type==='video'?videoState : festivState;
+  // Count target links
+  const targets = [];
+  stateArr.forEach((r,idx)=>{
+    ['j1','j2','j3','p3'].forEach(k=>{
+      if(r.links[k] && r.links[k].id) targets.push({id:r.links[k].id, r, k});
+    });
+  });
+  if(targets.length===0){ toast('⚠️ Aucun lien à mettre à jour','warn'); return; }
+  const kindLbl = type==='photo'?'photographes':type==='video'?'vidéastes':'festivaliers';
+  if(!confirm(`Pousser ce titre + description vers les ${targets.length} liens d'upload (${kindLbl}) ?\n\nLe titre et la description de chaque page Dropbox seront remplacés.`)) return;
+  if(!getToken()){ toast('⚠️ Connecte Dropbox','warn'); return; }
+  const bar = document.getElementById('save-upl-bar');
+  if(bar) bar.style.opacity='0.5';
+  let done=0, errs=0;
+  for(const t of targets){
+    try {
+      await fileRequestsPost('file_requests/update', { id:t.id, title:newTitle, description:newDesc });
+      done++;
+      await sleep(120);
+    } catch(e){ errs++; }
+  }
+  if(bar) bar.style.opacity='';
+  // reflect saved values in the view
+  document.getElementById('upl-title-'+n).textContent=newTitle;
+  document.getElementById('upl-desc-'+n).textContent=newDesc;
+  document.getElementById('upl-title-'+n).style.display='';
+  document.getElementById('edit-upl-title-input').style.display='none';
+  document.getElementById('upl-desc-'+n).style.display='';
+  document.getElementById('edit-upl-desc-input').style.display='none';
+  document.getElementById('save-upl-bar').style.display='none';
+  document.getElementById('edit-upl-btn').textContent='✎ Éditer';
+  toast(errs? `✓ ${done} liens mis à jour · ${errs} échec(s)` : `✓ ${done} liens d'upload mis à jour`, errs?'warn':'success');
+}
+
+// Resolve the row currently shown in the message overlay.
+function currentMsgRow(){
+  const type = msgState.type;
+  const state = type==='photo'?photoState : type==='video'?videoState : festivState;
+  const named = state.filter(r => (r.realName||'').trim());
+  return named[msgState.personIdx] || null;
 }
 
 
