@@ -1802,6 +1802,13 @@ function setFilterStatus(type, status, el){
 }
 // Status of a person row: complete / partial / empty (by links present)
 function rowStatus(row){
+  // Upload-based dot: green once the person has uploaded ≥1 file, amber otherwise.
+  // (_fileCount is populated by the file-count scan and the Vérification scan.)
+  if(row._fileCount > 0) return 'complete';
+  return 'partial';
+}
+// Link-creation completeness (used by the "Incomplets" filter, NOT the dot).
+function linkStatus(row){
   const keys=['j1','j2','j3','p3'];
   const have = keys.filter(k=>row.links[k] && row.links[k].url).length;
   if(have===0) return 'empty';
@@ -1812,7 +1819,7 @@ function passesFilter(type, row){
   const f = filterState[type];
   if(f.q){ const nm=(row.realName||'').toLowerCase(); if(!nm.includes(f.q)) return false; }
   if(f.status==='unnamed' && row.realName.trim()) return false;
-  if(f.status==='incomplete' && rowStatus(row)==='complete') return false;
+  if(f.status==='incomplete' && linkStatus(row)==='complete') return false;
   return true;
 }
 
@@ -2068,9 +2075,7 @@ function renderFestiv(){
     const folderBtn = folderUrl ? `<a href="${folderUrl}" target="_blank" class="icon-btn" title="Ouvrir le dossier Festivaliers" style="text-decoration:none;">${ICON.folder}</a>` : '';
     const copyBtn = `<button class="icon-btn" title="Copier tous les liens" onclick="copyPersonInfo('festiv',${idx})">${ICON.copy}</button>`;
     const actions = `<td class="actions" style="text-align:right;white-space:nowrap;">${copyBtn}${folderBtn}<button class="icon-btn del" title="Tout supprimer / reconfigurer" onclick="resetFestivArea()">${ICON.trash}</button></td>`;
-    const actK = festivActiveKeys();
-    const haveK = actK.filter(k=>row.links[k] && row.links[k].url).length;
-    const tStatus = haveK===0 ? 'empty' : (haveK<actK.length ? 'partial' : 'complete');
+    const tStatus = (row._fileCount > 0) ? 'complete' : 'partial';
     tbody.innerHTML = `<tr>
       <td class="num">01</td>
       <td class="name-cell"><div class="pcard-name-row"><span class="row-status rs-${tStatus}"></span><span class="pcard-name">${escapeHtml(areaName)}</span></div></td>
@@ -2096,9 +2101,7 @@ function renderFestiv(){
     const copyBtn = `<button class="icon-btn" title="Copier tous les liens" onclick="copyPersonInfo('festiv',0)">${ICON.copy}<span style="margin-left:5px;">Copier</span></button>`;
     const folderBtn = folderUrl ? `<a href="${folderUrl}" target="_blank" class="icon-btn go" title="Ouvrir dossier Dropbox">${ICON.folder}<span style="margin-left:5px;">Dossier</span></a>` : '';
     const delBtn = `<button class="icon-btn del" title="Tout supprimer / reconfigurer" onclick="resetFestivArea()">${ICON.trash}</button>`;
-    const activeK = festivActiveKeys();
-    const haveK = activeK.filter(k=>row.links[k] && row.links[k].url).length;
-    const fStatus = haveK===0 ? 'empty' : (haveK<activeK.length ? 'partial' : 'complete');
+    const fStatus = (row._fileCount > 0) ? 'complete' : 'partial';
     grid.innerHTML = `<div class="pcard" style="grid-column:1/-1;max-width:520px;">
       <div class="pcard-head">
         <span class="pcard-num">#01</span>
@@ -2254,9 +2257,11 @@ async function scanFestivKpis(){
   const set=(id,html)=>{ const el=document.getElementById(id); if(el) el.innerHTML=html; };
   set('fk-files', String(files));
   set('fk-volume', fmtSize(bytes));
+  row._fileCount = files; // drives the status dot (green if uploads exist)
   const pct = files? Math.round(tagged/files*100):0;
   set('fk-tagged', files? `<span style="color:var(--${pct>=90?'green':pct>=60?'amber':'red'});">${pct}<span style="font-size:13px;color:var(--text-muted);font-weight:500;">%</span></span>` : '—');
   set('fk-links', `${links}<span style="font-size:13px;color:var(--text-muted);font-weight:500;margin-left:2px;">/ ${festivActiveKeys().length}</span>`);
+  if(!festivReconfiguring) renderFestiv(); // refresh so the status dot reflects uploads
 }
 
 function updateStats() {
@@ -3365,6 +3370,7 @@ async function countFilesForType(type) {
   let total = 0;
   let scannedAny = false;
   for(const row of state) {
+    let rowFiles = 0;
     for(const key of ['j1','j2','j3','p3']) {
       const link = row.links[key];
       const path = link && link.dest ? link.dest : null;
@@ -3372,15 +3378,20 @@ async function countFilesForType(type) {
       scannedAny = true;
       try {
         let data = await apiPost('files/list_folder',{path, recursive:true, include_non_downloadable_files:false});
-        total += (data.entries||[]).filter(e=>e['.tag']==='file').length;
+        const c1 = (data.entries||[]).filter(e=>e['.tag']==='file').length;
+        total += c1; rowFiles += c1;
         while(data.has_more){
           data = await apiPost('files/list_folder/continue',{cursor:data.cursor});
-          total += (data.entries||[]).filter(e=>e['.tag']==='file').length;
+          const c2 = (data.entries||[]).filter(e=>e['.tag']==='file').length;
+          total += c2; rowFiles += c2;
         }
       } catch(e) { /* empty or missing */ }
       await new Promise(r=>setTimeout(r,50));
     }
+    row._fileCount = rowFiles; // per-person upload count → drives the status dot
   }
+  // Refresh tables so dots reflect upload status (green if files, amber if none yet).
+  renderTable('photo'); renderTable('video');
   if(!scannedAny){ stat.innerHTML='<span class="dim">aucun dossier</span>'; stat.style.color='var(--text-dim)'; return 0; }
   stat.innerHTML = total > 0 ? `${total} <span class="dim">fichiers</span>` : '0 <span class="dim">fichier</span>';
   stat.style.color = total > 0 ? 'var(--green)' : 'var(--text-dim)';
@@ -4490,6 +4501,7 @@ async function verifyType(type) {
 
     // Total files + size + date cells
     const totalFiles = counts.j1 + counts.j2 + counts.p3;
+    row._fileCount = totalFiles; // also drives the status dot on the photo/video tables
     const totalCell  = document.getElementById(`vc-${type}-${row.n}-total`);
     const sizeCell   = document.getElementById(`vc-${type}-${row.n}-size`);
     const dateCell   = document.getElementById(`vc-${type}-${row.n}-date`);
