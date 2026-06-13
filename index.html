@@ -1910,7 +1910,7 @@ function renderTable(type) {
         </div>`;
       } else {
         nameInner = `<div class="name-display">
-          <span class="row-status rs-${st}" title="${st==='complete'?'Tous les liens créés':st==='partial'?'Liens partiels':'Aucun lien'}"></span>
+          <span class="row-status rs-${st}" title="${st==='complete'?'A déposé des fichiers':'Aucun fichier déposé pour l\'instant'}"></span>
           <span class="name-text ${hasName?'':'unset'}">${hasName?row.realName:kind+' '+row.n}</span>
           <button class="icon-btn edit" title="Modifier le nom" onclick="toggleNameEdit('${type}',${idx})">${ICON.edit}</button>
         </div>`;
@@ -4411,6 +4411,8 @@ async function runVerify(scope) {
   } finally {
     verifyBusy = false;
     if(rb){ rb.disabled=false; rb.style.opacity=''; }
+    // Refresh the person tables so the status dots reflect upload counts from the verify scan.
+    renderTable('photo'); renderTable('video');
   }
 }
 
@@ -4449,8 +4451,8 @@ async function verifyType(type) {
 
   let uploaded=0, none=0;
   for(const row of state) {
-    const counts = {j1:0, j2:0, p3:0};
-    const found  = {j1:false, j2:false, p3:false};
+    const counts = {j1:0, j2:0, j3:0, p3:0};
+    const found  = {j1:false, j2:false, j3:false, p3:false};
     let totalBytes = 0;
     let firstDate  = null;
     // Subtle "scanning" cue on the active row, without blanking its values.
@@ -4500,7 +4502,7 @@ async function verifyType(type) {
     }
 
     // Total files + size + date cells
-    const totalFiles = counts.j1 + counts.j2 + counts.p3;
+    const totalFiles = (counts.j1||0) + (counts.j2||0) + (counts.j3||0) + (counts.p3||0);
     row._fileCount = totalFiles; // also drives the status dot on the photo/video tables
     const totalCell  = document.getElementById(`vc-${type}-${row.n}-total`);
     const sizeCell   = document.getElementById(`vc-${type}-${row.n}-size`);
