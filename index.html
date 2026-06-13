@@ -957,14 +957,23 @@ let videoState = [];
 // Festivaliers: a single shared crowd-upload area (not people). One row, day-link slots.
 let festivState = [];   // 0 or 1 row: {n:1, realName, links:{j1,j2,j3,p3}}
 let festivConfig = { root:'', days:{j1:false,j2:false,j3:false,p3:true}, texts:{} };
+let _pendingFestiv = null; // festiv area discovered during a load, applied in loadEventState
 
 // Load a new event state into the tabs
 function loadEventState(newPhotoState, newVideoState) {
   photoState = newPhotoState;
   videoState = newVideoState;
   perfData = null; // invalidate cached Performance scan for the new event
-  festivState = []; // festiv area is per-event; reset until (re)configured
-  festivConfig = { root:'', days:{j1:false,j2:false,j3:false,p3:true}, texts:{} };
+  // Festiv area is per-event. If the load discovered an existing area, restore it;
+  // otherwise reset to empty (setup form will show).
+  if(_pendingFestiv){
+    festivConfig = { root:_pendingFestiv.root, days:_pendingFestiv.days, texts:{} };
+    festivState = _pendingFestiv.state;
+    _pendingFestiv = null;
+  } else {
+    festivState = [];
+    festivConfig = { root:'', days:{j1:false,j2:false,j3:false,p3:true}, texts:{} };
+  }
   restoreNames(photoState, 'photo');
   restoreNames(videoState, 'video');
   renderTable('photo');
@@ -1802,6 +1811,8 @@ function setView(type, mode) {
     b.classList.toggle('on', b.dataset.view===mode);
   });
   if(type==='festiv'){
+    // User manually chose a view — stop the auto-default from overriding it.
+    if(festivState[0]) festivState[0]._viewTouched = true;
     const tbl=document.querySelector('#festiv-table-wrap .liste-table-wrap');
     const grid=document.getElementById('grid-festiv');
     if(tbl) tbl.style.display = mode==='list' ? '' : 'none';
@@ -2021,6 +2032,8 @@ function renderFestiv(){
   const grid = document.getElementById('grid-festiv');
   if(viewMode.festiv==='grid'){ if(tbl) tbl.style.display='none'; if(grid) grid.style.display=''; }
   else { if(tbl) tbl.style.display=''; if(grid) grid.style.display='none'; }
+  // Keep the toggle buttons in sync with the actual view.
+  document.querySelectorAll('#view-toggle-festiv button').forEach(b=>b.classList.toggle('on', b.dataset.view===viewMode.festiv));
 
   const row = festivState[0];
   const idx = 0;
@@ -2936,6 +2949,45 @@ async function loadEventFromPaths() {
     }
     await scanPersonFolders(pBase, photoMap);
     await scanPersonFolders(vBase, videoMap);
+
+    // ── Discover an existing Festivaliers area from the same file-requests list. ──
+    // The festiv folder lives at <eventRoot>/Rushs festivaliers - <event>/<day subfolder>.
+    // Event root = parent of the photo base.
+    try {
+      const eventRoot = pBase ? pBase.replace(/\/+$/,'').split('/').slice(0,-1).join('/') : '';
+      if(eventRoot){
+        const subToKey = (sub)=>{
+          const s=(sub||'').toLowerCase().trim();
+          if(s==='tous les jours') return 'p3';
+          if(s==='jour 1') return 'j1';
+          if(s==='jour 2') return 'j2';
+          if(s==='jour 3') return 'j3';
+          return null;
+        };
+        const festLinks = {};   // key -> {url,id,dest}
+        const festDays  = {j1:false,j2:false,j3:false,p3:false};
+        for(const r of allLinks){
+          if(!r.destination) continue;
+          const dest = r.destination;
+          // match .../Rushs festivaliers.../<sub>
+          const m = dest.match(/\/Rushs festivaliers[^/]*\/([^/]+)\/?$/i);
+          if(!m) continue;
+          const key = subToKey(m[1]);
+          if(!key) continue;
+          festLinks[key] = { url:r.url||'', id:r.id||'', dest };
+          festDays[key] = true;
+        }
+        if(Object.keys(festLinks).length){
+          _pendingFestiv = {
+            root: eventRoot,
+            days: festDays,
+            state: [{ n:1, realName:'Rushs festivaliers', editorUrl:'', _viewTouched:false,
+              links:{ j1:festLinks.j1||{url:'',id:'',dest:''}, j2:festLinks.j2||{url:'',id:'',dest:''},
+                      j3:festLinks.j3||{url:'',id:'',dest:''}, p3:festLinks.p3||{url:'',id:'',dest:''} } }]
+          };
+        }
+      }
+    } catch(e){ /* festiv discovery is best-effort */ }
 
     const newPhoto = Object.values(photoMap).sort((a,b)=>a.n-b.n);
     const newVideo = Object.values(videoMap).sort((a,b)=>a.n-b.n);
