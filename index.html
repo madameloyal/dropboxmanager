@@ -96,6 +96,10 @@ body{
 .dtg.on{border-color:var(--green);background:rgba(52,211,153,.1);color:var(--green);}
 .dtg .dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim);flex-shrink:0;}
 .dtg.on .dot{background:var(--green);}
+.dtg.alldays{flex-direction:column;align-items:flex-start;gap:2px;padding:8px 16px;}
+.dtg.alldays .row1{display:flex;align-items:center;gap:7px;}
+.dtg.alldays .sub{font-size:10px;font-weight:500;color:var(--text-dim);text-transform:none;letter-spacing:0;margin-left:15px;}
+.dtg.alldays.on .sub{color:rgba(52,211,153,.7);}
 .dayblock{border:1px solid var(--border-h);border-radius:10px;padding:14px;margin-bottom:10px;background:rgba(255,255,255,.015);}
 .dayblock-h{font-size:12px;font-weight:700;color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:7px;}
 .field-group{margin-bottom:14px;}
@@ -2088,16 +2092,23 @@ function buildFestivSetupForm(){
     const on = festivConfig.days[k];
     return `<button type="button" class="dtg${on?' on':''}" onclick="toggleFestivDay('${k}')"><span class="dot"></span>${label}</button>`;
   };
+  const allDaysToggle = ()=>{
+    const on = festivConfig.days.p3;
+    return `<button type="button" class="dtg alldays${on?' on':''}" onclick="toggleFestivDay('p3')"><span class="row1"><span class="dot"></span>Tous les jours</span><span class="sub">dossier global</span></button>`;
+  };
   const togglesHtml = `
-    ${dayToggle('p3','Tous les jours')}
+    ${allDaysToggle()}
     ${availDays.includes('j1')?dayToggle('j1','Jour 1'):''}
     ${availDays.includes('j2')?dayToggle('j2','Jour 2'):''}
     ${availDays.includes('j3')?dayToggle('j3','Jour 3'):''}`;
   const blocks = festivActiveKeys().map(k=>{
     const t = (festivConfig.texts[k]&&festivConfig.texts[k].title) || festivDefaultTitle(k);
     const d = (festivConfig.texts[k]&&festivConfig.texts[k].desc) || festivDefaultDesc();
+    const blockHead = k==='p3'
+      ? `📁 Tous les jours <span style="font-weight:500;color:var(--text-dim);font-size:11px;">— dossier global</span>`
+      : `🗓 ${keyLabel('festiv',k)}`;
     return `<div class="dayblock">
-      <div class="dayblock-h">🗓 ${keyLabel('festiv',k)} <span class="badge" style="font-size:9px;background:rgba(52,211,153,.15);color:#6ee7b7;padding:2px 8px;border-radius:10px;">lien d'upload</span></div>
+      <div class="dayblock-h">${blockHead} <span class="badge" style="font-size:9px;background:rgba(52,211,153,.15);color:#6ee7b7;padding:2px 8px;border-radius:10px;">lien d'upload</span></div>
       <div class="field-group" style="margin-bottom:10px;"><label class="field-label">Titre</label><input type="text" id="festiv-title-${k}" value="${escapeHtml(t)}" oninput="festivTextEdit('${k}','title',this.value)"></div>
       <div class="field-group" style="margin-bottom:0;"><label class="field-label">Description</label><textarea id="festiv-desc-${k}" rows="3" oninput="festivTextEdit('${k}','desc',this.value)">${escapeHtml(d)}</textarea></div>
     </div>`;
@@ -2113,7 +2124,7 @@ function buildFestivSetupForm(){
       <div class="field-group">
         <label class="field-label">Jours à activer</label>
         <div class="daytoggles" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;">${togglesHtml}</div>
-        <p class="hint">Choisis les jours. Chaque jour actif crée un sous-dossier et son lien d'upload. Clique un jour pour éditer ses textes.</p>
+        <p class="hint"><b style="color:var(--text-muted);">« Tous les jours »</b> = un seul dossier global où tout est déposé, quel que soit le jour. Les <b style="color:var(--text-muted);">« Jour N »</b> sont des dossiers séparés, un par jour. Chaque option activée crée 1 dossier + 1 lien d'upload.</p>
       </div>
       ${blocks}
       <button class="btn btn-create" style="margin-top:6px;" onclick="createFestivArea()">🎟 Créer la zone Festivaliers</button>
