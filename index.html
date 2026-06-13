@@ -1981,6 +1981,21 @@ function festivActiveKeys(){
   return ['j1','j2','j3','p3'].filter(k=>festivConfig.days[k]);
 }
 
+// Which day slots this event actually uses. Reliable for LOADED events (where the
+// setup wizard's smartSetup.days is empty): a day exists if any photographer or
+// videographer has a link or folder for it. Falls back to smartSetup for fresh setups.
+function festivAvailableDays(){
+  const days = new Set();
+  ['j1','j2','j3'].forEach((k,i)=>{
+    const inRoster = [...photoState, ...videoState].some(r => r.links[k] && (r.links[k].url || r.links[k].dest));
+    const inWizard = smartSetup.days && smartSetup.days[i];
+    if(inRoster || inWizard) days.add(k);
+  });
+  // If nothing detected (e.g. brand-new empty event), offer all three so the user can choose.
+  if(days.size===0){ days.add('j1'); days.add('j2'); days.add('j3'); }
+  return ['j1','j2','j3'].filter(k=>days.has(k));
+}
+
 function renderFestiv(){
   const setup = document.getElementById('festiv-setup');
   const tableWrap = document.getElementById('festiv-table-wrap');
@@ -2054,8 +2069,8 @@ function buildFestivSetupForm(){
     const pBase = (document.getElementById('path-photo')||{}).value || '';
     if(pBase){ const parts=pBase.replace(/\/$/,'').split('/'); parts.pop(); festivConfig.root = parts.join('/'); }
   }
-  // Which days the event supports (from smartSetup). Default: tous les jours on.
-  const availDays = ['j1','j2','j3'].filter((k,i)=> (smartSetup.days && smartSetup.days[i]) || festivConfig.days[k]);
+  // Which days the event supports — detected from the loaded roster (or wizard for fresh setups).
+  const availDays = festivAvailableDays();
   const dayToggle = (k,label)=>{
     const on = festivConfig.days[k];
     return `<button type="button" class="dtg${on?' on':''}" onclick="toggleFestivDay('${k}')"><span class="dot"></span>${label}</button>`;
@@ -2079,8 +2094,8 @@ function buildFestivSetupForm(){
       <div class="card-label">🎟 Configurer la zone Festivaliers</div>
       <div class="field-group">
         <label class="field-label">Nom de l'événement</label>
-        <input type="text" id="festiv-event-name" value="${escapeHtml(EVENT_CONFIG.name||'')}" oninput="EVENT_CONFIG.name=this.value; renderFestiv();">
-        <p class="hint">Un dossier <b style="color:var(--text-muted);">Rushs festivaliers - ${escapeHtml(ev||'…')}</b> sera créé à la racine de l'événement, avec un sous-dossier + lien par jour activé.</p>
+        <input type="text" id="festiv-event-name" value="${escapeHtml(EVENT_CONFIG.name||'')}" oninput="festivNameEdit(this.value)">
+        <p class="hint">Un dossier <b style="color:var(--text-muted);" id="festiv-folder-preview">Rushs festivaliers - ${escapeHtml(ev||'…')}</b> sera créé à la racine de l'événement, avec un sous-dossier + lien par jour activé.</p>
       </div>
       <div class="field-group">
         <label class="field-label">Jours à activer</label>
@@ -2104,6 +2119,14 @@ function toggleFestivDay(k){
 function festivTextEdit(k, field, val){
   festivConfig.texts[k] = festivConfig.texts[k] || {};
   festivConfig.texts[k][field] = val;
+}
+// Name field: store value + update the folder preview in place — DON'T re-render the
+// whole form (that would destroy the input mid-type and drop focus).
+function festivNameEdit(val){
+  EVENT_CONFIG.name = val;
+  EVENT_CONFIG.edition = val;
+  const prev = document.getElementById('festiv-folder-preview');
+  if(prev) prev.textContent = `Rushs festivaliers - ${val || '…'}`;
 }
 
 async function createFestivArea(){
