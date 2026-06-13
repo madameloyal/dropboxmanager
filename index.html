@@ -982,7 +982,9 @@ function loadEventState(newPhotoState, newVideoState) {
   restoreNames(videoState, 'video');
   renderTable('photo');
   renderTable('video');
+  renderFestiv(); // reflect any discovered festiv area (fixes stale setup-form on the festiv tab)
   renderVerifyTables(true); // force re-render
+  const _df=document.getElementById('dt-festiv-count'); if(_df) _df.textContent = festivState.length ? '(1)' : '';
   const _dp=document.getElementById('dt-photo-count'); if(_dp) _dp.textContent='('+photoState.length+')';
   const _dv=document.getElementById('dt-video-count'); if(_dv) _dv.textContent='('+videoState.length+')';
   updateHeader('photo');
@@ -2015,6 +2017,14 @@ function renderFestiv(){
   const setup = document.getElementById('festiv-setup');
   const tableWrap = document.getElementById('festiv-table-wrap');
   if(!setup || !tableWrap) return;
+  // While an event scan is still running, don't show the (possibly wrong) setup form —
+  // we don't yet know whether a festiv area exists. Show a brief loading state instead.
+  if(festivState.length===0 && loadInProgress){
+    tableWrap.style.display='none';
+    setup.style.display='';
+    setup.innerHTML = `<div style="color:var(--text-muted);font-size:13px;padding:30px 0;text-align:center;">⏳ Analyse de l'événement…</div>`;
+    return;
+  }
   // Empty (no area created) → show the setup form.
   if(festivState.length===0){
     tableWrap.style.display='none';
@@ -2059,21 +2069,34 @@ function renderFestiv(){
       ${actions}
     </tr>`;
   }
-  // GRID (card)
+  // GRID (card) — mirror the photo/video card structure exactly.
   if(grid){
-    const slots = festivActiveKeys().map(k=>{
+    const slotsHtml = festivActiveKeys().map(k=>{
       const url = row.links[k] && row.links[k].url;
       const dest = row.links[k] && row.links[k].dest;
       const lbl = keyLabel('festiv', k);
+      let right;
       if(url){
-        const fld = dest ? `<a href="${folderUrlFromDest(dest)}" target="_blank" class="icon-btn" style="text-decoration:none;" title="Dossier">${ICON.folder}</a>` : '';
-        return `<div class="pcard-slot"><span class="pcard-slot-lbl">${lbl}</span><span style="display:flex;align-items:center;gap:4px;"><a href="${url}" target="_blank" class="lnk-request">${ICON.link}Upload</a>${fld}<button class="icon-btn del" onclick="deleteSlot('festiv',0,'${k}')" title="Supprimer">${ICON.trash}</button></span></div>`;
+        const folderLink = dest ? `<a href="${folderUrlFromDest(dest)}" target="_blank" class="icon-btn go" title="Ouvrir le dossier ${lbl}">${ICON.folder}</a>` : '';
+        right = `<a href="${url}" target="_blank" class="lnk-request" style="font-size:12px;font-weight:600;" title="Lien d'upload ${lbl}">${ICON.link}Upload</a>${folderLink}<button onclick="deleteSlot('festiv',0,'${k}')" class="icon-btn del" title="Supprimer">${ICON.trash}</button>`;
+      } else {
+        right = `<button class="btn btn-ghost btn-xs" id="btn-festiv-1-${k}" onclick="generateOne('festiv',0,'${k}')">+ créer</button>`;
       }
-      return `<div class="pcard-slot"><span class="pcard-slot-lbl">${lbl}</span><button class="btn btn-ghost btn-xs" id="btn-festiv-1-${k}" onclick="generateOne('festiv',0,'${k}')">+ créer</button></div>`;
+      return `<div class="pslot"><span class="pslot-label">${lbl}</span><div class="pslot-actions">${right}</div></div>`;
     }).join('');
+    const copyBtn = `<button class="icon-btn" title="Copier tous les liens" onclick="copyPersonInfo('festiv',0)">${ICON.copy}<span style="margin-left:5px;">Copier</span></button>`;
+    const folderBtn = folderUrl ? `<a href="${folderUrl}" target="_blank" class="icon-btn go" title="Ouvrir dossier Dropbox">${ICON.folder}<span style="margin-left:5px;">Dossier</span></a>` : '';
+    const delBtn = `<button class="icon-btn del" title="Tout supprimer / reconfigurer" onclick="resetFestivArea()">${ICON.trash}</button>`;
+    const activeK = festivActiveKeys();
+    const haveK = activeK.filter(k=>row.links[k] && row.links[k].url).length;
+    const fStatus = haveK===0 ? 'empty' : (haveK<activeK.length ? 'partial' : 'complete');
     grid.innerHTML = `<div class="pcard" style="grid-column:1/-1;max-width:520px;">
-      <div class="pcard-head"><span class="pcard-num">#01</span><span style="font-weight:700;color:#fff;">${escapeHtml(areaName)}</span></div>
-      <div class="pcard-slots">${slots}</div>
+      <div class="pcard-head">
+        <span class="pcard-num">#01</span>
+        <div class="pcard-name-row"><span class="row-status rs-${fStatus}"></span><span class="pcard-name">${escapeHtml(areaName)}</span></div>
+      </div>
+      <div class="pcard-slots">${slotsHtml}</div>
+      <div class="pcard-foot">${copyBtn}${folderBtn}<span style="margin-left:auto;"></span>${delBtn}</div>
     </div>`;
   }
   const dc=document.getElementById('dt-festiv-count'); if(dc) dc.textContent='(1)';
