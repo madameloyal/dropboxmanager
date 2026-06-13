@@ -89,6 +89,15 @@ body{
 .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;transition:border-color 0.2s;margin-bottom:14px;}
 .card:hover{border-color:var(--border-h);}
 .card-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-dim);margin-bottom:14px;font-family:'JetBrains Mono',monospace;}
+/* Festivaliers setup form */
+.daytoggles{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+.dtg{padding:9px 16px;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .15s;}
+.dtg:hover{border-color:var(--border-h);color:var(--text);}
+.dtg.on{border-color:var(--green);background:rgba(52,211,153,.1);color:var(--green);}
+.dtg .dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim);flex-shrink:0;}
+.dtg.on .dot{background:var(--green);}
+.dayblock{border:1px solid var(--border-h);border-radius:10px;padding:14px;margin-bottom:10px;background:rgba(255,255,255,.015);}
+.dayblock-h{font-size:12px;font-weight:700;color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:7px;}
 .field-group{margin-bottom:14px;}
 .field-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:700;margin-bottom:7px;display:block;font-family:'JetBrains Mono',monospace;}
 .field-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
@@ -268,6 +277,9 @@ td.actions{white-space:nowrap;width:1px;}
 .pcard-name{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .pcard-name.unset{color:var(--text-dim);font-style:italic;font-weight:500;}
 .pcard-slots{display:flex;flex-direction:column;gap:6px;}
+.pcard-slot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);}
+.pcard-slot:last-child{border-bottom:none;}
+.pcard-slot-lbl{font-size:12px;font-weight:600;color:var(--text-muted);}
 .pslot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;}
 .pslot-label{font-size:12px;font-weight:600;color:var(--text-muted);white-space:nowrap;}
 .pslot-actions{display:flex;align-items:center;gap:4px;flex-shrink:0;}
@@ -376,6 +388,7 @@ td.actions{white-space:nowrap;width:1px;}
     <div class="dept-tabs" id="dept-tabs">
       <button class="dt on" data-tab="photo" onclick="switchTab('photo')"><svg class="dt-ic" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Photographes <span id="dt-photo-count" class="dt-count"></span></button>
       <button class="dt" data-tab="video" onclick="switchTab('video')"><svg class="dt-ic" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Vidéastes <span id="dt-video-count" class="dt-count"></span></button>
+      <button class="dt" data-tab="festiv" onclick="switchTab('festiv')"><svg class="dt-ic" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Festivaliers <span id="dt-festiv-count" class="dt-count"></span></button>
       <button class="dt" data-tab="verify" onclick="switchTab('verify')"><svg class="dt-ic" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Vérification</button>
       <button class="dt" data-tab="setup" onclick="switchTab('setup')"><svg class="dt-ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouvel événement</button>
       <button class="dt" data-tab="settings" onclick="switchTab('settings')"><svg class="dt-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Réglages</button>
@@ -556,6 +569,40 @@ td.actions{white-space:nowrap;width:1px;}
     </table>
   </div>
   <div class="person-grid" id="grid-video" style="display:none;"></div>
+</div>
+
+<!-- FESTIVALIERS TAB -->
+<div id="tab-festiv" style="display:none;">
+  <div class="kpi-row" id="festiv-kpi-row" style="margin-top:0;">
+    <div class="kpi"><div class="kpi-edge photo"></div><div class="kpi-label">Fichiers</div><div class="kpi-val" id="fk-files">—</div></div>
+    <div class="kpi"><div class="kpi-edge video"></div><div class="kpi-label">Volume</div><div class="kpi-val" id="fk-volume">—</div></div>
+    <div class="kpi"><div class="kpi-edge" style="background:var(--amber);"></div><div class="kpi-label">Taggés ＠</div><div class="kpi-val" id="fk-tagged">—</div></div>
+    <div class="kpi"><div class="kpi-edge" style="background:var(--green);"></div><div class="kpi-label">Liens actifs</div><div class="kpi-val" id="fk-links">—</div></div>
+  </div>
+
+  <!-- Setup form (shown when no festiv area created yet) -->
+  <div id="festiv-setup" style="display:none;"></div>
+
+  <!-- Table view (shown once the area exists) -->
+  <div id="festiv-table-wrap" style="display:none;">
+    <div class="section-header">
+      <span class="section-title-text">Festivaliers</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <button class="lchip" onclick="resetFestivArea()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Reconfigurer</button>
+        <div class="view-toggle" id="view-toggle-festiv">
+          <button class="on" data-view="list" onclick="setView('festiv','list')" title="Vue liste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+          <button data-view="grid" onclick="setView('festiv','grid')" title="Vue grille"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
+        </div>
+      </div>
+    </div>
+    <div class="liste-table-wrap">
+      <table class="liste-table">
+        <thead><tr><th class="th-c">#</th><th>Nom</th><th class="th-c">Jour 1</th><th class="th-c">Jour 2</th><th class="th-c">Jour 3</th><th class="th-c">Tous les jours</th><th class="th-r">Actions</th></tr></thead>
+        <tbody id="tbody-festiv"></tbody>
+      </table>
+    </div>
+    <div class="person-grid" id="grid-festiv" style="display:none;"></div>
+  </div>
 </div>
 
 <!-- VERIFY TAB -->
@@ -907,12 +954,17 @@ const EVENT_CONFIG = {
 // ══════════════════════════════════════════════════
 let photoState = [];
 let videoState = [];
+// Festivaliers: a single shared crowd-upload area (not people). One row, day-link slots.
+let festivState = [];   // 0 or 1 row: {n:1, realName, links:{j1,j2,j3,p3}}
+let festivConfig = { root:'', days:{j1:false,j2:false,j3:false,p3:true}, texts:{} };
 
 // Load a new event state into the tabs
 function loadEventState(newPhotoState, newVideoState) {
   photoState = newPhotoState;
   videoState = newVideoState;
   perfData = null; // invalidate cached Performance scan for the new event
+  festivState = []; // festiv area is per-event; reset until (re)configured
+  festivConfig = { root:'', days:{j1:false,j2:false,j3:false,p3:true}, texts:{} };
   restoreNames(photoState, 'photo');
   restoreNames(videoState, 'video');
   renderTable('photo');
@@ -1530,6 +1582,11 @@ async function apiPost(endpoint, body) {
 // HELPERS — event-agnostic
 // ══════════════════════════════════════════════════
 function makeTitle(type, key, n, name) {
+  if(type==='festiv'){
+    // Stored per-day texts from the festiv setup form; fall back to sample defaults.
+    const t = (festivConfig.texts && festivConfig.texts[key] && festivConfig.texts[key].title) || '';
+    return t || festivDefaultTitle(key);
+  }
   const v   = name || (type==='photo' ? `Photographe ${n}` : `Vidéaste ${n}`);
   const ev  = EVENT_CONFIG.edition || EVENT_CONFIG.name || 'Madame Loyal';
   const day = {j1:'Jour 1', j2:'Jour 2', j3:'Jour 3'}[key];
@@ -1541,7 +1598,23 @@ function makeTitle(type, key, n, name) {
   return `Vidéos BAB & Montages - ${v} - ${ev}`;
 }
 
+// Festivaliers default upload-link texts (sample provided by Leo).
+function festivDefaultTitle(key){
+  const ev = EVENT_CONFIG.edition || EVENT_CONFIG.name || 'Madame Loyal';
+  const base = `Madame Loyal Paris XXL - Rushs festivaliers`;
+  // Keep the provided sample title for "Tous les jours"; append the day otherwise.
+  if(key==='p3') return base;
+  return `${base} · ${ {j1:'Jour 1',j2:'Jour 2',j3:'Jour 3'}[key] }`;
+}
+function festivDefaultDesc(){
+  return `Envoie-nous tes meilleurs moments de Madame Loyal Paris XXL ! Ajoute les fichiers et ensuite écris ton @ :) Et tente de gagner un Pass pour un prochain évent 🎟`;
+}
+
 function makeDesc(type, key) {
+  if(type==='festiv'){
+    const d = (festivConfig.texts && festivConfig.texts[key] && festivConfig.texts[key].desc) || '';
+    return d || festivDefaultDesc();
+  }
   if(type==='photo'){
     if(key==='p3') return `Ici, tu peux mettre toutes les photos partenaires : Redbull, Gallia, Botcup, Sumeria, Merch… N'oublie pas de mettre ton @ sur le nom des photos.`;
     if(key==='j1'||key==='j2'||key==='j3') return `Ici, tu peux mettre toutes les photos du ${key==='j1'?'Jour 1':key==='j2'?'Jour 2':'Jour 3'}. N'oublie pas de mettre ton @ sur le nom des photos.`;
@@ -1551,17 +1624,24 @@ function makeDesc(type, key) {
 }
 
 function getSubfolder(type, key) {
-  return type==='photo'
-    (()=>{
-    const ev = EVENT_CONFIG.edition || EVENT_CONFIG.name || 'ML Event 2026';
-    const map = type==='photo'
-      ? {j1:`JOUR 1 - ${ev}`, j2:`JOUR 2 - ${ev}`, j3:`JOUR 3 - ${ev}`, p3:`PARTENAIRES - ${ev}`}
-      : {j1:`JOUR 1 - ${ev}`, j2:`JOUR 2 - ${ev}`, j3:`JOUR 3 - ${ev}`, p3:`BAB & Montages - ${ev}`};
+  const ev = EVENT_CONFIG.edition || EVENT_CONFIG.name || 'ML Event 2026';
+  if(type==='festiv'){
+    const map = {j1:`Jour 1`, j2:`Jour 2`, j3:`Jour 3`, p3:`Tous les jours`};
     return map[key];
-  })();
+  }
+  const map = type==='photo'
+    ? {j1:`JOUR 1 - ${ev}`, j2:`JOUR 2 - ${ev}`, j3:`JOUR 3 - ${ev}`, p3:`PARTENAIRES - ${ev}`}
+    : {j1:`JOUR 1 - ${ev}`, j2:`JOUR 2 - ${ev}`, j3:`JOUR 3 - ${ev}`, p3:`BAB & Montages - ${ev}`};
+  return map[key];
 }
 
 function getFolderPath(type, n, key) {
+  if(type==='festiv'){
+    // Single shared area at the event root — no per-person folders.
+    const ev = EVENT_CONFIG.edition || EVENT_CONFIG.name || 'ML Event 2026';
+    const root = (festivConfig.root || '').replace(/\/$/,'');
+    return `${root}/Rushs festivaliers - ${ev}/${getSubfolder(type,key)}`;
+  }
   const base = document.getElementById(type==='photo'?'path-photo':'path-video').value.trim().replace(/\/$/,'');
   const num = String(n).padStart(2,'0');
   const kind = type==='photo'?'Photographe':'Videaste';
@@ -1582,6 +1662,7 @@ function getFolderUrl(type, row, dest) {
 }
 
 function keyLabel(type, key) {
+  if(type==='festiv') return {j1:'Jour 1',j2:'Jour 2',j3:'Jour 3',p3:'Tous les jours'}[key];
   return type==='photo'?{j1:'Jour 1',j2:'Jour 2',j3:'Jour 3',p3:'Partenaires'}[key]:{j1:'Jour 1',j2:'Jour 2',j3:'Jour 3',p3:'BAB'}[key];
 }
 
@@ -1593,10 +1674,10 @@ function folderUrlFromDest(dest){
 
 // Assemble the one-click, paste-ready info block for a person.
 function buildPersonCopyText(type, row){
-  const kind = type==='photo' ? 'Photographe' : 'Vidéaste';
-  const name = row.realName.trim() || `${kind} ${row.n}`;
+  const kind = type==='photo' ? 'Photographe' : type==='video' ? 'Vidéaste' : 'Festivaliers';
+  const name = row.realName.trim() || (type==='festiv' ? 'Rushs festivaliers' : `${kind} ${row.n}`);
   const ev   = EVENT_CONFIG.edition || EVENT_CONFIG.name || '';
-  const extraLabel = type==='photo' ? 'Partenaires' : 'BAB & Montages';
+  const extraLabel = type==='photo' ? 'Partenaires' : type==='video' ? 'BAB & Montages' : 'Tous les jours';
   const hasExtra = !!(row.links.p3 && (row.links.p3.url || row.links.p3.dest));
   const L = [];
   L.push(`📋 ${name} — ${kind}`);
@@ -1631,7 +1712,7 @@ function buildPersonCopyText(type, row){
 // 📋 button handler: ensures an editor link exists (creates it if missing), then
 // copies the full info block to the clipboard.
 async function copyPersonInfo(type, idx){
-  const state = type==='photo'?photoState:videoState;
+  const state = stateFor(type);
   const row = state[idx];
   if(!row) return;
 
@@ -1662,7 +1743,7 @@ async function copyPersonInfo(type, idx){
   // 2) If the editor link is missing, create it in the background, then re-copy
   //    (this second copy happens outside the gesture, but the user already has a
   //    valid copy from step 1; clipboard updates silently if it succeeds).
-  if(!row.editorUrl){
+  if(type!=='festiv' && !row.editorUrl){
     const anyDest = row.links.j1.dest||row.links.j2.dest||row.links.j3?.dest||row.links.p3.dest||'';
     if(anyDest && getToken()){
       toast('✓ Infos copiées · création du lien éditeur…','success');
@@ -1690,7 +1771,7 @@ const ICON = {
   check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
 };
 
-const viewMode = { photo:'list', video:'list' };
+const viewMode = { photo:'list', video:'list', festiv:'list' };
 const filterState = { photo:{q:'',status:'all'}, video:{q:'',status:'all'} };
 
 function setFilterSearch(type, val){ filterState[type].q = (val||'').toLowerCase().trim(); renderTable(type); }
@@ -1720,6 +1801,14 @@ function setView(type, mode) {
   document.querySelectorAll(`#view-toggle-${type} button`).forEach(b=>{
     b.classList.toggle('on', b.dataset.view===mode);
   });
+  if(type==='festiv'){
+    const tbl=document.querySelector('#festiv-table-wrap .liste-table-wrap');
+    const grid=document.getElementById('grid-festiv');
+    if(tbl) tbl.style.display = mode==='list' ? '' : 'none';
+    if(grid) grid.style.display = mode==='grid' ? '' : 'none';
+    renderFestiv();
+    return;
+  }
   document.getElementById(`list-${type}`).style.display = mode==='list' ? '' : 'none';
   document.getElementById(`grid-${type}`).style.display = mode==='grid' ? '' : 'none';
   renderTable(type);
@@ -1743,8 +1832,10 @@ function commitNameEdit(type, idx) {
   if(row._editing){ row._editing = false; doRename(type, idx); }
 }
 
+function stateFor(type){ return type==='photo'?photoState : type==='video'?videoState : festivState; }
+
 function lnkCellOrPlus(type, idx, key) {
-  const state = type==='photo'?photoState:videoState;
+  const state = stateFor(type);
   const row = state[idx];
   const url = key==='j3' ? (row.links.j3?.url||'') : row.links[key].url;
   const dest = (key==='j3' ? (row.links.j3&&row.links.j3.dest) : row.links[key].dest)||'';
@@ -1880,6 +1971,201 @@ function renderTable(type) {
   updateStats();
 }
 
+// ══════════════════════════════════════════════════
+// FESTIVALIERS (shared crowd-upload area — not people)
+// ══════════════════════════════════════════════════
+const FESTIV_KEYS = ['j1','j2','j3','p3']; // p3 = "Tous les jours"
+
+function festivActiveKeys(){
+  // keys enabled in config, ordered with days first then "tous les jours"
+  return ['j1','j2','j3','p3'].filter(k=>festivConfig.days[k]);
+}
+
+function renderFestiv(){
+  const setup = document.getElementById('festiv-setup');
+  const tableWrap = document.getElementById('festiv-table-wrap');
+  if(!setup || !tableWrap) return;
+  // Empty (no area created) → show the setup form.
+  if(festivState.length===0){
+    tableWrap.style.display='none';
+    setup.style.display='';
+    setup.innerHTML = buildFestivSetupForm();
+    document.getElementById('dt-festiv-count') && (document.getElementById('dt-festiv-count').textContent='');
+    return;
+  }
+  // Area exists → show table (or card if only "tous les jours" is active).
+  setup.style.display='none';
+  tableWrap.style.display='';
+  const onlyAllDays = festivActiveKeys().length===1 && festivActiveKeys()[0]==='p3';
+  // Default to grid when only "tous les jours" — but respect a manual toggle.
+  if(onlyAllDays && viewMode.festiv==='list' && !festivState[0]._viewTouched){
+    viewMode.festiv='grid';
+    document.querySelectorAll('#view-toggle-festiv button').forEach(b=>b.classList.toggle('on', b.dataset.view==='grid'));
+  }
+  const tbl = tableWrap.querySelector('.liste-table-wrap');
+  const grid = document.getElementById('grid-festiv');
+  if(viewMode.festiv==='grid'){ if(tbl) tbl.style.display='none'; if(grid) grid.style.display=''; }
+  else { if(tbl) tbl.style.display=''; if(grid) grid.style.display='none'; }
+
+  const row = festivState[0];
+  const idx = 0;
+  const areaName = row.realName || 'Rushs festivaliers';
+  // TABLE (one row)
+  const tbody = document.getElementById('tbody-festiv');
+  if(tbody){
+    const cell = (k)=> festivConfig.days[k] ? lnkCellOrPlus('festiv', idx, k)
+      : `<td class="lnk"><span class="empty" style="color:var(--text-dim);opacity:.4;">—</span></td>`;
+    const anyDest = row.links.j1.dest||row.links.j2.dest||(row.links.j3&&row.links.j3.dest)||row.links.p3.dest||'';
+    const folderUrl = anyDest ? getFolderUrl('festiv', row, anyDest) : '';
+    const folderBtn = folderUrl ? `<a href="${folderUrl}" target="_blank" class="icon-btn" title="Ouvrir le dossier Festivaliers" style="text-decoration:none;">${ICON.folder}</a>` : '';
+    const copyBtn = `<button class="icon-btn" title="Copier tous les liens" onclick="copyPersonInfo('festiv',${idx})">${ICON.copy}</button>`;
+    const actions = `<td class="actions" style="text-align:right;white-space:nowrap;">${copyBtn}${folderBtn}<button class="icon-btn del" title="Tout supprimer / reconfigurer" onclick="resetFestivArea()">${ICON.trash}</button></td>`;
+    tbody.innerHTML = `<tr>
+      <td class="num">01</td>
+      <td class="name-cell"><span style="display:inline-flex;align-items:center;gap:8px;font-weight:600;color:#fff;"><span style="width:8px;height:8px;border-radius:50%;background:var(--green);"></span>${escapeHtml(areaName)}</span></td>
+      ${cell('j1')}${cell('j2')}${cell('j3')}${cell('p3')}
+      ${actions}
+    </tr>`;
+  }
+  // GRID (card)
+  if(grid){
+    const slots = festivActiveKeys().map(k=>{
+      const url = row.links[k] && row.links[k].url;
+      const dest = row.links[k] && row.links[k].dest;
+      const lbl = keyLabel('festiv', k);
+      if(url){
+        const fld = dest ? `<a href="${folderUrlFromDest(dest)}" target="_blank" class="icon-btn" style="text-decoration:none;" title="Dossier">${ICON.folder}</a>` : '';
+        return `<div class="pcard-slot"><span class="pcard-slot-lbl">${lbl}</span><span style="display:flex;align-items:center;gap:4px;"><a href="${url}" target="_blank" class="lnk-request">${ICON.link}Upload</a>${fld}<button class="icon-btn del" onclick="deleteSlot('festiv',0,'${k}')" title="Supprimer">${ICON.trash}</button></span></div>`;
+      }
+      return `<div class="pcard-slot"><span class="pcard-slot-lbl">${lbl}</span><button class="btn btn-ghost btn-xs" id="btn-festiv-1-${k}" onclick="generateOne('festiv',0,'${k}')">+ créer</button></div>`;
+    }).join('');
+    grid.innerHTML = `<div class="pcard" style="grid-column:1/-1;max-width:520px;">
+      <div class="pcard-head"><span class="pcard-num">#01</span><span style="font-weight:700;color:#fff;">${escapeHtml(areaName)}</span></div>
+      <div class="pcard-slots">${slots}</div>
+    </div>`;
+  }
+  const dc=document.getElementById('dt-festiv-count'); if(dc) dc.textContent='(1)';
+}
+
+function buildFestivSetupForm(){
+  const ev = EVENT_CONFIG.edition || EVENT_CONFIG.name || '';
+  // Initialize root from the loaded event if empty (event root = parent of photo base).
+  if(!festivConfig.root){
+    const pBase = (document.getElementById('path-photo')||{}).value || '';
+    if(pBase){ const parts=pBase.replace(/\/$/,'').split('/'); parts.pop(); festivConfig.root = parts.join('/'); }
+  }
+  // Which days the event supports (from smartSetup). Default: tous les jours on.
+  const availDays = ['j1','j2','j3'].filter((k,i)=> (smartSetup.days && smartSetup.days[i]) || festivConfig.days[k]);
+  const dayToggle = (k,label)=>{
+    const on = festivConfig.days[k];
+    return `<button type="button" class="dtg${on?' on':''}" onclick="toggleFestivDay('${k}')"><span class="dot"></span>${label}</button>`;
+  };
+  const togglesHtml = `
+    ${dayToggle('p3','Tous les jours')}
+    ${availDays.includes('j1')?dayToggle('j1','Jour 1'):''}
+    ${availDays.includes('j2')?dayToggle('j2','Jour 2'):''}
+    ${availDays.includes('j3')?dayToggle('j3','Jour 3'):''}`;
+  const blocks = festivActiveKeys().map(k=>{
+    const t = (festivConfig.texts[k]&&festivConfig.texts[k].title) || festivDefaultTitle(k);
+    const d = (festivConfig.texts[k]&&festivConfig.texts[k].desc) || festivDefaultDesc();
+    return `<div class="dayblock">
+      <div class="dayblock-h">🗓 ${keyLabel('festiv',k)} <span class="badge" style="font-size:9px;background:rgba(52,211,153,.15);color:#6ee7b7;padding:2px 8px;border-radius:10px;">lien d'upload</span></div>
+      <div class="field-group" style="margin-bottom:10px;"><label class="field-label">Titre</label><input type="text" id="festiv-title-${k}" value="${escapeHtml(t)}" oninput="festivTextEdit('${k}','title',this.value)"></div>
+      <div class="field-group" style="margin-bottom:0;"><label class="field-label">Description</label><textarea id="festiv-desc-${k}" rows="3" oninput="festivTextEdit('${k}','desc',this.value)">${escapeHtml(d)}</textarea></div>
+    </div>`;
+  }).join('');
+  return `
+    <div class="card">
+      <div class="card-label">🎟 Configurer la zone Festivaliers</div>
+      <div class="field-group">
+        <label class="field-label">Nom de l'événement</label>
+        <input type="text" id="festiv-event-name" value="${escapeHtml(EVENT_CONFIG.name||'')}" oninput="EVENT_CONFIG.name=this.value; renderFestiv();">
+        <p class="hint">Un dossier <b style="color:var(--text-muted);">Rushs festivaliers - ${escapeHtml(ev||'…')}</b> sera créé à la racine de l'événement, avec un sous-dossier + lien par jour activé.</p>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Jours à activer</label>
+        <div class="daytoggles" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;">${togglesHtml}</div>
+        <p class="hint">Choisis les jours. Chaque jour actif crée un sous-dossier et son lien d'upload. Clique un jour pour éditer ses textes.</p>
+      </div>
+      ${blocks}
+      <button class="btn btn-create" style="margin-top:6px;" onclick="createFestivArea()">🎟 Créer la zone Festivaliers</button>
+    </div>`;
+}
+
+function toggleFestivDay(k){
+  festivConfig.days[k] = !festivConfig.days[k];
+  // Capture current field values before re-rendering the form
+  festivActiveKeys().forEach(key=>{
+    const ti=document.getElementById('festiv-title-'+key); const de=document.getElementById('festiv-desc-'+key);
+    if(ti||de){ festivConfig.texts[key]=festivConfig.texts[key]||{}; if(ti) festivConfig.texts[key].title=ti.value; if(de) festivConfig.texts[key].desc=de.value; }
+  });
+  renderFestiv();
+}
+function festivTextEdit(k, field, val){
+  festivConfig.texts[k] = festivConfig.texts[k] || {};
+  festivConfig.texts[k][field] = val;
+}
+
+async function createFestivArea(){
+  if(!getToken()){ toast('⚠️ Connecte Dropbox d\'abord','warn'); return; }
+  const keys = festivActiveKeys();
+  if(keys.length===0){ toast('⚠️ Active au moins un jour','warn'); return; }
+  if(!festivConfig.root){ toast('⚠️ Aucun événement chargé (racine introuvable)','warn'); return; }
+  // snapshot field texts
+  keys.forEach(k=>{
+    const ti=document.getElementById('festiv-title-'+k); const de=document.getElementById('festiv-desc-'+k);
+    festivConfig.texts[k]=festivConfig.texts[k]||{};
+    if(ti) festivConfig.texts[k].title=ti.value; if(de) festivConfig.texts[k].desc=de.value;
+  });
+  const btn = document.querySelector('#festiv-setup .btn-create');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Création…'; }
+  // create the row in state first so generateOne can write into it
+  festivState = [{ n:1, realName:'Rushs festivaliers', editorUrl:'', _viewTouched:false, links:{j1:{},j2:{},j3:{},p3:{}} }];
+  try {
+    for(const k of keys){
+      const destPath = getFolderPath('festiv',1,k);
+      try { await apiPost('files/create_folder_v2',{path:destPath,autorename:false}); } catch(e){}
+      const data = await fileRequestsPost('file_requests/create',{destination:destPath,title:makeTitle('festiv',k,1,''),description:makeDesc('festiv',k)});
+      festivState[0].links[k] = { url:data.url, id:data.id, dest:destPath };
+    }
+    toast('✓ Zone Festivaliers créée','success');
+    renderFestiv();
+    if(getToken()) scanFestivKpis();
+  } catch(e){
+    toast('✗ '+e.message,'error');
+    if(btn){ btn.disabled=false; btn.textContent='🎟 Créer la zone Festivaliers'; }
+  }
+}
+
+function resetFestivArea(){
+  if(festivState.length && !confirm('Reconfigurer la zone Festivaliers ?\n\nCela vide la vue ici (les dossiers/liens Dropbox déjà créés ne sont PAS supprimés). Tu reviens au formulaire.')) return;
+  festivState = [];
+  renderFestiv();
+}
+
+async function scanFestivKpis(){
+  if(!festivState.length || !getToken()) return;
+  const row = festivState[0];
+  let files=0, bytes=0, tagged=0, links=0;
+  for(const k of FESTIV_KEYS){
+    const slot = row.links[k];
+    if(slot && slot.url) links++;
+    if(!slot || !slot.dest) continue;
+    try {
+      let data = await apiPost('files/list_folder',{path:slot.dest, recursive:true, include_non_downloadable_files:false});
+      let entries = data.entries||[];
+      while(data.has_more){ data = await apiPost('files/list_folder/continue',{cursor:data.cursor}); entries=entries.concat(data.entries||[]); }
+      entries.filter(e=>e['.tag']==='file').forEach(f=>{ files++; if(f.size)bytes+=f.size; if((f.name||'').includes('@'))tagged++; });
+    } catch(e){}
+  }
+  const set=(id,html)=>{ const el=document.getElementById(id); if(el) el.innerHTML=html; };
+  set('fk-files', String(files));
+  set('fk-volume', fmtSize(bytes));
+  const pct = files? Math.round(tagged/files*100):0;
+  set('fk-tagged', files? `<span style="color:var(--${pct>=90?'green':pct>=60?'amber':'red'});">${pct}<span style="font-size:13px;color:var(--text-muted);font-weight:500;">%</span></span>` : '—');
+  set('fk-links', `${links}<span style="font-size:13px;color:var(--text-muted);font-weight:500;margin-left:2px;">/ ${festivActiveKeys().length}</span>`);
+}
+
 function updateStats() {
   const keys=['j1','j2','j3','p3'];
   const pTotal=photoState.length*4;
@@ -1926,7 +2212,7 @@ function switchTab(tab) {
   // it so the load doesn't yank them back when it finishes.
   if(loadInProgress && tab !== CURRENT_TAB) userTabbedDuringLoad = true;
   CURRENT_TAB = tab;
-  ['photo','video','verify','setup','settings'].forEach(t=>{
+  ['photo','video','festiv','verify','setup','settings'].forEach(t=>{
     const el = document.getElementById('tab-'+t);
     if(el) el.style.display = t===tab?'':'none';
   });
@@ -1948,6 +2234,11 @@ function switchTab(tab) {
     if(getToken() && (photoState.length || videoState.length)){
       runVerify('all');
     }
+  }
+  if(tab==='festiv'){
+    renderFestiv();
+    // Auto-scan KPIs if the area exists and we're connected.
+    if(getToken() && festivState.length){ scanFestivKpis(); }
   }
   updateHeader(tab);
 }
@@ -1999,7 +2290,7 @@ function addPerson(type){
 
 async function generateOne(type,idx,key) {
   if(!getToken()){toast('⚠️ Entre le token','warn');return;}
-  const state=type==='photo'?photoState:videoState;
+  const state=stateFor(type);
   const row=state[idx];
   const btn=document.getElementById(`btn-${type}-${row.n}-${key}`);
   if(btn){btn.className='btn btn-loading btn-xs';btn.textContent='⏳';btn.disabled=true;}
@@ -2008,12 +2299,13 @@ async function generateOne(type,idx,key) {
     // Create folder first (silently ignore if already exists)
     try { await apiPost('files/create_folder_v2',{path:destPath,autorename:false}); } catch(e2){}
     const data=await fileRequestsPost('file_requests/create',{destination:destPath,title:makeTitle(type,key,row.n,row.realName),description:makeDesc(type,key)});
-    row.links[key]={url:data.url,id:data.id,dest:destPath};renderTable(type);
-    toast(`✓ ${type==='photo'?'Photographe':'Vidéaste'} ${row.n} · ${keyLabel(type,key)} créé`,'success');
-    // Auto-create the editor link (one shared link per person folder) now that a
-    // folder exists — keeps "+ créer" self-sufficient so every person ends up with
-    // an editor link without an extra tap. Background + silent; idempotent.
-    if(!row.editorUrl && getToken()){
+    row.links[key]={url:data.url,id:data.id,dest:destPath};
+    if(type==='festiv'){ renderFestiv(); } else { renderTable(type); }
+    const kindLbl = type==='photo'?'Photographe':type==='video'?'Vidéaste':'Festivaliers';
+    toast(`✓ ${kindLbl}${type==='festiv'?'':' '+row.n} · ${keyLabel(type,key)} créé`,'success');
+    // Auto-create the editor link (one shared link per person folder). Not for festiv
+    // (it's a shared public area, the folder link already covers it).
+    if(type!=='festiv' && !row.editorUrl && getToken()){
       createEditorLink(type, idx, true).catch(()=>{});
     }
   } catch(e) {
@@ -2086,11 +2378,11 @@ async function fileRequestsPost(endpoint, body) {
 }
 // ══════════════════════════════════════════════════
 async function deleteSlot(type, idx, key) {
-  const state = type==='photo' ? photoState : videoState;
+  const state = stateFor(type);
   const row = state[idx];
   const link = row.links[key];
   const label = keyLabel(type, key);
-  const name = row.realName || (type==='photo'?'Photographe':'Vidéaste')+' '+row.n;
+  const name = row.realName || (type==='photo'?'Photographe':type==='video'?'Vidéaste':'Festivaliers')+(type==='festiv'?'':' '+row.n);
 
   if(!confirm(`Supprimer ${label} pour ${name} ?\n\nCela supprimera :\n• Le lien Dropbox Upload Request\n• Le dossier et tous les fichiers uploadés\n\nCette action est irréversible.`)) return;
 
@@ -2127,6 +2419,12 @@ async function deleteSlot(type, idx, key) {
 
   // Clear slot from state then reload from Dropbox
   row.links[key] = { url:'', id:'', dest:'' };
+  if(type==='festiv'){
+    renderFestiv();
+    const fmsg = (linkDeleted && folderDeleted) ? `✓ ${label} supprimé` : `✓ ${label} supprimé (partiel)`;
+    toast(fmsg, linkDeleted && folderDeleted ? 'success' : 'warn');
+    return;
+  }
   renderTable(type);
   const msg = (linkDeleted && folderDeleted) ? `✓ ${label} supprimé — rechargement…` : `✓ ${label} supprimé (partiel) — rechargement…`;
   toast(msg, linkDeleted && folderDeleted ? 'success' : 'warn');
