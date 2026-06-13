@@ -775,6 +775,7 @@ td.actions{white-space:nowrap;width:1px;}
       <div style="display:flex;gap:0;" id="msg-type-tabs">
         <button id="mtab-photo" onclick="switchMsgType('photo')" style="padding:8px 18px;font-size:0.78em;font-weight:600;background:transparent;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;border-bottom:2px solid var(--indigo);color:#fff;">📷 Photographes <span id="mtab-photo-count" style="background:rgba(99,102,241,0.15);color:#a5b4fc;padding:1px 7px;border-radius:10px;font-size:0.85em;"></span></button>
         <button id="mtab-video" onclick="switchMsgType('video')" style="padding:8px 18px;font-size:0.78em;font-weight:600;background:transparent;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;border-bottom:2px solid transparent;color:var(--text-muted);">🎬 Vidéastes <span id="mtab-video-count" style="background:rgba(99,102,241,0.1);color:#818cf8;padding:1px 7px;border-radius:10px;font-size:0.85em;"></span></button>
+        <button id="mtab-tpl" onclick="switchMsgType('tpl')" style="padding:8px 18px;font-size:0.78em;font-weight:600;background:transparent;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;border-bottom:2px solid transparent;color:var(--text-muted);">🔗 Template Upload</button>
       </div>
     </div>
 
@@ -964,6 +965,7 @@ let videoState = [];
 let festivState = [];   // 0 or 1 row: {n:1, realName, links:{j1,j2,j3,p3}}
 let festivConfig = { root:'', days:{j1:false,j2:false,j3:false,p3:true}, texts:{} };
 let _pendingFestiv = null; // festiv area discovered during a load, applied in loadEventState
+let festivReconfiguring = false; // true while the form is shown via "Reconfigurer" (area still exists)
 
 // Load a new event state into the tabs
 function loadEventState(newPhotoState, newVideoState) {
@@ -972,6 +974,7 @@ function loadEventState(newPhotoState, newVideoState) {
   perfData = null; // invalidate cached Performance scan for the new event
   // Festiv area is per-event. If the load discovered an existing area, restore it;
   // otherwise reset to empty (setup form will show).
+  festivReconfiguring = false;
   if(_pendingFestiv){
     festivConfig = { root:_pendingFestiv.root, days:_pendingFestiv.days, texts:{} };
     festivState = _pendingFestiv.state;
@@ -2027,12 +2030,12 @@ function renderFestiv(){
     setup.innerHTML = `<div style="color:var(--text-muted);font-size:13px;padding:30px 0;text-align:center;">⏳ Analyse de l'événement…</div>`;
     return;
   }
-  // Empty (no area created) → show the setup form.
-  if(festivState.length===0){
+  // Empty (no area created) OR reconfiguring an existing area → show the setup form.
+  if(festivState.length===0 || festivReconfiguring){
     tableWrap.style.display='none';
     setup.style.display='';
     setup.innerHTML = buildFestivSetupForm();
-    document.getElementById('dt-festiv-count') && (document.getElementById('dt-festiv-count').textContent='');
+    if(festivState.length===0){ const dc=document.getElementById('dt-festiv-count'); if(dc) dc.textContent=''; }
     return;
   }
   // Area exists → show table (or card if only "tous les jours" is active).
@@ -2144,7 +2147,10 @@ function buildFestivSetupForm(){
   }).join('');
   return `
     <div class="card">
-      <div class="card-label">🎟 Configurer la zone Festivaliers</div>
+      <div class="card-label" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span>🎟 Configurer la zone Festivaliers</span>
+        ${festivReconfiguring ? `<button class="btn btn-ghost btn-sm" onclick="backFromFestivSetup()" style="text-transform:none;letter-spacing:0;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>Retour</button>` : ''}
+      </div>
       <div class="field-group">
         <label class="field-label">Nom de l'événement</label>
         <input type="text" id="festiv-event-name" value="${escapeHtml(EVENT_CONFIG.name||'')}" oninput="festivNameEdit(this.value)">
@@ -2205,6 +2211,7 @@ async function createFestivArea(){
       festivState[0].links[k] = { url:data.url, id:data.id, dest:destPath };
     }
     toast('✓ Zone Festivaliers créée','success');
+    festivReconfiguring = false;
     renderFestiv();
     if(getToken()) scanFestivKpis();
   } catch(e){
@@ -2214,8 +2221,18 @@ async function createFestivArea(){
 }
 
 function resetFestivArea(){
-  if(festivState.length && !confirm('Reconfigurer la zone Festivaliers ?\n\nCela vide la vue ici (les dossiers/liens Dropbox déjà créés ne sont PAS supprimés). Tu reviens au formulaire.')) return;
-  festivState = [];
+  if(festivState.length && !confirm('Reconfigurer la zone Festivaliers ?\n\nLes dossiers/liens Dropbox déjà créés ne sont PAS supprimés. Tu peux revenir en arrière sans rien perdre.')) return;
+  // Don't wipe festivState — just show the form. "Back" can return to the table.
+  festivReconfiguring = true;
+  // Seed the form's day toggles + texts from the existing area so it's pre-filled.
+  if(festivState.length){
+    const row = festivState[0];
+    ['j1','j2','j3','p3'].forEach(k=>{ festivConfig.days[k] = !!(row.links[k] && (row.links[k].url||row.links[k].dest)); });
+  }
+  renderFestiv();
+}
+function backFromFestivSetup(){
+  festivReconfiguring = false;
   renderFestiv();
 }
 
@@ -4574,9 +4591,16 @@ function getLinks(type, idx) {
 
 function renderMsgOverlay() {
   const {type, personIdx} = msgState;
+  // Global "Template Upload" tab — edit the upload-page title pattern + description per type.
+  if(type==='tpl'){ renderUploadTemplateTab(); return; }
   const photoNamed = photoState.filter(r => r.realName.trim());
   const videoNamed = videoState.filter(r => r.realName.trim());
   const named = type==='photo' ? photoNamed : videoNamed;
+  // Ensure the person selector (hidden by the tpl tab) is visible for photo/video.
+  const _sel = document.getElementById('msg-person-select');
+  if(_sel && _sel.closest('div')) _sel.closest('div').style.display='';
+  document.getElementById('mtab-tpl').style.borderBottomColor='transparent';
+  document.getElementById('mtab-tpl').style.color='var(--text-muted)';
 
   // Update type tabs
   const isPhoto = type==='photo';
@@ -4685,7 +4709,7 @@ function renderMsgOverlay() {
         <textarea id="edit-upl-desc-input" style="display:none;width:100%;font-size:0.82em;line-height:1.6;min-height:120px;resize:vertical;">${escapeHtml(makeDesc(type,'j1'))}</textarea>
       </div>
       <div id="save-upl-bar" style="display:none;padding:10px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;">
-        <span style="font-size:0.68em;color:var(--text-dim);">Sera appliqué à tous les liens de ${type==='photo'?'photographes':type==='video'?'vidéastes':'festivaliers'}.</span>
+        <span style="font-size:0.68em;color:var(--text-dim);">Modifie le titre + la description des pages Dropbox de cette personne uniquement.</span>
         <button class="btn btn-create btn-sm" onclick="saveUploadText()">💾 Enregistrer & pousser</button>
       </div>
     </div>
@@ -4701,7 +4725,87 @@ function copyMsgPart(id) {
   });
 }
 
-// ── Éditer / Save for the message cards (email / wa / upl) ──
+// ── Global "Template Upload" tab: per-type title pattern + description ──
+// Placeholders: {nom} {jour} {evenement}. Used to (re)generate every link's title/desc.
+let UPLOAD_TEMPLATES = {
+  photo: { titlePattern: 'Photos {jour} - {nom} - {evenement}', desc: "Ici, tu peux mettre tes photos. N'oublie pas de mettre ton @ Instagram sur le nom des fichiers." },
+  video: { titlePattern: 'Vidéos {jour} - {nom} - {evenement}', desc: "Ici, tu peux mettre tes vidéos. N'oublie pas de mettre ton @ Instagram sur le nom des fichiers." },
+  festiv:{ titlePattern: 'Madame Loyal - Rushs festivaliers · {jour}', desc: festivDefaultDesc() }
+};
+let uplTplType = 'photo';
+
+function fillUploadPattern(pattern, nom, jourLabel){
+  const ev = EVENT_CONFIG.edition || EVENT_CONFIG.name || '';
+  return pattern.replace(/\{nom\}/g, nom||'').replace(/\{jour\}/g, jourLabel||'').replace(/\{evenement\}/g, ev).replace(/\{événement\}/g, ev);
+}
+
+function renderUploadTemplateTab(){
+  // tab highlight
+  document.getElementById('mtab-photo').style.borderBottomColor='transparent';
+  document.getElementById('mtab-photo').style.color='var(--text-muted)';
+  document.getElementById('mtab-video').style.borderBottomColor='transparent';
+  document.getElementById('mtab-video').style.color='var(--text-muted)';
+  document.getElementById('mtab-tpl').style.borderBottomColor='var(--green)';
+  document.getElementById('mtab-tpl').style.color='#fff';
+  // hide the person selector (not relevant here)
+  const selWrap = document.getElementById('msg-person-select');
+  if(selWrap && selWrap.closest('div')) selWrap.closest('div').style.display='none';
+  document.getElementById('modal-subtitle').textContent = `Template des pages d'upload · ${EVENT_CONFIG.name||'Événement'}`;
+
+  const t = UPLOAD_TEMPLATES[uplTplType];
+  const typeBtn = (key,label)=>`<button onclick="setUplTplType('${key}')" class="msg-act-btn" style="${uplTplType===key?'background:var(--green);color:#06281d;border-color:var(--green);':''}">${label}</button>`;
+  const sample = fillUploadPattern(t.titlePattern, uplTplType==='festiv'?'':'Nom Exemple', 'Jour 1');
+  document.getElementById('msg-body-area').innerHTML = `
+    <div style="display:flex;gap:6px;margin-bottom:4px;">${typeBtn('photo','📷 Photo')}${typeBtn('video','🎬 Video')}${typeBtn('festiv','🎟 Festiv')}</div>
+    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:16px;">
+      <div style="font-size:0.7em;color:var(--text-dim);margin-bottom:14px;line-height:1.6;">Modèle appliqué quand on (re)génère les pages d'upload. Placeholders : <code>{nom}</code> <code>{jour}</code> <code>{evenement}</code>.</div>
+      <label class="field-label">Modèle de titre</label>
+      <input type="text" id="upltpl-title" value="${escapeHtml(t.titlePattern)}" oninput="document.getElementById('upltpl-sample').textContent=fillUploadPattern(this.value, ${uplTplType==='festiv'?"''":"'Nom Exemple'"}, 'Jour 1')" style="width:100%;margin-bottom:4px;">
+      <div style="font-size:0.7em;color:var(--text-dim);margin-bottom:14px;">Aperçu : <span id="upltpl-sample" style="color:var(--text-muted);">${escapeHtml(sample)}</span></div>
+      <label class="field-label">Description</label>
+      <textarea id="upltpl-desc" style="width:100%;min-height:120px;line-height:1.6;resize:vertical;">${escapeHtml(t.desc)}</textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap;">
+        <span style="font-size:0.68em;color:var(--text-dim);">« Enregistrer » garde le modèle. « Régénérer » réécrit le titre + la description de TOUS les liens ${uplTplType==='photo'?'photo':uplTplType==='video'?'vidéo':'festivaliers'}.</span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="saveUploadTemplate()">💾 Enregistrer</button>
+          <button class="btn btn-create btn-sm" onclick="regenerateAllFromTemplate()">↻ Régénérer tous les liens</button>
+        </div>
+      </div>
+    </div>`;
+}
+function setUplTplType(key){ saveUploadTemplate(true); uplTplType=key; renderUploadTemplateTab(); }
+function saveUploadTemplate(silent){
+  const ti=document.getElementById('upltpl-title'), de=document.getElementById('upltpl-desc');
+  if(ti&&de){ UPLOAD_TEMPLATES[uplTplType]={titlePattern:ti.value, desc:de.value}; }
+  if(!silent) toast('✓ Modèle enregistré','success');
+}
+async function regenerateAllFromTemplate(){
+  saveUploadTemplate(true);
+  const type = uplTplType;
+  const tpl = UPLOAD_TEMPLATES[type];
+  const stateArr = type==='photo'?photoState : type==='video'?videoState : festivState;
+  const dayLabel = {j1:'Jour 1',j2:'Jour 2',j3:'Jour 3',p3: type==='festiv'?'Tous les jours':(type==='photo'?'Partenaires':'BAB & Montages')};
+  const targets = [];
+  stateArr.forEach(r=>{
+    ['j1','j2','j3','p3'].forEach(k=>{
+      if(r.links[k] && r.links[k].id){
+        const nom = r.realName || '';
+        targets.push({ id:r.links[k].id, title:fillUploadPattern(tpl.titlePattern, nom, dayLabel[k]), desc:tpl.desc });
+      }
+    });
+  });
+  if(targets.length===0){ toast('⚠️ Aucun lien à régénérer','warn'); return; }
+  const kindLbl = type==='photo'?'photo':type==='video'?'vidéo':'festivaliers';
+  if(!confirm(`Régénérer le titre + la description de ${targets.length} lien(s) ${kindLbl} depuis le modèle ?\n\nChaque page Dropbox sera réécrite.`)) return;
+  if(!getToken()){ toast('⚠️ Connecte Dropbox','warn'); return; }
+  let done=0, errs=0;
+  for(const t of targets){
+    try { await fileRequestsPost('file_requests/update', { id:t.id, title:t.title, description:t.desc }); done++; await sleep(120); }
+    catch(e){ errs++; }
+  }
+  toast(errs? `✓ ${done} liens régénérés · ${errs} échec(s)` : `✓ ${done} liens régénérés depuis le modèle`, errs?'warn':'success');
+}
+
 function toggleMsgEdit(which){
   const row = currentMsgRow(); if(!row) return;
   const n = row.n;
@@ -4763,17 +4867,13 @@ async function saveUploadText(){
   const n = row.n;
   const newTitle = document.getElementById('edit-upl-title-input').value.trim();
   const newDesc  = document.getElementById('edit-upl-desc-input').value;
-  const stateArr = type==='photo'?photoState : type==='video'?videoState : festivState;
-  // Count target links
+  // Per-person: only this selected person's links.
   const targets = [];
-  stateArr.forEach((r,idx)=>{
-    ['j1','j2','j3','p3'].forEach(k=>{
-      if(r.links[k] && r.links[k].id) targets.push({id:r.links[k].id, r, k});
-    });
+  ['j1','j2','j3','p3'].forEach(k=>{
+    if(row.links[k] && row.links[k].id) targets.push({id:row.links[k].id, k});
   });
-  if(targets.length===0){ toast('⚠️ Aucun lien à mettre à jour','warn'); return; }
-  const kindLbl = type==='photo'?'photographes':type==='video'?'vidéastes':'festivaliers';
-  if(!confirm(`Pousser ce titre + description vers les ${targets.length} liens d'upload (${kindLbl}) ?\n\nLe titre et la description de chaque page Dropbox seront remplacés.`)) return;
+  if(targets.length===0){ toast('⚠️ Aucun lien à mettre à jour pour cette personne','warn'); return; }
+  if(!confirm(`Pousser ce titre + description vers les ${targets.length} lien(s) d'upload de ${row.realName} ?\n\nLe titre et la description de ses pages Dropbox seront remplacés.`)) return;
   if(!getToken()){ toast('⚠️ Connecte Dropbox','warn'); return; }
   const bar = document.getElementById('save-upl-bar');
   if(bar) bar.style.opacity='0.5';
