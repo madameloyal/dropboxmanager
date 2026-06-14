@@ -3098,8 +3098,50 @@ async function loadEventFromPaths() {
       newVideo.forEach((r,i)=>{ if(r.realName){ const inp=document.getElementById(`name-video-${r.n}`); if(inp) inp.value=r.realName; }});
       updateStats();
     },100);
+    // Rediscover existing editor (shared) links so the Éditeur button stays green after refresh.
+    discoverEditorLinks().catch(()=>{});
   } catch(e){ toast('✗ '+e.message,'error'); }
   finally { loadInProgress=false; if(btn){ btn.disabled=false; btn.textContent="⚡ Charger l'événement"; } }
+}
+
+// Editor links are Dropbox shared links on each person's FOLDER (not file-requests), so the
+// file-request discovery above never restores them. List all shared links once and match each
+// by folder path to a person, repopulating row.editorUrl. One API call (paginated) for everyone.
+async function discoverEditorLinks(){
+  if(!getToken()) return;
+  // Build folderPath -> {type, n} index from current state (person folder = parent of any slot dest).
+  const folderIndex = {};
+  const indexState = (state, type)=>{
+    state.forEach(row=>{
+      const anyDest = row.links.j1.dest||row.links.j2.dest||row.links.j3?.dest||row.links.p3.dest||'';
+      if(!anyDest) return;
+      const parts = anyDest.split('/'); parts.pop();
+      folderIndex[parts.join('/').toLowerCase()] = {type, n:row.n};
+    });
+  };
+  indexState(photoState,'photo');
+  indexState(videoState,'video');
+  if(!Object.keys(folderIndex).length) return;
+  try {
+    let links = [];
+    let data = await sharingPost('sharing/list_shared_links', {});
+    links = links.concat(data.links||[]);
+    while(data.has_more && data.cursor){
+      data = await sharingPost('sharing/list_shared_links', { cursor: data.cursor });
+      links = links.concat(data.links||[]);
+    }
+    let matched = 0;
+    for(const lk of links){
+      const p = (lk.path_lower||'').replace(/\/$/,'');
+      if(!p) continue;
+      const hit = folderIndex[p];
+      if(!hit) continue;
+      const state = hit.type==='photo'?photoState:videoState;
+      const row = state.find(r=>r.n===hit.n);
+      if(row && !row.editorUrl){ row.editorUrl = lk.url; matched++; }
+    }
+    if(matched){ renderTableSafe('photo'); renderTableSafe('video'); }
+  } catch(e){ /* best-effort; editor button just stays grey until clicked */ }
 }
 
 // ══════════════════════════════════════════════════
