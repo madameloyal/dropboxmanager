@@ -1296,7 +1296,23 @@ function removeSmartDay(i) {
 }
 function setSmartDayDate(i, val) {
   if(smartSetup.days[i]) smartSetup.days[i].date = val;
+  syncEventDateFromDays();
   renderSmartPreview();
+}
+// Build EVENT_CONFIG.date from the configured day dates so the {date} template placeholder resolves.
+// Produces e.g. "13 juin 2026" (single day) or "13–15 juin 2026" / "30 mai – 1 juin 2026" (range).
+function syncEventDateFromDays(){
+  const iso = (smartSetup.days||[]).map(d=>d&&d.date).filter(Boolean).sort();
+  if(!iso.length){ return; }
+  const MONTHS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  const fmt = (s)=>{ const [y,m,dd]=s.split('-').map(Number); return {d:dd, m:m-1, y, label:`${dd} ${MONTHS[m-1]} ${y}`}; };
+  const a = fmt(iso[0]);
+  if(iso.length===1){ EVENT_CONFIG.date = a.label; return; }
+  const b = fmt(iso[iso.length-1]);
+  if(a.y===b.y && a.m===b.m){ EVENT_CONFIG.date = `${a.d}–${b.d} ${MONTHS[a.m]} ${a.y}`; }
+  else if(a.y===b.y){ EVENT_CONFIG.date = `${a.d} ${MONTHS[a.m]} – ${b.d} ${MONTHS[b.m]} ${a.y}`; }
+  else { EVENT_CONFIG.date = `${a.label} – ${b.label}`; }
+  try { localStorage.setItem('dbx_ev_date', EVENT_CONFIG.date); } catch(e){}
 }
 
 function renderSmartDays() {
@@ -5072,6 +5088,8 @@ saveScanRoot(document.getElementById('paths-scan-root').value);
 
 // Restore event name (stored under dbx_ev_city for historical reasons).
 const savedCity = localStorage.getItem('dbx_ev_city');
+const savedEvDate = localStorage.getItem('dbx_ev_date');
+if(savedEvDate) EVENT_CONFIG.date = savedEvDate;
 if(savedCity) {
   EVENT_CONFIG.city = savedCity; EVENT_CONFIG.edition = savedCity;
 }
