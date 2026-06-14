@@ -1802,18 +1802,32 @@ function setFilterStatus(type, status, el){
 }
 // Status of a person row: complete / partial / empty (by links present)
 function rowStatus(row){
-  // Upload-based dot: green once the person has uploaded ≥1 file, amber otherwise.
-  // (_fileCount is populated by the file-count scan and the Vérification scan.)
-  if(row._fileCount > 0) return 'complete';
+  // 3-state upload dot, kept consistent with the Vérification chip:
+  //   complete (green) = every slot that has a link has files
+  //   partial  (amber) = some uploads but not all linked slots  (also the "not yet detail-scanned" state)
+  //   empty    (grey)  = no uploads at all
+  // _uploadStatus is set by the scans that know per-slot counts (verify + file-count).
+  if(row._uploadStatus) return row._uploadStatus;
+  // Fallback before any detailed scan: green needs proof of completeness we don't have yet,
+  // so treat "has some files" as partial, "none" as empty.
+  if(row._fileCount > 0) return 'partial';
+  return 'empty';
+}
+// Compute the 3-state upload status from a per-slot count map + the row's linked slots.
+function computeUploadStatus(row, counts){
+  const linkedKeys = ['j1','j2','j3','p3'].filter(k=>row.links[k] && row.links[k].url);
+  const anyFiles = ['j1','j2','j3','p3'].some(k=>(counts[k]||0)>0);
+  if(!anyFiles) return 'empty';
+  if(linkedKeys.length>0 && linkedKeys.every(k=>(counts[k]||0)>0)) return 'complete';
   return 'partial';
 }
 // Link-creation completeness (used by the "Incomplets" filter, NOT the dot).
 function linkStatus(row){
-  const keys=['j1','j2','j3','p3'];
-  const have = keys.filter(k=>row.links[k] && row.links[k].url).length;
-  if(have===0) return 'empty';
-  if(have<keys.length) return 'partial';
-  return 'complete';
+  // Used only by the "Incomplets" filter. There is no per-person record of which days a
+  // person is *supposed* to have, so we don't assume all 4 slots are required (that flagged
+  // legitimate 2-day people as forever-incomplete). "Incomplet" = no links created yet.
+  const have = ['j1','j2','j3','p3'].filter(k=>row.links[k] && row.links[k].url).length;
+  return have===0 ? 'empty' : 'complete';
 }
 function passesFilter(type, row){
   const f = filterState[type];
@@ -1878,6 +1892,23 @@ function lnkCellOrPlus(type, idx, key) {
     </td>`;
   }
   return `<td class="lnk"><button class="btn btn-ghost btn-xs" id="btn-${type}-${row.n}-${key}" onclick="generateOne('${type}',${idx},'${key}')" title="Créer ${lbl}">+ créer</button></td>`;
+}
+
+// Background scans re-render tables; if the user is mid-typing in a name field, rebuilding
+// tbody.innerHTML would drop focus/caret. Defer the re-render until the field is blurred.
+function renderTableSafe(type){
+  const active = document.activeElement;
+  const inThisTable = active && active.tagName==='INPUT' &&
+    (active.id||'').startsWith('name-'+type+'-');
+  if(inThisTable){
+    // Re-render once the user leaves the field. Guard against stacking multiple
+    // listeners if several background scans defer while the field stays focused.
+    if(active.dataset.pendingRerender) return;
+    active.dataset.pendingRerender = '1';
+    active.addEventListener('blur', ()=>{ renderTable(type); }, { once:true });
+    return;
+  }
+  renderTable(type);
 }
 
 function renderTable(type) {
@@ -2075,7 +2106,7 @@ function renderFestiv(){
     const folderBtn = folderUrl ? `<a href="${folderUrl}" target="_blank" class="icon-btn" title="Ouvrir le dossier Festivaliers" style="text-decoration:none;">${ICON.folder}</a>` : '';
     const copyBtn = `<button class="icon-btn" title="Copier tous les liens" onclick="copyPersonInfo('festiv',${idx})">${ICON.copy}</button>`;
     const actions = `<td class="actions" style="text-align:right;white-space:nowrap;">${copyBtn}${folderBtn}<button class="icon-btn del" title="Tout supprimer / reconfigurer" onclick="resetFestivArea()">${ICON.trash}</button></td>`;
-    const tStatus = (row._fileCount > 0) ? 'complete' : 'partial';
+    const tStatus = rowStatus(row); // 3-state, consistent with photo/video + verify chip
     tbody.innerHTML = `<tr>
       <td class="num">01</td>
       <td class="name-cell"><div class="pcard-name-row"><span class="row-status rs-${tStatus}"></span><span class="pcard-name">${escapeHtml(areaName)}</span></div></td>
@@ -2101,7 +2132,7 @@ function renderFestiv(){
     const copyBtn = `<button class="icon-btn" title="Copier tous les liens" onclick="copyPersonInfo('festiv',0)">${ICON.copy}<span style="margin-left:5px;">Copier</span></button>`;
     const folderBtn = folderUrl ? `<a href="${folderUrl}" target="_blank" class="icon-btn go" title="Ouvrir dossier Dropbox">${ICON.folder}<span style="margin-left:5px;">Dossier</span></a>` : '';
     const delBtn = `<button class="icon-btn del" title="Tout supprimer / reconfigurer" onclick="resetFestivArea()">${ICON.trash}</button>`;
-    const fStatus = (row._fileCount > 0) ? 'complete' : 'partial';
+    const fStatus = rowStatus(row); // 3-state, consistent with photo/video + verify chip
     grid.innerHTML = `<div class="pcard" style="grid-column:1/-1;max-width:520px;">
       <div class="pcard-head">
         <span class="pcard-num">#01</span>
@@ -2243,6 +2274,7 @@ async function scanFestivKpis(){
   if(!festivState.length || !getToken()) return;
   const row = festivState[0];
   let files=0, bytes=0, tagged=0, links=0;
+  const counts = {j1:0,j2:0,j3:0,p3:0};
   for(const k of FESTIV_KEYS){
     const slot = row.links[k];
     if(slot && slot.url) links++;
@@ -2251,13 +2283,14 @@ async function scanFestivKpis(){
       let data = await apiPost('files/list_folder',{path:slot.dest, recursive:true, include_non_downloadable_files:false});
       let entries = data.entries||[];
       while(data.has_more){ data = await apiPost('files/list_folder/continue',{cursor:data.cursor}); entries=entries.concat(data.entries||[]); }
-      entries.filter(e=>e['.tag']==='file').forEach(f=>{ files++; if(f.size)bytes+=f.size; if((f.name||'').includes('@'))tagged++; });
+      entries.filter(e=>e['.tag']==='file').forEach(f=>{ files++; counts[k]++; if(f.size)bytes+=f.size; if((f.name||'').includes('@'))tagged++; });
     } catch(e){}
   }
   const set=(id,html)=>{ const el=document.getElementById(id); if(el) el.innerHTML=html; };
   set('fk-files', String(files));
   set('fk-volume', fmtSize(bytes));
-  row._fileCount = files; // drives the status dot (green if uploads exist)
+  row._fileCount = files;
+  row._uploadStatus = computeUploadStatus(row, counts); // 3-state dot, consistent with photo/video
   const pct = files? Math.round(tagged/files*100):0;
   set('fk-tagged', files? `<span style="color:var(--${pct>=90?'green':pct>=60?'amber':'red'});">${pct}<span style="font-size:13px;color:var(--text-muted);font-weight:500;">%</span></span>` : '—');
   set('fk-links', `${links}<span style="font-size:13px;color:var(--text-muted);font-weight:500;margin-left:2px;">/ ${festivActiveKeys().length}</span>`);
@@ -2594,8 +2627,11 @@ async function deletePerson(type, idx) {
 // ══════════════════════════════════════════════════
 // RENAME
 // ══════════════════════════════════════════════════
-async function resolveId(type,n,key){
-  const row=(type==='photo'?photoState:videoState)[n-1];
+async function resolveId(row,key){
+  // Takes the row object directly — must NOT re-derive position from n.
+  // (n is parsed from the Dropbox folder prefix and can have gaps after deletions,
+  //  so state[n-1] could point at the wrong person or be undefined.)
+  if(!row || !row.links[key]) return null;
   if(row.links[key].id) return row.links[key].id;
   const url=row.links[key].url;
   if(url){const m=url.match(/\/request\/([A-Za-z0-9]+)$/);if(m) return m[1];}
@@ -2634,7 +2670,7 @@ async function doRename(type,idx){
   catch(e){const msg=(e.message||'').toLowerCase();if(msg.includes('conflict')||msg.includes('not_found')||msg.includes('not found')||msg.includes('409'))folderOk=true;else errs.push('Dossier: '+e.message);}
   for(const key of ['j1','j2','j3','p3']){
     if(!row.links[key].url) continue;
-    try{const id=await resolveId(type,row.n,key);if(!id){errs.push('ID manquant ('+key+')');continue;}await fileRequestsPost('file_requests/update',{id,title:makeTitle(type,key,row.n,name)});linksDone++;await sleep(120);}
+    try{const id=await resolveId(row,key);if(!id){errs.push('ID manquant ('+key+')');continue;}await fileRequestsPost('file_requests/update',{id,title:makeTitle(type,key,row.n,name)});linksDone++;await sleep(120);}
     catch(e){errs.push(key+': '+e.message);}
   }
   // Update dest in state so folder link reflects new name immediately
@@ -2808,7 +2844,7 @@ async function autoFillBasePaths(eventPath, eventName) {
   photoState = []; videoState = [];
   document.getElementById('path-photo').value = '';
   document.getElementById('path-video').value = '';
-  renderTable('photo'); renderTable('video');
+  renderTableSafe('photo'); renderTableSafe('video');
   const _dp=document.getElementById('dt-photo-count'); if(_dp) _dp.textContent='(0)';
   const _dv=document.getElementById('dt-video-count'); if(_dv) _dv.textContent='(0)';
   const navSub = document.getElementById('nav-session-sub');
@@ -3371,6 +3407,7 @@ async function countFilesForType(type) {
   let scannedAny = false;
   for(const row of state) {
     let rowFiles = 0;
+    const counts = {j1:0,j2:0,j3:0,p3:0};
     for(const key of ['j1','j2','j3','p3']) {
       const link = row.links[key];
       const path = link && link.dest ? link.dest : null;
@@ -3379,19 +3416,20 @@ async function countFilesForType(type) {
       try {
         let data = await apiPost('files/list_folder',{path, recursive:true, include_non_downloadable_files:false});
         const c1 = (data.entries||[]).filter(e=>e['.tag']==='file').length;
-        total += c1; rowFiles += c1;
+        total += c1; rowFiles += c1; counts[key] += c1;
         while(data.has_more){
           data = await apiPost('files/list_folder/continue',{cursor:data.cursor});
           const c2 = (data.entries||[]).filter(e=>e['.tag']==='file').length;
-          total += c2; rowFiles += c2;
+          total += c2; rowFiles += c2; counts[key] += c2;
         }
       } catch(e) { /* empty or missing */ }
       await new Promise(r=>setTimeout(r,50));
     }
-    row._fileCount = rowFiles; // per-person upload count → drives the status dot
+    row._fileCount = rowFiles; // per-person upload total
+    row._uploadStatus = computeUploadStatus(row, counts); // 3-state dot (matches verify chip)
   }
   // Refresh tables so dots reflect upload status (green if files, amber if none yet).
-  renderTable('photo'); renderTable('video');
+  renderTableSafe('photo'); renderTableSafe('video');
   if(!scannedAny){ stat.innerHTML='<span class="dim">aucun dossier</span>'; stat.style.color='var(--text-dim)'; return 0; }
   stat.innerHTML = total > 0 ? `${total} <span class="dim">fichiers</span>` : '0 <span class="dim">fichier</span>';
   stat.style.color = total > 0 ? 'var(--green)' : 'var(--text-dim)';
@@ -4412,7 +4450,7 @@ async function runVerify(scope) {
     verifyBusy = false;
     if(rb){ rb.disabled=false; rb.style.opacity=''; }
     // Refresh the person tables so the status dots reflect upload counts from the verify scan.
-    renderTable('photo'); renderTable('video');
+    renderTableSafe('photo'); renderTableSafe('video');
   }
 }
 
@@ -4524,9 +4562,12 @@ async function verifyType(type) {
         : `<span style="font-size:0.75em;color:var(--text-dim);">—</span>`;
     }
 
-    // Status chip
+    // Status chip. "Complete" = every slot that actually has an upload link has files.
+    // (A person who only works J1+J2 shouldn't be stuck on "Partiel" for missing J3/p3.)
     const hasAny = Object.values(counts).some(v=>v>0);
-    const hasAll = Object.keys(found).every(k=>found[k] && counts[k]>0);
+    const linkedKeys = ['j1','j2','j3','p3'].filter(k=>row.links[k] && row.links[k].url);
+    const hasAll = linkedKeys.length>0 && linkedKeys.every(k=>counts[k]>0);
+    row._uploadStatus = !hasAny ? 'empty' : (hasAll ? 'complete' : 'partial'); // sync the dot to the chip
     const statusCell = document.getElementById(`vs-${type}-${row.n}`);
     if(statusCell) {
       if(!hasAny)  { statusCell.innerHTML='<span class="status-chip sc-none">⏳ Rien</span>'; none++; }
@@ -4550,7 +4591,6 @@ async function verifyType(type) {
 // ══════════════════════════════════════════════════
 // EMAIL / WHATSAPP MODAL
 // ══════════════════════════════════════════════════
-let modalState = { type:null, idx:null, tab:'email' };
 
 // ══════════════════════════════════════════════════
 // MESSAGES OVERLAY
@@ -4733,10 +4773,24 @@ function renderMsgOverlay() {
 function copyMsgPart(id) {
   const el = document.getElementById(id);
   if(!el) return;
-  navigator.clipboard.writeText(el.textContent||el.innerText).then(()=>{
+  const text = el.textContent || el.innerText || '';
+  // Sync-first (works on iOS Safari, where bare navigator.clipboard can be undefined/blocked).
+  let ok = false;
+  try {
+    const ta=document.createElement('textarea');
+    ta.value=text; ta.style.position='fixed'; ta.style.top='-9999px'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    ta.setSelectionRange(0, text.length);
+    ok = document.execCommand('copy');
+    ta.remove();
+  } catch(e){ ok=false; }
+  if(!ok && navigator.clipboard) { navigator.clipboard.writeText(text).catch(()=>{}); ok=true; }
+  if(ok){
     const status = document.getElementById('modal-copy-status');
     if(status){ status.textContent='✓ Copié !'; setTimeout(()=>status.textContent='',2000); }
-  });
+  } else {
+    toast('⚠️ Copie impossible sur ce navigateur','warn');
+  }
 }
 
 // ── Global "Template Upload" tab: per-type title pattern + description ──
@@ -4960,7 +5014,7 @@ renderSmartPreview();
 switchTab('photo');
 renderSwitcher();
 // Restore scan roots from localStorage
-const savedRoot = localStorage.getItem('dbx_scan_root_ml2026');
+const savedRoot = localStorage.getItem(LS_SCAN_ROOT);
 if(savedRoot) {
   const sr1 = document.getElementById('scan-root'); if(sr1) sr1.value = savedRoot;
   const sr2 = document.getElementById('paths-scan-root'); if(sr2) sr2.value = savedRoot;
@@ -4968,16 +5022,10 @@ if(savedRoot) {
 // Always sync saveScanRoot so history works correctly
 saveScanRoot(document.getElementById('paths-scan-root').value);
 
-// Restore event city/date
+// Restore event name (stored under dbx_ev_city for historical reasons).
 const savedCity = localStorage.getItem('dbx_ev_city');
-const savedDate = localStorage.getItem('dbx_ev_date');
 if(savedCity) {
   EVENT_CONFIG.city = savedCity; EVENT_CONFIG.edition = savedCity;
-  const el = document.getElementById('ev-city-inline'); if(el) el.value = savedCity;
-}
-if(savedDate) {
-  EVENT_CONFIG.date = savedDate;
-  const el = document.getElementById('ev-date-inline'); if(el) el.value = savedDate;
 }
 
 // Auto-restore last loaded event (zero-effort reopen)
