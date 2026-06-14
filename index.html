@@ -5026,9 +5026,14 @@ document.getElementById('email-modal').addEventListener('click', function(e){
 // Keyboard nav for messages overlay
 document.addEventListener('keydown', function(e){
   if(document.getElementById('email-modal').style.display==='flex'){
-    if(e.key==='ArrowRight') navMsgPerson(1);
-    if(e.key==='ArrowLeft')  navMsgPerson(-1);
-    if(e.key==='Escape')     closeModal();
+    // Don't hijack arrows while the user is typing in a field — let the caret move normally.
+    const el = e.target;
+    const typing = el && (el.tagName==='INPUT' || el.tagName==='TEXTAREA' || el.isContentEditable);
+    if(!typing){
+      if(e.key==='ArrowRight') navMsgPerson(1);
+      if(e.key==='ArrowLeft')  navMsgPerson(-1);
+    }
+    if(e.key==='Escape'){ if(el && (el.tagName==='INPUT'||el.tagName==='TEXTAREA')) el.blur(); else closeModal(); }
   }
 });
 
