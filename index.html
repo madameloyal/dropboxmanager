@@ -3796,6 +3796,10 @@ function openExportMenu(anchorEl) {
     <button class="export-item" onclick="runExport('carnet')">
       <div style="font-weight:700;color:var(--text);font-size:13px;">📑 Carnet de liens — PDF</div>
       <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">Tous les liens (upload, dossier, éditeur) · photo + vidéo</div>
+    </button>
+    <button class="export-item" onclick="runExport('emails')">
+      <div style="font-weight:700;color:var(--text);font-size:13px;">✉️ Emails — PDF</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">Tous les messages email · photo + vidéo</div>
     </button>`;
   document.body.appendChild(menu);
   // Position under the button that was clicked
@@ -4093,6 +4097,34 @@ async function runExport(kind) {
       }
       exportCarnet();
       toast('✓ Carnet de liens prêt','success');
+    } catch(e){
+      hidePersistentToast();
+      toast('✗ Export échoué : '+e.message,'error');
+    } finally { exportBusy = false; }
+    return;
+  }
+
+  if(kind==='emails'){
+    if(photoState.length===0 && videoState.length===0){ toast('⚠️ Aucun événement chargé','warn'); return; }
+    if(exportBusy){ toast('⏳ Un export est déjà en cours…','warn'); return; }
+    exportBusy = true;
+    try {
+      // Backfill missing editor links so the emails include them (same as carnet).
+      const pending = [];
+      [['photo',photoState],['video',videoState]].forEach(([type,arr])=>{
+        arr.forEach((row,idx)=>{
+          const anyDest = row.links.j1.dest||row.links.j2.dest||(row.links.j3&&row.links.j3.dest)||row.links.p3.dest||'';
+          if(anyDest && !row.editorUrl) pending.push([type,idx]);
+        });
+      });
+      if(pending.length && getToken()){
+        showPersistentToast(`🔗 Création de ${pending.length} lien(s) éditeur manquant(s)…`);
+        let done=0;
+        for(const [type,idx] of pending){ try { await createEditorLink(type, idx, true); } catch(e){} done++; showPersistentToast(`🔗 Liens éditeur — ${done}/${pending.length}`); }
+        hidePersistentToast();
+      }
+      exportEmails();
+      toast('✓ Emails prêts','success');
     } catch(e){
       hidePersistentToast();
       toast('✗ Export échoué : '+e.message,'error');
@@ -4483,6 +4515,101 @@ function exportCarnet(){
 }
 
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+// ── Emails export — every person's full email message (subject + body), grouped
+//    photo + vidéo, built from in-memory state via applyTemplate. Same minimalist
+//    print design as the Carnet. ──
+function exportEmails(){
+  const label = eventLabel();
+  const ev    = EVENT_CONFIG.edition || EVENT_CONFIG.name || label;
+  const date  = EVENT_CONFIG.date || '';
+
+  const emailCard = (type, row, stateIdx)=>{
+    const kind = type==='photo' ? 'Photographe' : 'Vidéaste';
+    const name = row.realName.trim() || `${kind} ${row.n}`;
+    const links = getLinks(type, stateIdx);
+    const email = applyTemplate(type+'-email', row.realName, links.j1, links.j2, links.j3, links.p3, links.edit);
+    return `<div class="ecard">
+      <div class="ec-top"><span class="ec-num">${String(row.n).padStart(2,'0')}</span><span class="ec-name">${escapeHtml(name)}</span><span class="ec-kind">${escapeHtml(kind)}</span></div>
+      <div class="ec-subj"><span class="ec-lbl">Objet</span>${escapeHtml(email.subject)}</div>
+      <div class="ec-body">${escapeHtml(email.body)}</div>
+    </div>`;
+  };
+
+  const section = (title, icon, type, arr)=>{
+    const named = arr.filter(r=>r.realName.trim());
+    if(named.length===0) return '';
+    const stateArr = type==='photo'?photoState:videoState;
+    return `<div class="sect">
+      <div class="sect-h">${icon} ${escapeHtml(title)} <span class="cnt">${named.length} email${named.length>1?'s':''}</span></div>
+      ${named.map(r=>emailCard(type, r, stateArr.findIndex(x=>x.n===r.n))).join('')}
+    </div>`;
+  };
+
+  const photoNamed = photoState.filter(r=>r.realName.trim());
+  const videoNamed = videoState.filter(r=>r.realName.trim());
+  if(photoNamed.length===0 && videoNamed.length===0){ toast('⚠️ Aucun nom assigné — rien à exporter','warn'); return; }
+
+  const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emails — ${escapeHtml(label)}</title>
+<style>
+  @page { size:A4 portrait; margin:14mm 13mm; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#1e293b; font-size:11px; line-height:1.5; background:#fff; }
+  .page { max-width:760px; margin:0 auto; }
+  @media print { .noprint { display:none !important; } }
+  .noprint { position:fixed; top:12px; right:12px; z-index:50; }
+  .noprint button { background:#0f172a; color:#fff; border:none; padding:11px 18px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,0.18); }
+  .hdr { border-bottom:2px solid #0f172a; padding-bottom:13px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; }
+  .hdr h1 { font-size:20px; font-weight:800; letter-spacing:-0.3px; color:#0f172a; }
+  .hdr .sub { color:#64748b; font-size:11.5px; margin-top:3px; font-weight:500; }
+  .hdr .brand { text-align:right; font-size:9.5px; color:#94a3b8; line-height:1.5; }
+  .hdr .brand b { color:#0f172a; font-size:12px; display:block; letter-spacing:-0.2px; }
+  .legend { font-size:10px; color:#475569; margin:14px 0 18px; background:#f8fafc; border:1px solid #e2e8f0; border-left:3px solid #2563eb; padding:9px 13px; border-radius:7px; line-height:1.6; }
+  .sect-h { font-size:13px; font-weight:800; color:#0f172a; margin:20px 0 11px; display:flex; align-items:center; gap:8px; }
+  .sect-h .cnt { font-size:10px; font-weight:600; color:#94a3b8; }
+  .ecard { border:1px solid #e2e8f0; border-radius:9px; padding:12px 14px; margin-bottom:10px; break-inside:avoid; page-break-inside:avoid; }
+  .ec-top { display:flex; align-items:center; gap:9px; margin-bottom:9px; padding-bottom:8px; border-bottom:1px solid #f1f5f9; }
+  .ec-num { font-family:ui-monospace,'SFMono-Regular',Menlo,monospace; font-size:11px; font-weight:700; color:#fff; background:#0f172a; border-radius:5px; padding:2px 7px; }
+  .ec-name { font-size:13.5px; font-weight:700; color:#0f172a; }
+  .ec-kind { margin-left:auto; font-size:9.5px; font-weight:600; padding:2px 9px; border-radius:20px; background:#f1f5f9; color:#64748b; white-space:nowrap; }
+  .ec-subj { font-size:11px; color:#0f172a; margin-bottom:8px; }
+  .ec-subj .ec-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#94a3b8; display:block; margin-bottom:1px; }
+  .ec-body { font-size:10.5px; color:#334155; white-space:pre-wrap; line-height:1.6; background:#f8fafc; border:1px solid #f1f5f9; border-radius:7px; padding:10px 12px; word-break:break-word; }
+  .foot { margin-top:22px; padding-top:12px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; font-size:9px; color:#94a3b8; }
+</style></head><body>
+<div class="noprint"><button onclick="window.print()">⬇️ Enregistrer en PDF</button></div>
+<div class="page">
+  <div class="hdr">
+    <div><h1>Emails — Médias</h1><div class="sub">${escapeHtml(ev)}${date?` · ${escapeHtml(date)}`:''}</div></div>
+    <div class="brand"><b>Madame Loyal</b>Festiflow Médias<br>Généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+  </div>
+  <div class="legend">Le message email complet (objet + corps) pour chaque personne avec un nom assigné. Copie-colle le bloc de chacun, ou garde ce document comme référence.</div>
+  ${section('Photographes', '&#128247;', 'photo', photoState)}
+  ${section('Vidéastes', '&#127909;', 'video', videoState)}
+  <div class="foot">
+    <span>Généré via Festiflow Médias · Dropbox Manager</span>
+    <span>${new Date().toLocaleString('fr-FR')}</span>
+  </div>
+</div>
+</body></html>`;
+
+  try {
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `emails-${eventLabel().replace(/[^\w]+/g,'-')}.html`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    toast('✓ Emails téléchargés — ouvre le fichier puis « Enregistrer en PDF »','success');
+  } catch(e){
+    const w = window.open('', '_blank');
+    if(w){ w.document.write(html); w.document.close(); }
+    else { toast('⚠️ Export échoué : '+e.message,'warn'); }
+  }
+}
 
 let verifyBusy = false;
 let verifyTotals = {photo:{files:0,bytes:0,up:0,tot:0}, video:{files:0,bytes:0,up:0,tot:0}};
