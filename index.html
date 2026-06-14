@@ -1618,16 +1618,17 @@ function makeTitle(type, key, n, name) {
   return `Vidéos BAB & Montages - ${v} - ${ev}`;
 }
 
-// Festivaliers default upload-link texts (sample provided by Leo).
+// Festivaliers default upload-link texts.
 function festivDefaultTitle(key){
   const ev = EVENT_CONFIG.edition || EVENT_CONFIG.name || 'Madame Loyal';
-  const base = `Madame Loyal Paris XXL - Rushs festivaliers`;
-  // Keep the provided sample title for "Tous les jours"; append the day otherwise.
+  const base = `${ev} - Rushs festivaliers`;
+  // Keep the base title for "Tous les jours"; append the day otherwise.
   if(key==='p3') return base;
   return `${base} · ${ {j1:'Jour 1',j2:'Jour 2',j3:'Jour 3'}[key] }`;
 }
 function festivDefaultDesc(){
-  return `Envoie-nous tes meilleurs moments de Madame Loyal Paris XXL ! Ajoute les fichiers et ensuite écris ton @ :) Et tente de gagner un Pass pour un prochain évent 🎟`;
+  const ev = EVENT_CONFIG.edition || EVENT_CONFIG.name || 'Madame Loyal';
+  return `Envoie-nous tes meilleurs moments de ${ev} ! Ajoute les fichiers et ensuite écris ton @ :) Et tente de gagner un Pass pour un prochain évent 🎟`;
 }
 
 function makeDesc(type, key) {
@@ -4798,7 +4799,7 @@ function copyMsgPart(id) {
 let UPLOAD_TEMPLATES = {
   photo: { titlePattern: 'Photos {jour} - {nom} - {evenement}', desc: "Ici, tu peux mettre tes photos. N'oublie pas de mettre ton @ Instagram sur le nom des fichiers." },
   video: { titlePattern: 'Vidéos {jour} - {nom} - {evenement}', desc: "Ici, tu peux mettre tes vidéos. N'oublie pas de mettre ton @ Instagram sur le nom des fichiers." },
-  festiv:{ titlePattern: 'Madame Loyal - Rushs festivaliers · {jour}', desc: festivDefaultDesc() }
+  festiv:{ titlePattern: '{evenement} - Rushs festivaliers · {jour}', desc: festivDefaultDesc() }
 };
 let uplTplType = 'photo';
 
